@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { FEED, GAMES, ME, PLAYERS } from '@/data/mock';
 import { RULES, ruleById } from '@/data/rules';
-import type { FeedEvent, Game, GameMode, Player } from '@/types/game';
+import type { FeedEvent, Game, GameMode, Player, Vote } from '@/types/game';
 
 /**
  * Store globale del gioco.
@@ -13,7 +13,10 @@ interface GameState {
   games: Game[];
   players: Player[];
   events: FeedEvent[];
+  /** "Chiama" un punto: nasce in attesa del voto del gruppo */
   assignPoints: (input: { gameId: string; playerId: string; ruleId: string }) => FeedEvent | undefined;
+  /** Voto su una chiamata. Nel mock il primo voto la rende ufficiale (o la scarta). */
+  vote: (eventId: string, vote: Vote) => void;
   createGame: (input: { name: string; mode: GameMode }) => Game;
 }
 
@@ -27,6 +30,8 @@ export const useGameStore = create<GameState>((set) => ({
     if (!rule) return undefined;
     const event: FeedEvent = {
       id: `e-${Date.now()}`,
+      status: 'pending',
+      myVote: 'confirm', // chi chiama il punto lo conferma già
       gameId,
       playerId,
       ruleId,
@@ -37,6 +42,13 @@ export const useGameStore = create<GameState>((set) => ({
     set((s) => ({ events: [event, ...s.events] }));
     return event;
   },
+
+  vote: (eventId, vote) =>
+    set((s) => ({
+      events: s.events.map((e) =>
+        e.id === eventId ? { ...e, myVote: vote, status: vote === 'confirm' ? 'confirmed' : 'rejected' } : e,
+      ),
+    })),
 
   createGame: ({ name, mode }) => {
     const game: Game = {
@@ -50,7 +62,7 @@ export const useGameStore = create<GameState>((set) => ({
       week: mode === 'marathon' ? { current: 1, total: 4 } : undefined,
       playerIds: [ME.id],
       ruleIds: RULES.map((r) => r.id),
-      accent: '#FF9F1C',
+      accent: '#0B8200',
     };
     set((s) => ({ games: [game, ...s.games] }));
     return game;
@@ -62,10 +74,13 @@ export const useGameStore = create<GameState>((set) => ({
 export const useGame = (gameId: string | undefined) =>
   useGameStore((s) => s.games.find((g) => g.id === gameId));
 
+/** Classifica: contano solo i punti confermati. */
 export function computeStandings(game: Game, events: FeedEvent[], players: Player[]) {
   const totals = new Map<string, number>(game.playerIds.map((id) => [id, 0]));
   for (const e of events) {
-    if (e.gameId === game.id) totals.set(e.playerId, (totals.get(e.playerId) ?? 0) + e.points);
+    if (e.gameId === game.id && e.status === 'confirmed') {
+      totals.set(e.playerId, (totals.get(e.playerId) ?? 0) + e.points);
+    }
   }
   return game.playerIds
     .map((id) => ({ player: players.find((p) => p.id === id)!, points: totals.get(id) ?? 0 }))

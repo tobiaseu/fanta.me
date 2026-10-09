@@ -1,0 +1,54 @@
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+
+import { AppText } from './AppText';
+import { PressableScale } from './PressableScale';
+
+import { haptics } from '@/lib/haptics';
+import { colors, radius, space } from '@/theme/tokens';
+
+type Variant = 'primary' | 'secondary' | 'confirm' | 'reject';
+
+interface Props {
+  label: string;
+  onPress: () => void;
+  variant?: Variant;
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * CTA del Figma: "CTA 1" (giallo pieno), "CTA 2" (bianco con bordo giallo),
+ * più le varianti Conferma/Rifiuta della schermata di voto.
+ */
+export function Button({ label, onPress, variant = 'primary', disabled, style }: Props) {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={() => {
+        haptics.press();
+        onPress();
+      }}
+      style={[styles.base, styles[variant], disabled && styles.disabled, style]}>
+      <AppText variant="headline" color={disabled ? colors.inkMuted : colors.ink}>
+        {label}
+      </AppText>
+    </PressableScale>
+  );
+}
+
+const styles = StyleSheet.create({
+  base: {
+    height: 60,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space.md,
+  },
+  primary: { backgroundColor: colors.cta },
+  secondary: { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.cta },
+  confirm: { backgroundColor: colors.bonusSoft, borderWidth: 1, borderColor: colors.bonusBorder },
+  reject: { backgroundColor: colors.malusSoft, borderWidth: 1, borderColor: colors.malusBorder },
+  disabled: { backgroundColor: colors.surfaceMuted, borderColor: colors.surfaceMuted },
+});

@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,24 +6,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/icons/Icon';
 import { RubberHoseMascot } from '@/components/illustrations/RubberHoseMascot';
 import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
-import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
+import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { GameMode } from '@/types/game';
 
-const MODES: { id: GameMode; title: string; body: string; emoji: string }[] = [
-  { id: 'sprint', title: 'Sprint', body: 'Countdown a ore. Perfetto per un weekend o una vacanza.', emoji: '⚡️' },
-  { id: 'marathon', title: 'Maratona', body: 'Divisa in settimane. Per ufficio, scuola, coinquilini.', emoji: '🏃' },
+const MODES: { id: GameMode; title: string; body: string; icon: 'clock' | 'calendar' }[] = [
+  { id: 'sprint', title: 'Sprint', body: 'Countdown a ore. Perfetto per un weekend o una vacanza.', icon: 'clock' },
+  { id: 'marathon', title: 'Maratona', body: 'Divisa in settimane. Per ufficio, scuola, coinquilini.', icon: 'calendar' },
 ];
 
-/** Crea Nuova Stanza (modale). In Fase 2: regole personalizzate + invito via link. */
+/** Crea nuova stanza (modale). Arriva precompilata se si parte da un format della Lobby. */
 export function CreateRoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ mode?: GameMode; format?: string }>();
   const createGame = useGameStore((s) => s.createGame);
-  const [name, setName] = useState('');
-  const [mode, setMode] = useState<GameMode>('sprint');
+  const [name, setName] = useState(params.format ? `Fanta${params.format.charAt(0)}${params.format.slice(1).toLowerCase()}` : '');
+  const [mode, setMode] = useState<GameMode>(params.mode ?? 'sprint');
   const ready = name.trim().length > 1;
 
   const submit = () => {
@@ -41,28 +43,29 @@ export function CreateRoomScreen() {
       <View style={styles.head}>
         <AppText variant="title">Nuova stanza</AppText>
         <PressableScale onPress={() => router.back()} style={styles.close} accessibilityLabel="Chiudi">
-          <Icon name="close" size={18} color={colors.inkSoft} />
+          <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
         </PressableScale>
       </View>
 
       <View style={styles.art}>
-        <RubberHoseMascot size={120} color={colors.toonPurple} pose="cheer" />
+        <RubberHoseMascot size={130} color={colors.toonBlue} pose="cheer" />
       </View>
 
-      <AppText variant="micro" color={colors.inkMuted}>
-        Nome della partita
+      <AppText variant="caption" color={colors.inkSoft}>
+        Nome della lega
       </AppText>
       <TextInput
         value={name}
         onChangeText={setName}
-        placeholder="Es. FantaCapodanno"
-        placeholderTextColor={colors.inkMuted}
+        placeholder="Es. Fantapasquetta"
+        placeholderTextColor={colors.inkFaint}
         style={styles.input}
         returnKeyType="done"
         onSubmitEditing={submit}
+        accessibilityLabel="Nome della lega"
       />
 
-      <AppText variant="micro" color={colors.inkMuted}>
+      <AppText variant="caption" color={colors.inkSoft}>
         Modalità
       </AppText>
       <View style={styles.modes}>
@@ -71,14 +74,16 @@ export function CreateRoomScreen() {
           return (
             <Pressable
               key={m.id}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
               onPress={() => {
                 haptics.tap();
                 setMode(m.id);
               }}
               style={[styles.mode, selected && styles.modeSelected]}>
-              <AppText variant="title">{m.emoji}</AppText>
+              <Icon name={m.icon} size={24} />
               <AppText variant="headline">{m.title}</AppText>
-              <AppText variant="caption" color={colors.inkMuted}>
+              <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
                 {m.body}
               </AppText>
             </Pressable>
@@ -86,11 +91,7 @@ export function CreateRoomScreen() {
         })}
       </View>
 
-      <PressableScale disabled={!ready} onPress={submit} style={[styles.cta, !ready && styles.ctaDisabled]}>
-        <AppText variant="headline" color={ready ? colors.ctaInk : colors.inkMuted}>
-          Crea e inizia a giocare
-        </AppText>
-      </PressableScale>
+      <Button label="Crea e inizia a giocare" disabled={!ready} onPress={submit} />
     </ScrollView>
   );
 }
@@ -98,7 +99,8 @@ export function CreateRoomScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
-    padding: space.lg,
+    padding: space.md,
+    paddingTop: space.lg,
     gap: space.sm,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
@@ -116,10 +118,11 @@ const styles = StyleSheet.create({
   art: { alignItems: 'center', paddingVertical: space.md },
   input: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     paddingHorizontal: space.md,
-    height: 52,
+    height: 60,
     fontSize: 17,
+    fontWeight: '600',
     color: colors.ink,
     marginBottom: space.sm,
   },
@@ -132,15 +135,7 @@ const styles = StyleSheet.create({
     gap: space.xxs,
     borderWidth: 2,
     borderColor: 'transparent',
-    ...shadow.card,
   },
   modeSelected: { borderColor: colors.cta },
-  cta: {
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.cta,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaDisabled: { backgroundColor: colors.surfaceMuted },
+  regular: { fontWeight: '400' },
 });

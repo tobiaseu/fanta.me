@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { RULES } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
@@ -15,8 +16,9 @@ import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Game, RuleKind } from '@/types/game';
 
 /**
- * Azione Veloce (Bottom Sheet): chi → cosa → conferma.
- * Tre tocchi, zero tastiera: assegnare punti deve essere più veloce che raccontarlo.
+ * Aggiungi punti (Bottom Sheet): chi → quale carta → chiama.
+ * Tre tocchi, zero tastiera. La chiamata finisce nelle storie del Feed e diventa
+ * ufficiale quando il gruppo la conferma.
  */
 export function QuickActionSheet({ game }: { game: Game }) {
   const open = useUiStore((s) => s.quickActionOpen);
@@ -44,11 +46,11 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
     (r) => game.ruleIds.includes(r.id) && (kind === 'bonus' ? r.points > 0 : r.points < 0),
   );
   const rule = RULES.find((r) => r.id === ruleId);
-  const ready = Boolean(playerId && rule);
+  const player = players.find((p) => p.id === playerId);
 
   const confirm = () => {
-    if (!playerId || !rule) return;
-    assignPoints({ gameId: game.id, playerId, ruleId: rule.id });
+    if (!player || !rule) return;
+    assignPoints({ gameId: game.id, playerId: player.id, ruleId: rule.id });
     if (rule.points > 0) haptics.bonus();
     else haptics.malus();
     onDone();
@@ -61,32 +63,32 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
         style={[styles.sheet, { paddingBottom: insets.bottom + space.md }]}>
         <View style={styles.grabber} />
         <View style={styles.head}>
-          <AppText variant="title">Azione veloce ⚡️</AppText>
+          <AppText variant="title">Aggiungi punti</AppText>
           <PressableScale onPress={onDone} style={styles.close} accessibilityLabel="Chiudi">
-            <Icon name="close" size={18} color={colors.inkSoft} />
+            <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
           </PressableScale>
         </View>
 
-        <AppText variant="micro" color={colors.inkMuted}>
+        <AppText variant="caption" color={colors.inkSoft}>
           1 · Chi?
         </AppText>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.noShrink}
-          contentContainerStyle={styles.players}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noShrink} contentContainerStyle={styles.players}>
           {players.map((p) => {
             const selected = p.id === playerId;
             return (
               <Pressable
                 key={p.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
                 onPress={() => {
                   haptics.tap();
                   setPlayerId(p.id);
                 }}
-                style={[styles.player, selected && styles.playerSelected]}>
-                <Avatar player={p} size={48} />
-                <AppText variant="caption" color={selected ? colors.ink : colors.inkMuted}>
+                style={styles.player}>
+                <View style={[styles.ring, selected && styles.ringActive]}>
+                  <Avatar player={p} size={52} sticker={false} />
+                </View>
+                <AppText variant="micro" color={selected ? colors.ink : colors.inkSoft}>
                   {p.name}
                 </AppText>
               </Pressable>
@@ -94,8 +96,8 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
           })}
         </ScrollView>
 
-        <AppText variant="micro" color={colors.inkMuted}>
-          2 · Cosa ha fatto?
+        <AppText variant="caption" color={colors.inkSoft}>
+          2 · Quale carta?
         </AppText>
         <View style={styles.segment}>
           {(['bonus', 'malus'] as const).map((k) => (
@@ -107,8 +109,8 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                 setRuleId(undefined);
               }}
               style={[styles.segmentItem, kind === k && styles.segmentActive]}>
-              <AppText variant="headline" color={kind === k ? (k === 'bonus' ? colors.bonus : colors.malus) : colors.inkMuted}>
-                {k === 'bonus' ? '＋ Bonus' : '－ Malus'}
+              <AppText variant="headline" color={kind === k ? (k === 'bonus' ? colors.bonus : colors.malus) : colors.inkFaint}>
+                {k === 'bonus' ? 'Bonus' : 'Malus'}
               </AppText>
             </Pressable>
           ))}
@@ -120,18 +122,26 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
             return (
               <Pressable
                 key={r.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
                 onPress={() => {
                   haptics.tap();
                   setRuleId(r.id);
                 }}
                 style={[
                   styles.rule,
-                  selected && { borderColor: isBonus ? colors.bonus : colors.malus, backgroundColor: isBonus ? colors.bonusSoft : colors.malusSoft },
+                  selected && {
+                    borderColor: isBonus ? colors.bonusBorder : colors.malusBorder,
+                    backgroundColor: isBonus ? colors.bonusSoft : colors.malusSoft,
+                  },
                 ]}>
-                <AppText variant="body" style={styles.ruleLabel} numberOfLines={2}>
-                  {r.label}
-                </AppText>
-                <AppText variant="headline" color={isBonus ? colors.bonus : colors.malus}>
+                <View style={styles.flex}>
+                  <AppText variant="serifCard">{r.label}</AppText>
+                  <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
+                    {r.description}
+                  </AppText>
+                </View>
+                <AppText variant="name" color={isBonus ? colors.bonus : colors.malus}>
                   {isBonus ? `+${r.points}` : r.points}
                 </AppText>
               </Pressable>
@@ -139,33 +149,34 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
           })}
         </ScrollView>
 
-        <PressableScale
-          disabled={!ready}
+        <Button
+          disabled={!player || !rule}
           onPress={confirm}
-          accessibilityRole="button"
-          style={[styles.cta, !ready && styles.ctaDisabled]}>
-          <AppText variant="headline" color={ready ? colors.ctaInk : colors.inkMuted}>
-            {ready && rule
-              ? `Assegna ${rule.points > 0 ? '+' : ''}${rule.points} a ${players.find((p) => p.id === playerId)?.name}`
-              : 'Scegli giocatore e azione'}
-          </AppText>
-        </PressableScale>
+          label={
+            player && rule
+              ? `Chiama ${rule.points > 0 ? '+' : ''}${rule.points} su ${player.name}`
+              : 'Scegli giocatore e carta'
+          }
+        />
+        <AppText variant="micro" color={colors.inkFaint} style={styles.hint}>
+          Diventa ufficiale quando il gruppo la conferma.
+        </AppText>
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(28, 28, 30, 0.35)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.3)' },
   anchor: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
   sheet: {
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
-    maxHeight: '88%',
-    backgroundColor: colors.background,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: space.lg,
+    maxHeight: '90%',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.bar,
+    borderTopRightRadius: radius.bar,
+    paddingHorizontal: space.md,
     paddingTop: space.sm,
     gap: space.sm,
   },
@@ -174,36 +185,25 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.placeholder,
     marginBottom: space.xs,
   },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.xs },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   close: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   noShrink: { flexGrow: 0, flexShrink: 0 },
-  players: { gap: space.sm, paddingBottom: space.xs },
-  player: {
-    alignItems: 'center',
-    gap: space.xxs,
-    padding: space.xs,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  playerSelected: { borderColor: colors.cta, backgroundColor: colors.surface },
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.pill,
-    padding: 4,
-  },
-  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs, borderRadius: radius.pill },
+  players: { gap: space.md, paddingVertical: space.xxs },
+  player: { alignItems: 'center', gap: space.xxs },
+  ring: { padding: 3, borderRadius: 32, borderWidth: 3, borderColor: 'transparent' },
+  ringActive: { borderColor: colors.cta },
+  segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md + 4, padding: 4 },
+  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs + 2, borderRadius: radius.md },
   segmentActive: { backgroundColor: colors.surface },
   rulesScroll: { flexShrink: 1 },
   rules: { gap: space.xs },
@@ -211,21 +211,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.lg,
     paddingHorizontal: space.md,
     paddingVertical: space.sm,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
-  ruleLabel: { flex: 1 },
-  cta: {
-    marginTop: space.xs,
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.cta,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaDisabled: { backgroundColor: colors.surfaceMuted },
+  flex: { flex: 1, gap: 2 },
+  regular: { fontWeight: '400' },
+  hint: { textAlign: 'center', fontWeight: '500' },
 });

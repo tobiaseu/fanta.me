@@ -1,5 +1,6 @@
 /**
- * Design tokens di Fanta.me.
+ * Design tokens di Fanta.me, allineati al file Figma "Fanta.me"
+ * (pagine Component master + Prototype).
  *
  * Ogni valore qui è l'equivalente di una variabile Figma: colori, spaziature
  * (gap dell'Auto Layout), raggi e tipografia. I componenti non usano mai valori
@@ -11,38 +12,49 @@ export const colors = {
   // Superfici
   background: '#F2F2F7', // off-white di sistema iOS
   surface: '#FFFFFF',
-  surfaceMuted: '#E9E9F0',
-  hairline: 'rgba(28, 28, 30, 0.08)',
+  surfaceMuted: '#E9E9EE',
+  placeholder: '#D9D9D9',
+  hairline: 'rgba(0, 0, 0, 0.06)',
 
   // Testo
-  ink: '#1C1C1E',
-  inkSoft: '#3A3A3F',
-  inkMuted: '#8A8A95',
+  ink: '#000000',
+  inkSoft: '#6E6E6E',
+  inkMuted: 'rgba(0, 0, 0, 0.5)',
+  inkFaint: '#909090',
   inkInverse: '#FFFFFF',
 
-  // Stato "in gioco" (verde pastello)
-  live: '#34C759',
-  liveSoft: '#D6F5DE',
-  liveInk: '#1E7A3A',
+  // Stato "in partita" (verde)
+  live: '#0B8200',
+  liveSoft: 'rgba(11, 130, 0, 0.2)', // card lega in corso
+  liveStrip: 'rgba(11, 130, 0, 0.2)', // banda laterale sovrapposta
+  liveInk: '#0B8200',
 
-  // CTA primaria (giallo/arancio vibrante)
-  cta: '#FF9F1C',
-  ctaPressed: '#F08700',
-  ctaSoft: '#FFE8C2',
-  ctaInk: '#1C1C1E',
+  // CTA primaria (giallo burro)
+  cta: '#FFE382',
+  ctaPressed: '#F7D45E',
+  ctaSoft: 'rgba(255, 227, 130, 0.2)', // card lega in attesa
+  ctaInk: '#000000',
 
-  // Punteggi
-  bonus: '#1E9E4A',
-  bonusSoft: '#DDF6E4',
-  malus: '#E5484D',
-  malusSoft: '#FDE3E4',
+  // Lega conclusa
+  ended: 'rgba(135, 135, 135, 0.2)',
 
-  // Palette illustrazioni rubber-hose (sempre 2 colori + bordo bianco sticker)
-  toonRed: '#FF4B3E',
-  toonBlue: '#2E6BFF',
-  toonYellow: '#FFC531',
-  toonPurple: '#8B5CF6',
-  toonInk: '#17171A',
+  // Punteggi e voto
+  bonus: '#0B8200',
+  bonusBright: '#1CB100',
+  bonusSoft: 'rgba(121, 245, 96, 0.5)',
+  bonusBorder: '#1BA700',
+  malus: '#D92D20',
+  malusSoft: 'rgba(255, 130, 130, 0.5)',
+  malusBorder: '#FF0000',
+
+  // Palette illustrazioni rubber-hose (come lo sticker "La Smurratona")
+  toonBody: '#FFFDF5',
+  toonBlue: '#2F7BEA',
+  toonRed: '#F25C54',
+  toonYellow: '#FFD84D',
+  toonPurple: '#8B6CF6',
+  toonGreen: '#3DBA5B',
+  toonInk: '#111114',
   sticker: '#FFFFFF',
 } as const;
 
@@ -60,41 +72,58 @@ export const space = {
 export const radius = {
   sm: 12,
   md: 16,
-  lg: 24,
-  xl: 32,
+  lg: 24, // card, CTA
+  xl: 28, // navbar flottante
+  bar: 36, // top bar
   pill: 999,
 } as const;
 
-const rounded = Platform.select({ ios: 'ui-rounded', default: undefined });
+/** Serif da "carta trofeo" (Apple Garamond nel Figma). */
+const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' });
 
 export const type = {
-  display: { fontFamily: rounded, fontSize: 32, lineHeight: 36, fontWeight: '800', letterSpacing: -0.6 },
-  title: { fontFamily: rounded, fontSize: 22, lineHeight: 28, fontWeight: '800', letterSpacing: -0.3 },
-  headline: { fontSize: 17, lineHeight: 22, fontWeight: '700' },
-  body: { fontSize: 15, lineHeight: 21, fontWeight: '500' },
-  caption: { fontSize: 13, lineHeight: 17, fontWeight: '600' },
-  micro: { fontSize: 11, lineHeight: 14, fontWeight: '700', letterSpacing: 0.4, textTransform: 'uppercase' },
-  number: { fontFamily: rounded, fontSize: 28, lineHeight: 32, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  display: { fontSize: 28, lineHeight: 34, fontWeight: '600', letterSpacing: -0.4 },
+  title: { fontSize: 24, lineHeight: 29, fontWeight: '600', letterSpacing: -0.2 },
+  cardTitle: { fontSize: 20, lineHeight: 24, fontWeight: '600' },
+  headline: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  name: { fontSize: 16, lineHeight: 19, fontWeight: '700' },
+  body: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
+  caption: { fontSize: 14, lineHeight: 17, fontWeight: '600' },
+  micro: { fontSize: 12, lineHeight: 14, fontWeight: '700' },
+  number: { fontSize: 24, lineHeight: 28, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  watermark: { fontSize: 128, lineHeight: 136, fontWeight: '600', letterSpacing: -4 },
+  serifTitle: { fontFamily: serif, fontSize: 32, lineHeight: 38, fontWeight: '700' },
+  serifCard: { fontFamily: serif, fontSize: 17, lineHeight: 21, fontWeight: '700' },
 } as const;
 
-/** Ombra morbida unica per le card: niente "muro di mattoni". */
+/** Ombra morbida unica: niente "muro di mattoni". */
 export const shadow = {
   card: Platform.select({
-    web: { boxShadow: '0 6px 20px rgba(28, 28, 30, 0.06)' },
+    web: { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)' },
     default: {
-      shadowColor: '#1C1C1E',
-      shadowOpacity: 0.06,
-      shadowRadius: 20,
+      shadowColor: '#000',
+      shadowOpacity: 0.04,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 2,
+    },
+  }),
+  avatar: Platform.select({
+    web: { boxShadow: '0 6px 14px rgba(0, 0, 0, 0.18)' },
+    default: {
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowRadius: 14,
       shadowOffset: { width: 0, height: 6 },
-      elevation: 3,
+      elevation: 6,
     },
   }),
   floating: Platform.select({
-    web: { boxShadow: '0 10px 28px rgba(240, 135, 0, 0.35)' },
+    web: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)' },
     default: {
-      shadowColor: '#F08700',
-      shadowOpacity: 0.35,
-      shadowRadius: 18,
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 30,
       shadowOffset: { width: 0, height: 10 },
       elevation: 8,
     },

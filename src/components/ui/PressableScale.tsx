@@ -9,14 +9,17 @@ interface Props extends Omit<PressableProps, 'style' | 'children'> {
   pressedScale?: number;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 /** Pressable con micro-animazione elastica: il tocco deve sembrare fisico. */
 export function PressableScale({ style, children, pressedScale = 0.97, onPressIn, onPressOut, ...rest }: Props) {
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Pressable
+    <AnimatedPressable
       {...rest}
+      style={[style, animated]}
       onPressIn={(e) => {
         scale.value = withSpring(pressedScale, { damping: 18, stiffness: 400 });
         onPressIn?.(e);
@@ -25,7 +28,7 @@ export function PressableScale({ style, children, pressedScale = 0.97, onPressIn
         scale.value = withSpring(1, { damping: 14, stiffness: 300 });
         onPressOut?.(e);
       }}>
-      <Animated.View style={[style, animated]}>{children}</Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }

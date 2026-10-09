@@ -1,15 +1,18 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { RubberHoseMascot } from '@/components/illustrations/RubberHoseMascot';
+import { Icon } from '@/components/icons/Icon';
 import { CareerHeader } from '@/components/lobby/CareerHeader';
-import { CreateRoomButton } from '@/components/lobby/CreateRoomButton';
 import { EmptyLobby } from '@/components/lobby/EmptyLobby';
-import { GameCard } from '@/components/lobby/GameCard';
+import { FormatCarousel } from '@/components/lobby/FormatCarousel';
+import { LeagueCard } from '@/components/lobby/LeagueCard';
+import { LOBBY_ACTIONS_HEIGHT, LobbyActions } from '@/components/lobby/LobbyActions';
 import { AppText } from '@/components/ui/AppText';
+import { Avatar } from '@/components/ui/Avatar';
+import { Wordmark } from '@/components/ui/Brand';
+import { TopBar } from '@/components/ui/TopBar';
 import { ME } from '@/data/mock';
 import { useNow } from '@/hooks/useNow';
 import { haptics } from '@/lib/haptics';
@@ -17,21 +20,23 @@ import { computeStandings, useGameStore } from '@/store/useGameStore';
 import { colors, MAX_APP_WIDTH, space } from '@/theme/tokens';
 import type { Game } from '@/types/game';
 
-const CTA_SPACE = 58 + space.lg * 2;
+type Filter = 'all' | 'live';
 
 /**
  * LOBBY (Global App): nessuna bottom navbar.
- * Header carriera → lista verticale delle partite attive → CTA fissa "Crea Nuova Stanza".
+ * Top bar → carriera → "Nuovo evento" (format) → "Le tue leghe" con filtro →
+ * pannello fisso con "Crea nuova stanza" ed "Entra con codice".
  */
 export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const now = useNow(30_000);
   const { games, events, players } = useGameStore();
+  const [filter, setFilter] = useState<Filter>('all');
 
-  const activeGames = useMemo(
-    () => (forceEmpty ? [] : games.filter((g) => g.status !== 'ended')),
-    [games, forceEmpty],
+  const myGames = useMemo(() => (forceEmpty ? [] : games), [games, forceEmpty]);
+  const shown = useMemo(
+    () => (filter === 'live' ? myGames.filter((g) => g.status === 'live') : myGames),
+    [myGames, filter],
   );
 
   const openGame = (game: Game) => {
@@ -41,48 +46,67 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
 
   return (
     <View style={styles.screen}>
+      <TopBar
+        title={<Wordmark />}
+        left={<Avatar player={ME} size={32} sticker={false} />}
+        right={<Icon name="bell" size={24} />}
+      />
       <FlatList
-        data={activeGames}
+        data={shown}
         keyExtractor={(g) => g.id}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + space.md, paddingBottom: CTA_SPACE + insets.bottom },
-        ]}
+        contentContainerStyle={[styles.content, { paddingBottom: LOBBY_ACTIONS_HEIGHT + space.xl }]}
         ItemSeparatorComponent={() => <View style={{ height: space.md }} />}
         ListHeaderComponent={
           <View style={styles.header}>
             <CareerHeader user={ME} />
-            {activeGames.length > 0 && (
-              <View style={styles.sectionTitle}>
-                <AppText variant="title">Partite attive</AppText>
-                <AppText variant="caption" color={colors.inkMuted}>
-                  {activeGames.length} {activeGames.length === 1 ? 'stanza' : 'stanze'}
-                </AppText>
-              </View>
-            )}
+
+            <View style={styles.section}>
+              <AppText variant="title">Le tue leghe</AppText>
+              {myGames.length > 0 && (
+                <View style={styles.filters} accessibilityRole="tablist">
+                  {(
+                    [
+                      ['all', 'Tutte le leghe'],
+                      ['live', 'In partita'],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <Pressable
+                      key={id}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: filter === id }}
+                      onPress={() => {
+                        haptics.tap();
+                        setFilter(id);
+                      }}
+                      style={[styles.filter, filter === id && styles.filterActive]}>
+                      <AppText variant="headline" color={filter === id ? colors.ink : colors.inkFaint}>
+                        {label}
+                      </AppText>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         }
         ListEmptyComponent={<EmptyLobby />}
         ListFooterComponent={
-          activeGames.length > 0 ? (
-            <View style={styles.footerArt}>
-              <RubberHoseMascot size={92} color={colors.toonBlue} pose="wave" />
-              <AppText variant="caption" color={colors.inkMuted} style={styles.footerText}>
-                Ogni azione vale punti.{'\n'}Anche quelle di cui ti vergogni.
-              </AppText>
-            </View>
-          ) : null
+          <View style={[styles.section, styles.footer]}>
+            <AppText variant="title">Nuovo evento</AppText>
+            <FormatCarousel
+              onPick={(f) => router.push({ pathname: '/room/new', params: { mode: f.mode, format: f.name } })}
+            />
+          </View>
         }
         renderItem={({ item, index }) => {
           const standings = computeStandings(item, events, players);
-          const myIndex = standings.findIndex((r) => r.player.id === ME.id);
+          const myRank = standings.findIndex((r) => r.player.id === ME.id) + 1;
           return (
-            <Animated.View entering={FadeInDown.delay(80 * index).springify().damping(18)}>
-              <GameCard
+            <Animated.View entering={FadeInDown.delay(70 * index).springify().damping(18)}>
+              <LeagueCard
                 game={item}
-                players={standings.map((r) => r.player)}
-                myPoints={standings[myIndex]?.points ?? 0}
-                myRank={myIndex + 1}
+                playerCount={item.playerIds.length}
+                myRank={myRank}
                 now={now}
                 onPress={() => openGame(item)}
               />
@@ -90,26 +114,24 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           );
         }}
       />
-      <CreateRoomButton onPress={() => router.push('/room/new')} />
+      <LobbyActions onCreate={() => router.push('/room/new')} onJoin={() => router.push('/room/join')} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  footer: { marginTop: space.xl },
   content: {
-    paddingHorizontal: space.lg,
+    paddingHorizontal: space.md,
+    paddingTop: space.lg,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',
   },
   header: { gap: space.lg, marginBottom: space.md },
-  sectionTitle: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginTop: space.xs,
-  },
-  footerArt: { alignItems: 'center', gap: space.sm, paddingTop: space.xl },
-  footerText: { textAlign: 'center' },
+  section: { gap: space.sm },
+  filters: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: 16, padding: 4 },
+  filter: { flex: 1, alignItems: 'center', paddingVertical: space.xs + 2, borderRadius: 12 },
+  filterActive: { backgroundColor: colors.surface },
 });

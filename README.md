@@ -29,17 +29,24 @@ con Dashboard in-game già navigabile su dati finti.
 
 ```
 /                  LOBBY (nessuna navbar)
-                   header carriera · lista partite · CTA "Crea Nuova Stanza"
-   │ tap su card                         └─► /room/new (modale)
-   ▼
+                   carriera · le tue leghe · nuovo evento (format)
+                   pannello fisso: Entra con codice · Crea stanza
+   │ tap su lega            ├─► /room/new  (modale)
+   ▼                        └─► /room/join (modale)
 /game/[gameId]/*   DASHBOARD IN-GAME
-                   top bar (nome partita + "In partita")
-                   bottom navbar: Feed · Regole · ⚡ Azione · Classifica · Profilo
+                   top bar bianca (nome lega + "● in partita")
+                   navbar flottante: Feed · Regolamento · ▶ Punti · Classifica · Profilo
+   │ tap su una storia
+   ▼
+/call/[eventId]    CONFERMA PUNTO (modale a schermo intero): Rifiuta · Conferma · Ignora
 ```
 
 - La **navbar esiste solo nel layout `game/[gameId]/_layout.tsx`**: la Lobby non può mostrarla nemmeno per errore.
-- Il tab centrale **⚡ Azione Veloce** non apre una pagina: apre un bottom sheet sopra qualsiasi tab
-  (chi → cosa → conferma, tre tocchi, zero tastiera).
+- Il tab centrale **▶ Aggiungi punti** non apre una pagina: apre un bottom sheet sopra qualsiasi tab
+  (chi → quale carta → chiama, tre tocchi, zero tastiera).
+- **I punti sono chiamate, non sentenze.** Chi assegna punti crea una *chiamata* (`status: 'pending'`)
+  che compare nelle storie del Feed; il gruppo la vota in "Conferma punto". Classifica e profilo
+  contano solo le chiamate confermate. Così il gioco resta sociale e nessuno si autoassegna +50.
 
 ## Albero delle directory
 
@@ -49,9 +56,11 @@ src/
 │   ├── _layout.tsx               # Root Stack: separa Lobby, Dashboard e modali
 │   ├── index.tsx                 # /            → Lobby
 │   ├── room/
-│   │   └── new.tsx               # /room/new    → Crea stanza (modale)
+│   │   ├── new.tsx               # /room/new    → Crea stanza (modale)
+│   │   └── join.tsx              # /room/join   → Entra con codice (modale)
+│   ├── call/[eventId].tsx        # /call/:id    → Conferma punto (voto del gruppo)
 │   └── game/[gameId]/
-│       ├── _layout.tsx           # Tabs a 5 + Top Bar + Azione Veloce
+│       ├── _layout.tsx           # Tabs a 5 + Top Bar + Aggiungi punti
 │       ├── index.tsx             # Feed live
 │       ├── rules.tsx             # Regolamento + Superpoteri
 │       ├── action.tsx            # Tab "fantasma" (la navbar apre il bottom sheet)
@@ -60,19 +69,21 @@ src/
 ├── screens/                      # Schermate complete (logica + layout), montate dalle route
 │   ├── LobbyScreen.tsx
 │   ├── CreateRoomScreen.tsx
+│   ├── JoinRoomScreen.tsx
+│   ├── CallScreen.tsx
 │   └── game/
 │       ├── FeedScreen.tsx
 │       ├── RulesScreen.tsx
 │       ├── LeaderboardScreen.tsx
 │       └── ProfileScreen.tsx
 ├── components/
-│   ├── ui/                       # Primitive: AppText, Avatar, StatusBadge, PressableScale
-│   ├── icons/                    # Set icone SVG
-│   ├── illustrations/            # Mascotte "Retro Rubber-Hose"
-│   ├── lobby/                    # CareerHeader, GameCard, EmptyLobby, CreateRoomButton
-│   └── game/                     # GameTopBar, GameTabBar, QuickActionSheet, FeedItem, CountdownHero
+│   ├── ui/                       # Primitive: AppText, Button, TopBar, Avatar, StatusBadge, Brand, PressableScale
+│   ├── icons/                    # Icone SVG in stile Vuesax (come nel Figma)
+│   ├── illustrations/            # Mascotte "Retro Rubber-Hose" + RuleSticker (sticker delle carte)
+│   ├── lobby/                    # CareerHeader, LeagueCard, FormatCarousel, LobbyActions, EmptyLobby
+│   └── game/                     # GameTabBar, QuickActionSheet, StoriesRow, CountdownStrip, FeedItem, PlayerCard
 ├── store/                        # Zustand: useGameStore (dominio), useUiStore (stato UI)
-├── data/                         # Mock + dizionario regole (→ Supabase in Fase 2)
+├── data/                         # Mock, dizionario regole, format evento (→ Supabase in Fase 2)
 ├── types/                        # Modello di dominio (Game, Rule, FeedEvent…)
 ├── hooks/                        # useNow (countdown), useCurrentGame
 ├── lib/                          # haptics, formattazione tempi
@@ -89,21 +100,29 @@ navigazione senza toccare le schermate.
 
 | Token | Valore | Uso |
 | --- | --- | --- |
-| `background` | `#F2F2F7` | Sfondo off-white |
-| `live` / `liveSoft` | `#34C759` / `#D6F5DE` | Stato "In partita", tab attivo |
-| `cta` | `#FF9F1C` | CTA primarie (Crea stanza, ⚡, conferma) |
-| `bonus` / `malus` | verde / rosso | Punteggi |
-| `space` | 4 · 8 · 12 · **16** · **24** · 32 · 48 | Gap costanti, niente "muro di mattoni" |
-| `radius` | 12 · 16 · **24** · 32 · pill | Card morbide |
+Token presi dal file Figma (pagina *Prototype* e *Component master*).
 
-Illustrazioni: personaggi rubber-hose anni '30, due colori vibranti + inchiostro, bordo bianco
-spesso da sticker fustellato. UI pulita, mascotte irriverenti.
+| Token | Valore | Uso |
+| --- | --- | --- |
+| `background` | `#F2F2F7` | Sfondo off-white |
+| `cta` | `#FFE382` | CTA 1 (giallo pieno) e bordo della CTA 2 |
+| `live` | `#0B8200` su verde al 20% | Leghe in partita, "● in partita" |
+| `ctaSoft` / `ended` | giallo / grigio al 20% | Leghe in attesa / concluse |
+| `bonusBright` / `malus` | `#1CB100` / `#D92D20` | Punti di una carta |
+| `space` | 4 · 8 · 12 · **16** · **24** · 32 · 48 | Gap costanti |
+| `radius` | 12 · 16 · **24** · 28 · 36 (top bar) · pill | Card morbide |
+| tipografia | SF/system 600, titoli carta in serif | Le carte trofeo parlano "da trofeo" |
+
+Illustrazioni: sticker rubber-hose anni '30 (corpo crema, inchiostro, accenti blu, bordo bianco
+fustellato). Lo sticker della Smurratona viene dal Figma; le altre carte usano la mascotte vettoriale.
 
 ## Requisiti di gioco: stato
 
 - [x] Modalità **Sprint** (countdown a ore) e **Maratona** (settimane)
 - [x] Motore regole: dizionario Bonus/Malus per categoria (`src/data/rules.ts`)
-- [x] Azione Veloce con feedback aptico
+- [x] Aggiungi punti con feedback aptico
+- [x] Chiamate votate dal gruppo (Conferma / Rifiuta) prima di contare in classifica
+- [x] Classifica a podio, squadre e individuale, con trend delle ultime 2 ore
 - [x] Superpoteri visibili e bloccati (sblocco con Rewarded Ad in Fase 3)
 - [ ] Sincronizzazione realtime (Supabase) · Fase 2
 - [ ] Notifiche push "cronaca sportiva" · Fase 2
@@ -119,4 +138,5 @@ npm run typecheck
 npm run build:web    # export statico in dist/
 ```
 
-Ogni push su `main` pubblica la demo web su GitHub Pages (`.github/workflows/pages.yml`).
+Ogni push su `main` esegue typecheck ed export web, poi pubblica `dist/` sul branch `gh-pages`
+(`.github/workflows/pages.yml`). Demo: https://tobiaseu.github.io/fanta.me/

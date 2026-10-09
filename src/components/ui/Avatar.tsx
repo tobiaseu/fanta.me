@@ -10,9 +10,11 @@ interface Props {
   size?: number;
   /** Bordo bianco spesso stile sticker fustellato */
   sticker?: boolean;
+  /** Quadrato arrotondato (classifica) o cerchio */
+  shape?: 'circle' | 'square';
 }
 
-export function Avatar({ player, size = 40, sticker = true }: Props) {
+export function Avatar({ player, size = 40, sticker = true, shape = 'circle' }: Props) {
   const border = sticker ? Math.max(2, Math.round(size / 14)) : 0;
   return (
     <View
@@ -21,7 +23,7 @@ export function Avatar({ player, size = 40, sticker = true }: Props) {
         {
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: shape === 'circle' ? size / 2 : size * 0.3,
           backgroundColor: player.color,
           borderWidth: border,
         },

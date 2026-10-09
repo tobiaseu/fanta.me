@@ -11,6 +11,8 @@ import { colors, MAX_APP_WIDTH } from '@/theme/tokens';
  *
  *   /                 → LOBBY (nessuna navbar)
  *   /room/new         → Crea stanza (modale)
+ *   /room/join        → Entra con codice (modale)
+ *   /call/[eventId]   → Conferma punto: voto su una chiamata (modale a schermo intero)
  *   /game/[gameId]/*  → DASHBOARD IN-GAME (Tabs a 5 icone, vedi game/[gameId]/_layout)
  *
  * La navbar esiste solo dentro il layout della partita: la Lobby non può
@@ -31,6 +33,8 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="game/[gameId]" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="room/new" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="room/join" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="call/[eventId]" options={{ presentation: 'fullScreenModal', animation: 'fade_from_bottom' }} />
           </Stack>
         </View>
       </SafeAreaProvider>

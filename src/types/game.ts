@@ -7,6 +7,7 @@ export type GameSetting = 'vacation' | 'office' | 'school' | 'party';
 export interface Player {
   id: string;
   name: string;
+  handle: string;
   /** Colore dell'avatar sticker */
   color: string;
 }
@@ -19,7 +20,6 @@ export interface Career {
 }
 
 export interface User extends Player {
-  handle: string;
   career: Career;
 }
 
@@ -31,11 +31,23 @@ export interface RuleCategory {
   emoji: string;
 }
 
+export type StickerId = 'smurratona';
+
 export interface Rule {
   id: string;
   categoryId: string;
+  /** Nome breve della "carta trofeo" */
   label: string;
+  description: string;
   points: number; // positivo = bonus, negativo = malus
+  /** Illustrazione dedicata; senza, si usa la mascotte SVG */
+  sticker?: StickerId;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  memberIds: string[];
 }
 
 export type PowerUpId = 'veto' | 'multiplier';
@@ -60,13 +72,25 @@ export interface Game {
   /** Maratona: settimana corrente e totale */
   week?: { current: number; total: number };
   playerIds: string[];
+  /** Squadre (fantasquadre) della lega, se previste */
+  teams?: Team[];
   ruleIds: string[];
   /** Colore principale della mascotte della stanza */
   accent: string;
 }
 
+/**
+ * Ogni assegnazione è una "chiamata": diventa ufficiale quando il gruppo la conferma.
+ * `pending` = da votare (cerchio giallo nelle storie del Feed).
+ */
+export type EventStatus = 'pending' | 'confirmed' | 'rejected';
+export type Vote = 'confirm' | 'reject';
+
 export interface FeedEvent {
   id: string;
+  status: EventStatus;
+  /** Il mio voto, se già espresso */
+  myVote?: Vote;
   gameId: string;
   playerId: string;
   ruleId: string;

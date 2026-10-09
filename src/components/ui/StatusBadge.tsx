@@ -9,30 +9,30 @@ import Animated, {
 
 import { AppText } from './AppText';
 
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, space } from '@/theme/tokens';
 import type { GameStatus } from '@/types/game';
 
-const CONFIG: Record<GameStatus, { label: string; bg: string; fg: string; dot: string }> = {
-  live: { label: 'In partita', bg: colors.liveSoft, fg: colors.liveInk, dot: colors.live },
-  waiting: { label: 'In attesa', bg: colors.ctaSoft, fg: '#8A4B00', dot: colors.cta },
-  ended: { label: 'Conclusa', bg: colors.surfaceMuted, fg: colors.inkMuted, dot: colors.inkMuted },
+const CONFIG: Record<GameStatus, { label: string; color: string }> = {
+  live: { label: 'in partita', color: colors.live },
+  waiting: { label: 'in attesa', color: '#777777' },
+  ended: { label: 'conclusa', color: colors.inkFaint },
 };
 
-/** Badge di stato con pallino "live" pulsante. */
-export function StatusBadge({ status }: { status: GameStatus }) {
+/** Stato partita come nel Figma: pallino + testo colorato, pallino "live" pulsante. */
+export function StatusBadge({ status, size = 'sm' }: { status: GameStatus; size?: 'sm' | 'md' }) {
   const c = CONFIG[status];
   const pulse = useSharedValue(1);
 
   useEffect(() => {
-    if (status === 'live') pulse.value = withRepeat(withTiming(0.35, { duration: 900 }), -1, true);
+    if (status === 'live') pulse.value = withRepeat(withTiming(0.3, { duration: 900 }), -1, true);
   }, [status, pulse]);
 
   const dotStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
 
   return (
-    <View style={[styles.badge, { backgroundColor: c.bg }]}>
-      <Animated.View style={[styles.dot, { backgroundColor: c.dot }, dotStyle]} />
-      <AppText variant="caption" color={c.fg}>
+    <View style={styles.row}>
+      <Animated.View style={[styles.dot, { backgroundColor: c.color }, dotStyle]} />
+      <AppText variant={size === 'md' ? 'headline' : 'caption'} color={c.color}>
         {c.label}
       </AppText>
     </View>
@@ -40,14 +40,6 @@ export function StatusBadge({ status }: { status: GameStatus }) {
 }
 
 const styles = StyleSheet.create({
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.xs - 2,
-    paddingHorizontal: space.sm - 2,
-    paddingVertical: space.xxs,
-    borderRadius: radius.pill,
-    alignSelf: 'flex-start',
-  },
-  dot: { width: 8, height: 8, borderRadius: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.xxs },
+  dot: { width: 6, height: 6, borderRadius: 3 },
 });

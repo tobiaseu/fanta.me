@@ -4,7 +4,7 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { ruleById } from '@/data/rules';
 import { timeAgo } from '@/lib/time';
-import { colors, radius, shadow, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 import type { FeedEvent, Player } from '@/types/game';
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
   now: number;
 }
 
-/** Riga del Feed live: cronaca sportiva di un'assegnazione punti. */
+/** "Feed card" chiusa del Figma: avatar, nome, carta, punti. Sotto, chi l'ha chiamata e quando. */
 export function FeedItem({ event, player, author, now }: Props) {
   const rule = ruleById(event.ruleId);
   const isBonus = event.points > 0;
@@ -22,18 +22,19 @@ export function FeedItem({ event, player, author, now }: Props) {
 
   return (
     <View style={styles.card}>
-      <Avatar player={player} size={44} />
+      <Avatar player={player} size={40} sticker={false} />
       <View style={styles.body}>
-        <AppText variant="body">
-          <AppText variant="headline">{player.name}</AppText> · {rule?.label ?? 'Azione'}
-        </AppText>
-        <AppText variant="caption" color={colors.inkMuted}>
-          {timeAgo(event.createdAt, now)} · segnalato da {author?.name ?? '—'}
+        <AppText variant="name">{player.name}</AppText>
+        <AppText variant="body" color={colors.inkMuted} numberOfLines={1}>
+          {rule?.label ?? 'Azione'}
         </AppText>
       </View>
-      <View style={[styles.points, { backgroundColor: isBonus ? colors.bonusSoft : colors.malusSoft }]}>
-        <AppText variant="headline" color={isBonus ? colors.bonus : colors.malus}>
+      <View style={styles.right}>
+        <AppText variant="name" color={isBonus ? colors.bonus : colors.malus}>
           {isBonus ? `+${event.points}` : event.points}
+        </AppText>
+        <AppText variant="micro" color={colors.inkFaint} style={styles.meta}>
+          {timeAgo(event.createdAt, now)} · {author?.name ?? '—'}
         </AppText>
       </View>
     </View>
@@ -48,8 +49,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: space.md,
-    ...shadow.card,
   },
   body: { flex: 1, gap: 2 },
-  points: { paddingHorizontal: space.sm, paddingVertical: space.xxs + 2, borderRadius: radius.pill },
+  right: { alignItems: 'flex-end', gap: 4 },
+  meta: { fontWeight: '500' },
 });
