@@ -42,6 +42,12 @@ export function FeedItem({ event, player, author, now, onOpenPlayer }: Props) {
       <View style={styles.right}>
         <AppText variant="name" color={isBonus ? colors.bonus : colors.malus}>
           {isBonus ? `+${event.points}` : event.points}
+          {event.double ? (
+            <AppText variant="micro" color={colors.bonus}>
+              {' '}
+              ×2
+            </AppText>
+          ) : null}
         </AppText>
         <AppText variant="micro" color={colors.inkFaint} style={styles.meta}>
           {author ? `da ${author.name}, ` : ''}

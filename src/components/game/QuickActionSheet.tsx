@@ -45,9 +45,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const [kind, setKind] = useState<RuleKind>('bonus');
   const [ruleId, setRuleId] = useState<string>();
 
-  const rules = RULES.filter(
-    (r) => game.ruleIds.includes(r.id) && (kind === 'bonus' ? r.points > 0 : r.points < 0),
-  );
+  const rules = RULES.filter((r) => game.ruleIds.includes(r.id) && (kind === 'bonus' ? r.points > 0 : r.points < 0));
   const rule = RULES.find((r) => r.id === ruleId);
   const player = players.find((p) => p.id === playerId);
 
@@ -81,7 +79,11 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
         <AppText variant="caption" color={colors.inkSoft}>
           1 · Chi?
         </AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.noShrink} contentContainerStyle={styles.players}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.noShrink}
+          contentContainerStyle={styles.players}>
           {players.map((p) => {
             const selected = p.id === playerId;
             return (
@@ -95,7 +97,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                 }}
                 style={styles.player}>
                 <View style={[styles.ring, selected && styles.ringActive]}>
-                  <Avatar player={p} size={52} sticker={false} />
+                  <Avatar player={p} size={52} sticker={false} shape="circle" />
                 </View>
                 <AppText variant="micro" color={selected ? colors.ink : colors.inkSoft}>
                   {p.name}
@@ -118,7 +120,9 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                 setRuleId(undefined);
               }}
               style={[styles.segmentItem, kind === k && styles.segmentActive]}>
-              <AppText variant="headline" color={kind === k ? (k === 'bonus' ? colors.bonus : colors.malus) : colors.inkFaint}>
+              <AppText
+                variant="headline"
+                color={kind === k ? (k === 'bonus' ? colors.bonus : colors.malus) : colors.inkFaint}>
                 {k === 'bonus' ? 'Bonus' : 'Malus'}
               </AppText>
             </Pressable>

@@ -16,7 +16,12 @@ import type { GameMode } from '@/types/game';
 
 const MODES: { id: GameMode; title: string; body: string; icon: 'clock' | 'calendar' }[] = [
   { id: 'sprint', title: 'Sprint', body: 'Countdown a ore. Perfetto per un weekend o una vacanza.', icon: 'clock' },
-  { id: 'marathon', title: 'Maratona', body: 'Divisa in settimane. Per ufficio, scuola, coinquilini.', icon: 'calendar' },
+  {
+    id: 'marathon',
+    title: 'Maratona',
+    body: 'Divisa in settimane. Per ufficio, scuola, coinquilini.',
+    icon: 'calendar',
+  },
 ];
 
 /** Crea nuova stanza (modale). Arriva precompilata se si parte da un format della Lobby. */
@@ -33,7 +38,9 @@ export function CreateRoomScreen() {
     haptics.tap();
     setInvited((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
   };
-  const [name, setName] = useState(params.format ? `Fanta${params.format.charAt(0)}${params.format.slice(1).toLowerCase()}` : '');
+  const [name, setName] = useState(
+    params.format ? `Fanta${params.format.charAt(0)}${params.format.slice(1).toLowerCase()}` : '',
+  );
   const [mode, setMode] = useState<GameMode>(params.mode ?? 'sprint');
   const ready = name.trim().length > 1;
 
@@ -61,7 +68,7 @@ export function CreateRoomScreen() {
       </View>
 
       <AppText variant="caption" color={colors.inkSoft}>
-        Nome della lega
+        Nome della stanza
       </AppText>
       <TextInput
         value={name}
@@ -71,7 +78,7 @@ export function CreateRoomScreen() {
         style={styles.input}
         returnKeyType="done"
         onSubmitEditing={submit}
-        accessibilityLabel="Nome della lega"
+        accessibilityLabel="Nome della stanza"
       />
 
       <AppText variant="caption" color={colors.inkSoft}>
@@ -135,7 +142,11 @@ export function CreateRoomScreen() {
       )}
 
       <Button
-        label={invited.length ? `Crea e invita ${invited.length === 1 ? '1 amico' : `${invited.length} amici`}` : 'Crea e inizia a giocare'}
+        label={
+          invited.length
+            ? `Crea e invita ${invited.length === 1 ? '1 amico' : `${invited.length} amici`}`
+            : 'Crea e inizia a giocare'
+        }
         disabled={!ready}
         onPress={submit}
       />
@@ -187,7 +198,7 @@ const styles = StyleSheet.create({
   regular: { fontWeight: '400' },
   friends: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, marginBottom: space.md },
   friend: { alignItems: 'center', gap: space.xxs },
-  ring: { padding: 3, borderRadius: 30, borderWidth: 3, borderColor: 'transparent' },
+  ring: { padding: 3, borderRadius: 24, borderWidth: 3, borderColor: 'transparent' },
   ringActive: { borderColor: colors.cta },
   check: {
     position: 'absolute',

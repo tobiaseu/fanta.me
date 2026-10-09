@@ -7,19 +7,19 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { haptics } from '@/lib/haptics';
+import { inviteCode, useGameStore } from '@/store/useGameStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
-
-/** Codice demo: in Fase 2 sarà generato da Supabase per ogni stanza. */
-const DEMO_CODES: Record<string, string> = { PASQUA: 'fantapasquetta' };
 
 /** Entra con codice (modale): sei caratteri, maiuscoli, niente altro. */
 export function JoinRoomScreen() {
   const router = useRouter();
+  const games = useGameStore((s) => s.games);
   const [code, setCode] = useState('');
   const [error, setError] = useState(false);
 
   const submit = () => {
-    const gameId = DEMO_CODES[code.trim().toUpperCase()];
+    // Fase 2: il codice si risolve lato Supabase
+    const gameId = games.find((g) => inviteCode(g) === code.trim().toUpperCase())?.id;
     if (!gameId) {
       haptics.malus();
       setError(true);

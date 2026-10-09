@@ -69,10 +69,14 @@ export interface PowerUp {
 export interface Game {
   id: string;
   name: string;
+  /** Codice invito (6 lettere) */
+  code?: string;
   emoji: string;
   setting: GameSetting;
   mode: GameMode;
   status: GameStatus;
+  /** Inizio della partita (ISO): da qui si contano le giornate */
+  startsAt?: string;
   /** Sprint: fine del countdown (ISO) */
   endsAt?: string;
   /** Maratona: settimana corrente e totale */
@@ -105,4 +109,6 @@ export interface FeedEvent {
   createdAt: string;
   /** Voti raccolti finora (chi chiama conta già come conferma) */
   votes: { confirm: number; reject: number };
+  /** Chiamata sulla carta del giorno: punti già raddoppiati */
+  double?: boolean;
 }

@@ -1,3 +1,3 @@
-import { FeedScreen } from '@/screens/game/FeedScreen';
+import { DashboardScreen } from '@/screens/game/DashboardScreen';
 
-export default FeedScreen;
+export default DashboardScreen;

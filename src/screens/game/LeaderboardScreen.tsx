@@ -11,8 +11,9 @@ import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { computeStandings, useGameStore } from '@/store/useGameStore';
-import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
+import { computeStandings, computeTeamStandings, useGameStore } from '@/store/useGameStore';
+import { teamColor } from '@/lib/teams';
+import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
 
 type View_ = 'teams' | 'players';
@@ -32,14 +33,13 @@ interface Row {
 }
 
 const TREND_WINDOW_MS = 2 * 3_600_000;
-/** Colori degli stemmi di squadra, nell'ordine in cui sono definite. */
-const TEAM_COLORS = [colors.toonBlue, colors.toonPurple, colors.toonGreen, colors.toonRed, '#FF9F1C'];
 
 /** Classifica: podio per i primi tre, lista per gli altri. Squadre o individuale. */
 export function LeaderboardScreen() {
   const game = useCurrentGame();
   const events = useGameStore((s) => s.events);
   const players = useGameStore((s) => s.players);
+  const captains = useGameStore((s) => s.captains);
   const [mode, setMode] = useState<View_>(game?.teams?.length ? 'teams' : 'players');
   const openPlayer = useOpenPlayer();
 
@@ -59,21 +59,16 @@ export function LeaderboardScreen() {
           trend: 0,
         }));
       }
-      return (game.teams ?? [])
-        .map((t, ti) => {
-          const members = standings.filter((r) => t.memberIds.includes(r.player.id));
-          return {
-            id: t.id,
-            name: t.name,
-            points: members.reduce((sum, m) => sum + m.points, 0),
-            lead: { id: t.id, name: t.name, handle: '', color: TEAM_COLORS[ti % TEAM_COLORS.length] },
-            isTeam: true,
-            place: 0,
-            members: members.map((m) => m.player),
-            trend: 0,
-          };
-        })
-        .sort((a, b) => b.points - a.points);
+      return computeTeamStandings(game, evts, players, captains, Date.now()).map((t) => ({
+        id: t.team.id,
+        name: t.team.name,
+        points: t.points,
+        lead: { id: t.team.id, name: t.team.name, handle: '', color: teamColor(game, t.team.id) },
+        isTeam: true,
+        place: 0,
+        members: t.members.map((m) => m.player),
+        trend: 0,
+      }));
     };
     const now = build(events);
     const before = build(events.filter((e) => Date.now() - new Date(e.createdAt).getTime() > TREND_WINDOW_MS));
@@ -82,7 +77,7 @@ export function LeaderboardScreen() {
       place: now.findIndex((x) => x.points === r.points) + 1,
       trend: before.findIndex((b) => b.id === r.id) - i,
     }));
-  }, [game, events, players, mode]);
+  }, [game, events, players, mode, captains]);
 
   if (!game) return null;
 
@@ -201,9 +196,10 @@ export function LeaderboardScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
-    padding: space.md,
+    paddingHorizontal: layout.gutter,
+    paddingTop: layout.section,
     paddingBottom: TAB_BAR_SPACE,
-    gap: space.lg,
+    gap: layout.section,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',

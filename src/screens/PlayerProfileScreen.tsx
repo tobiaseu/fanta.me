@@ -14,6 +14,7 @@ import { ME } from '@/data/mock';
 import { ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
+import { useSessionStore } from '@/store/useSessionStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { FriendStatus, Player } from '@/types/game';
@@ -138,10 +139,10 @@ export function PlayerProfileScreen() {
       )}
 
       <View style={styles.section}>
-        <AppText variant="headline">{isMe ? 'Le tue leghe' : 'Leghe in comune'}</AppText>
+        <AppText variant="headline">{isMe ? 'Le tue stanze' : 'Stanze in comune'}</AppText>
         {shared.length === 0 ? (
           <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
-            Nessuna lega insieme, per ora.
+            Nessuna stanza insieme, per ora.
           </AppText>
         ) : (
           shared.map((g) => (
@@ -163,6 +164,22 @@ export function PlayerProfileScreen() {
           ))
         )}
       </View>
+      {isMe && (
+        <PressableScale
+          accessibilityRole="button"
+          hitSlop={8}
+          style={styles.signOut}
+          onPress={() => {
+            haptics.tap();
+            useSessionStore.getState().signOut();
+            if (router.canDismiss()) router.dismissAll();
+            router.replace('/welcome');
+          }}>
+          <AppText variant="caption" color={colors.malus}>
+            Esci
+          </AppText>
+        </PressableScale>
+      )}
     </ScrollView>
   );
 }
@@ -295,6 +312,7 @@ function MyFriends({
 }
 
 const styles = StyleSheet.create({
+  signOut: { alignSelf: 'center', paddingVertical: space.sm },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: space.md,

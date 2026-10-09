@@ -85,20 +85,27 @@ export const radius = {
  */
 export const fonts = { serifBold: 'Fraunces_700Bold', serifSemi: 'Fraunces_600SemiBold' } as const;
 
+/**
+ * Scala tipografica unica (terzo giro di review):
+ * 4 taglie per l'interfaccia (13 · 15 · 17 · 22), più il serif delle carte e i numeri grandi.
+ * 3 pesi: 400 testi, 600 etichette e titoli, 800 numeri e titoli di schermata.
+ */
 export const type = {
-  display: { fontSize: 28, lineHeight: 34, fontWeight: '600', letterSpacing: -0.4 },
-  title: { fontSize: 24, lineHeight: 29, fontWeight: '600', letterSpacing: -0.2 },
-  cardTitle: { fontSize: 20, lineHeight: 24, fontWeight: '600' },
-  headline: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
-  name: { fontSize: 16, lineHeight: 19, fontWeight: '700' },
-  body: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
-  caption: { fontSize: 14, lineHeight: 17, fontWeight: '600' },
-  micro: { fontSize: 12, lineHeight: 14, fontWeight: '700' },
-  number: { fontSize: 24, lineHeight: 28, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  watermark: { fontSize: 128, lineHeight: 136, fontWeight: '600', letterSpacing: -4 },
+  display: { fontSize: 34, lineHeight: 40, fontWeight: '800', letterSpacing: -0.8, fontVariant: ['tabular-nums'] },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '800', letterSpacing: -0.4 },
+  cardTitle: { fontSize: 17, lineHeight: 22, fontWeight: '600', letterSpacing: -0.2 },
+  headline: { fontSize: 17, lineHeight: 22, fontWeight: '600', letterSpacing: -0.2 },
+  name: { fontSize: 15, lineHeight: 20, fontWeight: '600' },
+  body: { fontSize: 15, lineHeight: 21, fontWeight: '400' },
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
+  micro: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  number: { fontSize: 22, lineHeight: 26, fontWeight: '800', fontVariant: ['tabular-nums'] },
   serifTitle: { fontFamily: fonts.serifBold, fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
   serifCard: { fontFamily: fonts.serifSemi, fontSize: 18, lineHeight: 22, letterSpacing: -0.2 },
 } as const;
+
+/** Layout: margine laterale, spazio tra sezioni, padding delle card. */
+export const layout = { gutter: 16, section: 24, card: 16 } as const;
 
 /** Ombra morbida unica: niente "muro di mattoni". */
 export const shadow = {

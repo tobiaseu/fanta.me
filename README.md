@@ -25,23 +25,34 @@ con Dashboard in-game già navigabile su dati finti.
 | Backend (Fase 2) | **Supabase** | Postgres + Realtime per Feed live e classifiche; Auth; Edge Functions per le notifiche. |
 | Monetizzazione (Fase 3) | **RevenueCat + Rewarded Ads** | Superpoteri (Veto, Moltiplicatore) sbloccati guardando un video. |
 
-## Architettura UX: i due mondi
+## Architettura UX
 
 ```
-/                  LOBBY (nessuna navbar)
-                   carriera · le tue leghe · nuovo evento (format)
-                   pannello fisso: Entra con codice · Crea stanza
-   │ tap su lega            ├─► /room/new  (modale)
+/welcome           ACCESSO: Apple · Google · email (mock) · "Ho già un codice invito"
+/onboarding/room   1/2 PRIMA STANZA: nome (precompilato) + Sprint o Maratona
+/onboarding/invite 2/2 INVITA: codice di 6 lettere, Condividi, persone che conosci
+   ▼
+/                  LOBBY alla Clubhouse (nessuna navbar)
+                   saluto + carriera · "Le tue stanze" (card con chi c'è dentro) · nuovo evento
+                   pillola flottante "+ Crea stanza" · bottone tondo "Entra con codice"
+   │ tap su stanza          ├─► /room/new  (modale)
    ▼                        └─► /room/join (modale)
-/game/[gameId]/*   DASHBOARD IN-GAME
-                   top bar bianca (nome lega + "● in partita")
-                   navbar flottante: Feed · Regolamento · ▶ Punti · Classifica · Profilo
+/game/[gameId]/*   PARTITA
+                   header in alto con countdown: aperto sulla Dashboard,
+                   striscia "● in partita / da iniziare / conclusa" sugli altri tab
+                   navbar flottante: Dashboard · Regolamento · + Punti · Classifica · Profilo
+                   Dashboard: da votare · carta del giorno ×2 · capitano · podio e MVP di oggi · ultimi punti
+                   /feed (nascosto): cronaca completa, da "Vedi tutto"
    │ tap su una storia
    ▼
 /call/[eventId]    CONFERMA PUNTO (modale a schermo intero): Rifiuta · Conferma · Decido dopo
-/player/[id]       PROFILO GIOCATORE (modale): carriera, leghe in comune, amicizia
+/player/[id]       PROFILO GIOCATORE (modale): carriera, stanze in comune, amicizia, Esci
 ```
 
+- **Dinamiche FantaSanremo.** La partita è divisa in giornate (Sprint: 24 ore; Maratona: settimane).
+  Ogni giornata ha una *carta del giorno* che vale doppio, ogni squadra sceglie un *capitano* i cui punti
+  di oggi contano due volte, e la Dashboard mostra podio e MVP della giornata.
+- La sessione (mock) resta salvata nel browser: riaprendo la demo si salta il login. "Esci" dal profilo la azzera.
 - La **navbar esiste solo nel layout `game/[gameId]/_layout.tsx`**: la Lobby non può mostrarla nemmeno per errore.
 - Il tab centrale **▶ Aggiungi punti** non apre una pagina: apre un bottom sheet sopra qualsiasi tab
   (chi → quale carta → chiama, tre tocchi, zero tastiera).
@@ -60,15 +71,18 @@ con Dashboard in-game già navigabile su dati finti.
 src/
 ├── app/                          # SOLO route (Expo Router): file = schermata
 │   ├── _layout.tsx               # Root Stack: separa Lobby, Dashboard e modali
-│   ├── index.tsx                 # /            → Lobby
+│   ├── index.tsx                 # /            → Lobby (senza sessione → /welcome)
+│   ├── welcome.tsx               # /welcome     → Accesso
+│   ├── onboarding/               # room.tsx, invite.tsx → prima stanza e inviti
 │   ├── room/
 │   │   ├── new.tsx               # /room/new    → Crea stanza (modale)
 │   │   └── join.tsx              # /room/join   → Entra con codice (modale)
 │   ├── call/[eventId].tsx        # /call/:id    → Conferma punto (voto del gruppo)
 │   ├── player/[playerId].tsx     # /player/:id  → Profilo giocatore e amicizia
 │   └── game/[gameId]/
-│       ├── _layout.tsx           # Tabs a 5 + Top Bar + Aggiungi punti
-│       ├── index.tsx             # Feed live
+│       ├── _layout.tsx           # GameHeader + Tabs a 5 + Aggiungi punti
+│       ├── index.tsx             # Dashboard della partita
+│       ├── feed.tsx              # Cronaca completa (nascosta dalla navbar)
 │       ├── rules.tsx             # Regolamento + Superpoteri
 │       ├── action.tsx            # Tab "fantasma" (la navbar apre il bottom sheet)
 │       ├── leaderboard.tsx       # Classifica
@@ -79,18 +93,20 @@ src/
 │   ├── JoinRoomScreen.tsx
 │   ├── CallScreen.tsx
 │   ├── PlayerProfileScreen.tsx
+│   ├── onboarding/               # WelcomeScreen, OnboardingRoomScreen, OnboardingInviteScreen
 │   └── game/
+│       ├── DashboardScreen.tsx
 │       ├── FeedScreen.tsx
 │       ├── RulesScreen.tsx
 │       ├── LeaderboardScreen.tsx
 │       └── ProfileScreen.tsx
 ├── components/
-│   ├── ui/                       # Primitive: AppText, Button, TopBar, Avatar, StatusBadge, Brand, ToastHost, PressableScale
+│   ├── ui/                       # Primitive: AppText, Button, TopBar, SectionHeader, StepHeader, Avatar, StatusBadge, Brand, ToastHost, PressableScale
 │   ├── icons/                    # Icone SVG in stile Vuesax (come nel Figma)
 │   ├── illustrations/            # Mascotte "Retro Rubber-Hose" + RuleSticker (emoji delle carte)
-│   ├── lobby/                    # CareerHeader, LeagueCard, FormatCarousel, LobbyActions, EmptyLobby
-│   └── game/                     # GameTabBar, QuickActionSheet, StoriesRow, CountdownStrip, FeedItem
-├── store/                        # Zustand: useGameStore (dominio), useUiStore (stato UI)
+│   ├── lobby/                    # RoomCard, FormatCarousel, LobbyActions, EmptyLobby
+│   └── game/                     # GameHeader, GameTabBar, QuickActionSheet, StoriesRow, FeedItem
+├── store/                        # Zustand: useGameStore (dominio), useSessionStore (login, persistito), useUiStore (stato UI)
 ├── data/                         # Mock, dizionario regole, format evento (→ Supabase in Fase 2)
 ├── types/                        # Modello di dominio (Game, Rule, FeedEvent…)
 ├── hooks/                        # useNow (countdown), useCurrentGame, useOpenPlayer
@@ -106,8 +122,6 @@ navigazione senza toccare le schermate.
 
 ## Design system
 
-| Token | Valore | Uso |
-| --- | --- | --- |
 Token presi dal file Figma (pagina *Prototype* e *Component master*).
 
 | Token | Valore | Uso |
@@ -119,7 +133,9 @@ Token presi dal file Figma (pagina *Prototype* e *Component master*).
 | `bonusBright` / `malus` | `#1CB100` / `#D92D20` | Punti di una carta |
 | `space` | 4 · 8 · 12 · **16** · **24** · 32 · 48 | Gap costanti |
 | `radius` | 12 · 16 · **24** · 28 · 36 (top bar) · pill | Card morbide |
-| tipografia | SF/system 600, titoli delle carte in **Fraunces** | Serif morbido e un po' storto, coerente con le mascotte |
+| `layout` | margini 16 · sezioni 24 · padding card 16 | Stessa griglia in tutte le schermate |
+| tipografia | 3 pesi (400 · 600 · 800), 4 taglie (12 · 15 · 17 · 22) + display 34; **Fraunces** per saluti, onboarding e carte | Gerarchia chiara, serif morbido coerente con le mascotte |
+| forme | avatar squircle (come Clubhouse), bottoni a pillola alti 56 | Cerchi solo nelle storie |
 
 Carte: ogni carta ha la sua emoji di sistema in grande (su iPhone e Mac sono le emoji 3D di Apple),
 con un'ombra morbida che la "posa" sulla carta. Le mascotte rubber-hose restano solo negli stati vuoti.

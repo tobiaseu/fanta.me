@@ -1,0 +1,54 @@
+import { create } from 'zustand';
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+
+export type SignInMethod = 'apple' | 'google' | 'email';
+
+/**
+ * Sessione utente (mock). Fase 2: Supabase Auth con Sign in with Apple / Google.
+ * Sul web resta salvata nel browser, così riaprendo la demo si salta il login.
+ */
+interface SessionState {
+  signedIn: boolean;
+  method?: SignInMethod;
+  /** Ha già creato (o saltato) la prima stanza */
+  onboarded: boolean;
+  signIn: (method: SignInMethod) => void;
+  finishOnboarding: () => void;
+  signOut: () => void;
+}
+
+const memory = new Map<string, string>();
+const storage: StateStorage = {
+  getItem: (k) => {
+    try {
+      return globalThis.localStorage?.getItem(k) ?? memory.get(k) ?? null;
+    } catch {
+      return memory.get(k) ?? null;
+    }
+  },
+  setItem: (k, v) => {
+    memory.set(k, v);
+    try {
+      globalThis.localStorage?.setItem(k, v);
+    } catch {}
+  },
+  removeItem: (k) => {
+    memory.delete(k);
+    try {
+      globalThis.localStorage?.removeItem(k);
+    } catch {}
+  },
+};
+
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      signedIn: false,
+      onboarded: false,
+      signIn: (method) => set({ signedIn: true, method }),
+      finishOnboarding: () => set({ onboarded: true }),
+      signOut: () => set({ signedIn: false, onboarded: false, method: undefined }),
+    }),
+    { name: 'fantame-session', storage: createJSONStorage(() => storage) },
+  ),
+);

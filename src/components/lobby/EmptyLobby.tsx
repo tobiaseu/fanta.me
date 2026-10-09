@@ -13,8 +13,8 @@ export function EmptyLobby() {
         Nessuna partita in corso
       </AppText>
       <AppText variant="body" color={colors.inkMuted} style={[styles.center, styles.body]}>
-        Le vacanze, l'ufficio, la cena di classe: tutto può diventare un campionato. Crea una stanza e
-        invita i tuoi amici.
+        Le vacanze, l'ufficio, la cena di classe: tutto può diventare un campionato. Crea una stanza e invita i tuoi
+        amici.
       </AppText>
     </View>
   );

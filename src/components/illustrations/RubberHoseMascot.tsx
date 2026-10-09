@@ -66,8 +66,22 @@ export function RubberHoseMascot({ size = 140, color = colors.toonBlue, pose = '
         <Ellipse cx={44} cy={161} rx={17} ry={9} fill={fill(ink)} stroke={stroke} strokeWidth={sw(0)} />
         <Ellipse cx={116} cy={161} rx={17} ry={9} fill={fill(ink)} stroke={stroke} strokeWidth={sw(0)} />
         {/* guanti */}
-        <Circle cx={arms.lg[0]} cy={arms.lg[1]} r={11} fill={fill(colors.sticker)} stroke={stroke} strokeWidth={sw(3)} />
-        <Circle cx={arms.rg[0]} cy={arms.rg[1]} r={11} fill={fill(colors.sticker)} stroke={stroke} strokeWidth={sw(3)} />
+        <Circle
+          cx={arms.lg[0]}
+          cy={arms.lg[1]}
+          r={11}
+          fill={fill(colors.sticker)}
+          stroke={stroke}
+          strokeWidth={sw(3)}
+        />
+        <Circle
+          cx={arms.rg[0]}
+          cy={arms.rg[1]}
+          r={11}
+          fill={fill(colors.sticker)}
+          stroke={stroke}
+          strokeWidth={sw(3)}
+        />
         {/* corpo */}
         <Circle cx={80} cy={90} r={44} fill={fill(colors.toonBody)} stroke={stroke} strokeWidth={sw(3.5)} />
         {!outline && (
@@ -87,7 +101,9 @@ export function RubberHoseMascot({ size = 140, color = colors.toonBlue, pose = '
             {/* bocca */}
             <Path
               fill={ink}
-              d={pose === 'shrug' ? 'M68 108 Q80 102 92 108 Q80 113 68 108 Z' : 'M62 102 Q80 126 98 102 Q80 111 62 102 Z'}
+              d={
+                pose === 'shrug' ? 'M68 108 Q80 102 92 108 Q80 113 68 108 Z' : 'M62 102 Q80 126 98 102 Q80 111 62 102 Z'
+              }
             />
             {pose !== 'shrug' && <Path fill={color} d="M72 111 Q80 119 88 111 Q80 109 72 111 Z" />}
             {/* goccia di sudore / guance */}

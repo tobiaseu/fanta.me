@@ -12,7 +12,7 @@ import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 
 const TABS: Record<string, { label: string; icon?: IconName }> = {
-  index: { label: 'Feed', icon: 'home' },
+  index: { label: 'Dashboard', icon: 'home' },
   rules: { label: 'Regolamento', icon: 'book' },
   action: { label: 'Punti' },
   leaderboard: { label: 'Classifica', icon: 'people' },
@@ -35,7 +35,9 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const tab = TABS[route.name];
           if (!tab) return null;
-          const focused = state.index === index;
+          const current = state.routes[state.index]?.name;
+          // la cronaca completa appartiene alla Dashboard
+          const focused = state.index === index || (route.name === 'index' && current === 'feed');
           // inattivi in #6E6E6E: contrasto 4,9:1 sul vetro chiaro (WCAG AA)
           const tint = focused ? colors.ink : colors.inkSoft;
 
@@ -64,7 +66,7 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityLabel={tab.label}
               onPress={() => {
                 const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) {
+                if (state.index !== index && !event.defaultPrevented) {
                   haptics.tap();
                   navigation.navigate(route.name, route.params);
                 }

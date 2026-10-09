@@ -27,7 +27,11 @@ export function StoriesRow({ calls, players, onAdd, onOpen }: Props) {
       showsHorizontalScrollIndicator={false}
       style={styles.scroll}
       contentContainerStyle={styles.row}>
-      <PressableScale accessibilityRole="button" accessibilityLabel="Aggiungi punti" onPress={onAdd} style={styles.item}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel="Aggiungi punti"
+        onPress={onAdd}
+        style={styles.item}>
         <View style={[styles.circle, styles.add]}>
           <Icon name="plus" size={40} color={colors.cta} strokeWidth={4} />
         </View>
@@ -48,7 +52,7 @@ export function StoriesRow({ calls, players, onAdd, onOpen }: Props) {
             onPress={() => onOpen(call)}
             style={styles.item}>
             <View style={[styles.circle, styles.ring, voted && styles.ringVoted]}>
-              <Avatar player={player} size={SIZE - 14} sticker={false} />
+              <Avatar player={player} size={SIZE - 14} sticker={false} shape="circle" />
             </View>
             {voted && (
               <View style={styles.badge}>

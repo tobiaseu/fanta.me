@@ -6,11 +6,12 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { CoinIcon } from '@/components/ui/Brand';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { computeStandings, useGameStore } from '@/store/useGameStore';
-import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
+import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 
 /** Profilo in-game (frame "Home" del Figma): avatar grande, il tuo bilancio, chi c'è in questa lega. */
 export function ProfileScreen() {
@@ -57,28 +58,26 @@ export function ProfileScreen() {
         <Stat label="totale" value={`${bonus + malus}`} color={colors.ink} />
       </View>
 
-      <AppText variant="headline">In questa lega</AppText>
+      <SectionHeader title="In questa stanza" />
       <View style={styles.list}>
         {standings
           .filter((r) => r.player.id !== ME.id)
-          .map((r) => (
+          .map((r, i) => (
             <PressableScale
               key={r.player.id}
               accessibilityRole="button"
               accessibilityLabel={`Profilo di ${r.player.name}`}
               onPress={() => openPlayer(r.player.id)}
-              style={styles.row}>
+              style={[styles.row, i > 0 && styles.rowDivider]}>
               <Avatar player={r.player} size={40} sticker={false} />
               <View style={styles.flex}>
                 <AppText variant="name">{r.player.name}</AppText>
                 <AppText variant="body" color={colors.inkMuted}>
-                  {r.player.handle}
+                  @{r.player.handle}
                 </AppText>
               </View>
               <CoinIcon />
-              <AppText variant="name" color="#D9A400">
-                {r.points}
-              </AppText>
+              <AppText variant="name">{r.points}</AppText>
             </PressableScale>
           ))}
       </View>
@@ -102,16 +101,17 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
-    padding: space.md,
+    paddingHorizontal: layout.gutter,
+    paddingTop: layout.section,
     paddingBottom: TAB_BAR_SPACE,
-    gap: space.lg,
+    gap: layout.section,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',
   },
   avatarShadow: { borderRadius: 60 },
   link: { paddingVertical: 4 },
-  hero: { alignItems: 'center', gap: space.xs, paddingTop: space.md },
+  hero: { alignItems: 'center', gap: space.xs },
   balance: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
@@ -120,14 +120,15 @@ const styles = StyleSheet.create({
   },
   divider: { width: 1, backgroundColor: colors.hairline },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
-  list: { gap: space.md, marginTop: -space.sm },
+  // lista raggruppata stile iOS: una card, righe separate da un filo
+  list: { backgroundColor: colors.surface, borderRadius: radius.lg, marginTop: -space.sm, overflow: 'hidden' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: space.md,
+    paddingHorizontal: layout.card,
+    paddingVertical: space.sm,
   },
+  rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
   flex: { flex: 1, gap: 2 },
 });

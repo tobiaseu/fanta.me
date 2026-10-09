@@ -10,11 +10,11 @@ interface Props {
   size?: number;
   /** Bordo bianco spesso stile sticker fustellato */
   sticker?: boolean;
-  /** Quadrato arrotondato (classifica) o cerchio */
+  /** Squircle alla Clubhouse (predefinito) o cerchio (solo storie e anelli) */
   shape?: 'circle' | 'square';
 }
 
-export function Avatar({ player, size = 40, sticker = true, shape = 'circle' }: Props) {
+export function Avatar({ player, size = 40, sticker = true, shape = 'square' }: Props) {
   const border = sticker ? Math.max(2, Math.round(size / 14)) : 0;
   return (
     <View
@@ -23,7 +23,7 @@ export function Avatar({ player, size = 40, sticker = true, shape = 'circle' }: 
         {
           width: size,
           height: size,
-          borderRadius: shape === 'circle' ? size / 2 : size * 0.3,
+          borderRadius: shape === 'circle' ? size / 2 : size * 0.38,
           backgroundColor: player.color,
           borderWidth: border,
         },
@@ -31,7 +31,7 @@ export function Avatar({ player, size = 40, sticker = true, shape = 'circle' }: 
       <AppText
         variant="headline"
         color={colors.inkInverse}
-        style={{ fontSize: size * 0.42, lineHeight: size * 0.5, fontWeight: '800' }}>
+        style={{ fontSize: size * 0.42, lineHeight: size * 0.5, fontWeight: '800', letterSpacing: 0 }}>
         {player.name.charAt(0).toUpperCase()}
       </AppText>
     </View>
@@ -46,7 +46,7 @@ export function AvatarStack({ players, size = 28, max = 4 }: { players: Player[]
     <View style={styles.stack}>
       {shown.map((p, i) => (
         <View key={p.id} style={{ marginLeft: i === 0 ? 0 : -size / 3, zIndex: max - i }}>
-          <Avatar player={p} size={size} />
+          <Avatar player={p} size={size} sticker />
         </View>
       ))}
       {extra > 0 && (
@@ -54,7 +54,7 @@ export function AvatarStack({ players, size = 28, max = 4 }: { players: Player[]
           style={[
             styles.base,
             styles.extra,
-            { width: size, height: size, borderRadius: size / 2, marginLeft: -size / 3 },
+            { width: size, height: size, borderRadius: size * 0.38, marginLeft: -size / 3 },
           ]}>
           <AppText variant="caption" color={colors.inkSoft}>
             +{extra}

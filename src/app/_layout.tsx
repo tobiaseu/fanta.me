@@ -11,7 +11,10 @@ import { colors, MAX_APP_WIDTH } from '@/theme/tokens';
 /**
  * Root navigator: uno Stack che separa i due mondi.
  *
- *   /                 → LOBBY (nessuna navbar)
+ *   /welcome          → Accesso (Apple, Google, email: mock)
+ *   /onboarding/room  → Prima stanza (1/2)
+ *   /onboarding/invite→ Invita persone (2/2)
+ *   /                 → LOBBY (nessuna navbar); senza sessione rimanda a /welcome
  *   /room/new         → Crea stanza (modale)
  *   /room/join        → Entra con codice (modale)
  *   /call/[eventId]   → Conferma punto: voto su una chiamata (modale a schermo intero)
@@ -38,11 +41,20 @@ export default function RootLayout() {
               animation: 'slide_from_right',
             }}>
             <Stack.Screen name="index" />
+            <Stack.Screen name="welcome" options={{ animation: 'fade', gestureEnabled: false }} />
+            <Stack.Screen name="onboarding/room" options={{ animation: 'fade', gestureEnabled: false }} />
+            <Stack.Screen name="onboarding/invite" options={{ gestureEnabled: false }} />
             <Stack.Screen name="game/[gameId]" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="room/new" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="room/join" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="call/[eventId]" options={{ presentation: 'fullScreenModal', animation: 'fade_from_bottom' }} />
-            <Stack.Screen name="player/[playerId]" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen
+              name="call/[eventId]"
+              options={{ presentation: 'fullScreenModal', animation: 'fade_from_bottom' }}
+            />
+            <Stack.Screen
+              name="player/[playerId]"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
           </Stack>
           <ToastHost />
         </View>
