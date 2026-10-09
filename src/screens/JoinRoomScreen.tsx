@@ -38,7 +38,7 @@ export function JoinRoomScreen() {
         </PressableScale>
       </View>
       <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
-        Chiedi il codice a chi ha creato la stanza. Per la demo prova con PASQUA.
+        Chiedi il codice all'host della stanza. Per la demo prova con R4TB9Z.
       </AppText>
       <TextInput
         value={code}

@@ -4,9 +4,9 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
-import { PhaseTrack } from '@/components/game/PhaseTrack';
 import { PowersPanel } from '@/components/game/PowersPanel';
 import { PregamePanel } from '@/components/game/PregamePanel';
+import { RulebookCard } from '@/components/game/RulebookCard';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
@@ -67,10 +67,12 @@ export function DashboardScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {game.status !== 'live' && <PhaseTrack status={game.status} />}
       {game.status === 'waiting' && (
         <>
-          <PregamePanel game={game} onOpenDeck={() => goTo('rules')} />
+          <PregamePanel
+            game={game}
+            onOpenDeck={() => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } })}
+          />
           <PowersPanel game={game} now={now} />
         </>
       )}
@@ -234,6 +236,7 @@ export function DashboardScreen() {
           )}
         </View>
       )}
+      <RulebookCard />
     </ScrollView>
   );
 }

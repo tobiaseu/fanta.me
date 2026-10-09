@@ -1,63 +1,45 @@
-import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { DeckCard } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { AvatarStack } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
-import { ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
 import { inviteCode, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, radius, space } from '@/theme/tokens';
-import type { Game, Rule } from '@/types/game';
+import { DEFAULT_SETTINGS, type Game } from '@/types/game';
+import { PressableScale } from '@/components/ui/PressableScale';
 
 /** Dashboard del pre-partita: il mazzo che si sta formando, chi c'è, e (per chi l'ha creata) "Avvia". */
 export function PregamePanel({ game, onOpenDeck }: { game: Game; onOpenDeck: () => void }) {
-  const router = useRouter();
   const players = useGameStore((s) => s.players);
   const proposals = useGameStore((s) => s.proposals);
   const startGame = useGameStore((s) => s.startGame);
   const showToast = useUiStore((s) => s.showToast);
 
-  const open = proposals.filter((p) => p.gameId === game.id && p.status === 'open');
-  const toLike = open.filter((p) => !p.likes.includes(ME.id)).length;
-  const preview = open
-    .map((p) => ruleById(p.ruleId))
-    .filter((r): r is Rule => !!r)
-    .slice(0, 4);
+  const mine = proposals.filter((p) => p.gameId === game.id && p.authorId === ME.id).length;
+  const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
   const people = players.filter((p) => game.playerIds.includes(p.id));
 
   return (
     <>
-      <View style={styles.section}>
-        <SectionHeader
-          title="Il mazzo si decide adesso"
-          caption={
-            toLike > 0
-              ? `${toLike} ${toLike === 1 ? 'proposta aspetta' : 'proposte aspettano'} il tuo voto. ${game.ruleIds.length} carte già nel mazzo.`
-              : `${game.ruleIds.length} carte nel mazzo. Proponi le tue prima che si parta.`
-          }
-        />
-        {preview.length > 0 && (
-          <View style={styles.grid}>
-            {preview.map((r) => (
-              <DeckCard key={r.id} rule={r} onPress={onOpenDeck} />
-            ))}
-          </View>
-        )}
-        <View style={styles.actions}>
-          <Button label="Apri il mazzo" variant="dark" onPress={onOpenDeck} style={styles.flex} />
-          <Button
-            label="Crea carta"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/card/new', params: { gameId: game.id } })}
-            style={styles.flex}
-          />
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel="Apri il mazzo"
+        onPress={onOpenDeck}
+        style={styles.deckCard}>
+        <View style={styles.flex}>
+          <AppText variant="name">Il mazzo si decide adesso</AppText>
+          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+            {game.ruleIds.length} carte nel mazzo. Tu ne hai messe {mine} su {perPlayer}.
+          </AppText>
         </View>
-      </View>
+        <View style={styles.cta}>
+          <AppText variant="caption">Apri il mazzo</AppText>
+        </View>
+      </PressableScale>
 
       <View style={styles.section}>
         <SectionHeader
@@ -87,9 +69,23 @@ export function PregamePanel({ game, onOpenDeck }: { game: Game; onOpenDeck: () 
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
-  grid: { flexDirection: 'row', columnGap: '3.33%' },
-  actions: { flexDirection: 'row', gap: space.sm },
-  flex: { flex: 1 },
+  deckCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: layout.card,
+  },
+  cta: {
+    backgroundColor: colors.cta,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.md,
+    height: 40,
+    justifyContent: 'center',
+  },
+  regular: { fontWeight: '400' },
+  flex: { flex: 1, gap: 2 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',

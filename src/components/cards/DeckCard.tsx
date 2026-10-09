@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
@@ -11,12 +11,11 @@ const EMOJI_FONT = Platform.select({
   default: undefined,
 });
 
-/** Colori "rarità" alla Clash Royale: verde bonus, rosso malus, viola carta personale. */
+/** Toni della carta: goccia verde bonus, rossa malus, viola per le carte personali. */
 export function cardTone(rule: Rule) {
-  if (rule.authorId) return { edge: colors.toonPurple, fill: 'rgba(139, 108, 246, 0.14)', gem: colors.toonPurple };
-  return rule.points > 0
-    ? { edge: '#7FD36B', fill: 'rgba(28, 177, 0, 0.10)', gem: colors.bonus }
-    : { edge: '#FF9E96', fill: 'rgba(217, 45, 32, 0.08)', gem: colors.malus };
+  // Carte pulite: fondo bianco, bordo sottile grigio scuro; il colore sta solo nella goccia dei punti
+  const gem = rule.authorId ? colors.toonPurple : rule.points > 0 ? colors.bonus : colors.malus;
+  return { edge: '#3A3A3C', fill: colors.background, gem };
 }
 
 interface Props {
@@ -28,22 +27,27 @@ interface Props {
   /** Etichetta sotto il nome (es. "proposta") */
   note?: string;
   onPress?: () => void;
+  onLongPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  /** Senza nome sotto (pila del mazzo) */
+  bare?: boolean;
 }
 
 /**
- * Carta del mazzo in stile Clash Royale: verticale, bordo colorato per "rarità",
+ * Carta del mazzo in stile Clash Royale: verticale, bordo sottile grigio scuro,
  * goccia con i punti in alto a sinistra (come l'elisir), emoji 3D al centro e nome sotto.
  */
-export function DeckCard({ rule, dimmed, checked, note, onPress }: Props) {
+export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, style, bare }: Props) {
   const tone = cardTone(rule);
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${rule.label}, ${rule.points > 0 ? '+' : ''}${rule.points} punti${rule.authorId ? ', carta personale' : ''}${note ? `, ${note}` : ''}`}
       onPress={onPress}
+      onLongPress={onLongPress}
       pressedScale={0.94}
-      style={[styles.wrap, dimmed && styles.dimmed]}>
-      <View style={[styles.card, { borderColor: tone.edge, backgroundColor: tone.fill }]}>
+      style={[styles.wrap, dimmed && styles.dimmed, style]}>
+      <View style={[styles.card, { borderColor: tone.edge, backgroundColor: colors.surface }]}>
         <Text style={styles.emoji} allowFontScaling={false}>
           {rule.emoji}
         </Text>
@@ -57,11 +61,12 @@ export function DeckCard({ rule, dimmed, checked, note, onPress }: Props) {
             <Icon name="check" size={11} strokeWidth={3.2} />
           </View>
         )}
-        {rule.authorId && <View style={[styles.ribbon, { backgroundColor: tone.edge }]} />}
       </View>
-      <AppText variant="micro" numberOfLines={2} style={styles.name}>
-        {rule.label}
-      </AppText>
+      {!bare && (
+        <AppText variant="micro" numberOfLines={2} style={styles.name}>
+          {rule.label}
+        </AppText>
+      )}
       {note ? (
         <AppText variant="micro" color={colors.inkSoft} style={styles.note} numberOfLines={1}>
           {note}
@@ -72,7 +77,7 @@ export function DeckCard({ rule, dimmed, checked, note, onPress }: Props) {
 }
 
 /** Slot vuoto: "+ Crea carta" (tratteggiato) oppure lucchetto Premium. */
-export function EmptySlot({ locked, onPress }: { locked?: boolean; onPress: () => void }) {
+export function EmptySlot({ locked, onPress, label }: { locked?: boolean; onPress: () => void; label?: string }) {
   return (
     <PressableScale
       accessibilityRole="button"
@@ -86,7 +91,7 @@ export function EmptySlot({ locked, onPress }: { locked?: boolean; onPress: () =
         </View>
       </View>
       <AppText variant="micro" color={colors.inkSoft} style={styles.name}>
-        {locked ? 'Sblocca' : 'Crea carta'}
+        {label ?? (locked ? 'Sblocca' : 'Crea carta')}
       </AppText>
     </PressableScale>
   );
@@ -99,7 +104,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 0.78,
     borderRadius: radius.sm,
-    borderWidth: 3,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

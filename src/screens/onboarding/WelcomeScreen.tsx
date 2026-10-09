@@ -33,7 +33,7 @@ export function WelcomeScreen() {
   const go = (method: SignInMethod) => {
     haptics.bonus();
     signIn(method);
-    router.replace(onboarded ? '/' : '/onboarding/room');
+    router.replace({ pathname: '/splash', params: { next: onboarded ? '/' : '/onboarding/hello' } });
   };
 
   return (

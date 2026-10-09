@@ -3,6 +3,7 @@ import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { AppText } from './AppText';
 import { PressableScale } from './PressableScale';
 
+import { Icon, type IconName } from '@/components/icons/Icon';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, space } from '@/theme/tokens';
 
@@ -14,6 +15,8 @@ interface Props {
   variant?: Variant;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Icona a sinistra del testo */
+  icon?: IconName;
 }
 
 /**
@@ -21,7 +24,8 @@ interface Props {
  * CTA del Figma: "CTA 1" (giallo pieno), "CTA 2" (bianco con bordo giallo),
  * più le varianti Conferma/Rifiuta della schermata di voto.
  */
-export function Button({ label, onPress, variant = 'primary', disabled, style }: Props) {
+export function Button({ label, onPress, variant = 'primary', disabled, style, icon }: Props) {
+  const tint = disabled ? colors.inkMuted : variant === 'dark' ? colors.inkInverse : colors.ink;
   return (
     <PressableScale
       accessibilityRole="button"
@@ -32,9 +36,8 @@ export function Button({ label, onPress, variant = 'primary', disabled, style }:
         onPress();
       }}
       style={[styles.base, styles[variant], disabled && styles.disabled, style]}>
-      <AppText
-        variant="headline"
-        color={disabled ? colors.inkMuted : variant === 'dark' ? colors.inkInverse : colors.ink}>
+      {icon && <Icon name={icon} size={20} color={tint} strokeWidth={2} />}
+      <AppText variant="headline" color={tint}>
         {label}
       </AppText>
     </PressableScale>
@@ -45,6 +48,8 @@ const styles = StyleSheet.create({
   base: {
     height: 56,
     borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: space.xs,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space.md,

@@ -15,7 +15,6 @@ import { powerById, RULES, ruleById } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { haptics } from '@/lib/haptics';
 import { customSlots, proposalsNeeded, useGameStore } from '@/store/useGameStore';
-import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Rule } from '@/types/game';
 
@@ -42,9 +41,7 @@ export function RulesScreen() {
   const allProposals = useGameStore((s) => s.proposals);
   const extraSlots = useGameStore((s) => s.extraSlots);
   const powers = useGameStore((s) => s.powers);
-  const proposeCard = useGameStore((s) => s.proposeCard);
   const toggleLike = useGameStore((s) => s.toggleLike);
-  const showToast = useUiStore((s) => s.showToast);
   const [tab, setTab] = useState<Tab>('base');
   const [selected, setSelected] = useState<Rule>();
 
@@ -90,14 +87,10 @@ export function RulesScreen() {
       };
     }
     return {
-      status: 'Non è nel mazzo. Proponila: entra se la vuole la maggioranza.',
+      status: 'Non è nel mazzo. Mettila in una delle tue caselle.',
       action: {
-        label: 'Proponi per la partita',
-        onPress: () => {
-          haptics.bonus();
-          proposeCard(game.id, selected.id);
-          showToast({ text: `Hai proposto ${selected.label}` });
-        },
+        label: 'Apri il mazzo',
+        onPress: () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } }),
       },
     };
   })();

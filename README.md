@@ -73,6 +73,16 @@ con Dashboard in-game già navigabile su dati finti.
   da lì si chiede l'amicizia, e tra amici si crea una stanza insieme (gli amici si invitano con un tocco).
 - Ogni azione che cambia lo stato mostra un toast in alto con **Annulla**.
 
+### Flusso round 5
+
+- **Splash** (`/splash`): solo il wordmark con tre puntini, 1,5 s dopo il login.
+- **Benvenuto** (`/onboarding/hello`) poi creazione stanza in 4 passi: nome, tipo di partita, orario, **Avanzate** (carte a testa, tetto punti, fantapoteri, promessa simbolica dell'host obbligatoria).
+- **Home**: solo "Ciao …" e la card "Rientra in partita" sull'ultima stanza aperta; le altre stanze in lista compatta.
+- **Codici stanza** casuali a 6 caratteri (senza 0/O/1/I).
+- **Costruttore del mazzo** (`/deck/[gameId]`): pila del mazzo che cresce, N caselle personali, griglia scorrevole; tocca per mettere, tieni premuto e trascina su una casella per scambiare.
+- **Il Libro del Fanta** (`/rulebook`): regole, momenti del gioco, etica.
+- Il pulsante centrale **+** della navbar appare solo con la partita in corso.
+
 ## Albero delle directory
 
 ```

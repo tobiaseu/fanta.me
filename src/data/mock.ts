@@ -74,7 +74,7 @@ export const GAMES: Game[] = [
   {
     id: 'fantapasquetta',
     name: 'Fantapasquetta',
-    code: 'PASQUA',
+    code: 'R4TB9Z',
     emoji: '🧺',
     setting: 'vacation',
     mode: 'sprint',
@@ -124,10 +124,22 @@ export const GAMES: Game[] = [
     mode: 'sprint',
     status: 'waiting',
     ownerId: 'u-me',
+    code: 'K7QX2M',
     startsAt: hoursFromNow(72),
     endsAt: hoursFromNow(48 + 72),
     playerIds: ['u-me', 'u-sara', 'u-giulia', 'u-ale'],
-    ruleIds: ['r-toast', 'r-phone', 'r-late', 'r-fall', 'r-smurratona', 'r-photo', 'r-spill', 'r-dj'],
+    ruleIds: [
+      'r-toast',
+      'r-phone',
+      'r-late',
+      'r-fall',
+      'r-smurratona',
+      'r-photo',
+      'r-spill',
+      'r-dj',
+      'c-karaoke',
+      'c-prof',
+    ],
     accent: colors.cta,
   },
   {
@@ -294,25 +306,27 @@ export const FEED: FeedEvent[] = [
 ];
 
 /** Proposte di carte nel pre-partita della Cena di classe. */
-export const PROPOSALS: CardProposal[] = [
-  {
-    id: 'pr1',
-    gameId: 'cena-classe',
-    ruleId: 'c-karaoke',
-    authorId: 'u-ale',
-    likes: ['u-ale', 'u-sara'],
-    status: 'open',
-  },
-  { id: 'pr2', gameId: 'cena-classe', ruleId: 'c-prof', authorId: 'u-giulia', likes: ['u-giulia'], status: 'open' },
-  {
-    id: 'pr3',
-    gameId: 'cena-classe',
-    ruleId: 'r-dj',
-    authorId: 'u-sara',
-    likes: ['u-sara', 'u-ale', 'u-giulia'],
-    status: 'accepted',
-  },
-];
+export const PROPOSALS: CardProposal[] = (
+  [
+    ['r-toast', 'u-ale'],
+    ['r-phone', 'u-giulia'],
+    ['r-late', 'u-sara'],
+    ['r-fall', 'u-ale'],
+    ['r-smurratona', 'u-ale'],
+    ['r-photo', 'u-giulia'],
+    ['r-spill', 'u-sara'],
+    ['r-dj', 'u-sara'],
+    ['c-karaoke', 'u-ale'],
+    ['c-prof', 'u-giulia'],
+  ] as const
+).map(([ruleId, authorId], i) => ({
+  id: `pr${i + 1}`,
+  gameId: 'cena-classe',
+  ruleId,
+  authorId,
+  likes: [authorId],
+  status: 'accepted' as const,
+}));
 
 /** Fantapoteri scelti da ciascuno (principale + secondario). */
 export const POWERS: Record<string, { main: PowerUpId; secondary: PowerUpId }> = {

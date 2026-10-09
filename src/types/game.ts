@@ -98,6 +98,17 @@ export interface PowerActivation {
   until: string;
 }
 
+export interface GameSettings {
+  /** Carte che ognuno mette nel mazzo nel pre-partita */
+  cardsPerPlayer: number;
+  /** Punti massimi per carta */
+  pointsCap: number;
+  /** Fantapoteri attivi in questa stanza */
+  powers: boolean;
+}
+
+export const DEFAULT_SETTINGS: GameSettings = { cardsPerPlayer: 4, pointsCap: 25, powers: true };
+
 export interface Game {
   id: string;
   name: string;
@@ -119,8 +130,10 @@ export interface Game {
   ruleIds: string[];
   /** Stanza Premium: più carte personali per tutti e fantapoteri speciali */
   premium?: boolean;
-  /** Chi ha creato la stanza (può avviarla dal pre-partita) */
+  /** Host: chi ha creato la stanza, promesso di gestirla bene e può avviarla */
   ownerId?: string;
+  /** Impostazioni avanzate scelte dall'host */
+  settings?: GameSettings;
   /** Colore principale della mascotte della stanza */
   accent: string;
 }

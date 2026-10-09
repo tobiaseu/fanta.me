@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { ME } from '@/data/mock';
 import { haptics } from '@/lib/haptics';
+import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 
@@ -28,6 +29,8 @@ export const TAB_BAR_SPACE = 72 + space.lg + space.md;
 export function GameTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const openQuickAction = useUiStore((s) => s.openQuickAction);
+  // I punti si chiamano solo in partita: fuori dal "live" il + centrale sparisce
+  const live = useCurrentGame()?.status === 'live';
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
@@ -42,6 +45,7 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
           const tint = focused ? colors.ink : colors.inkSoft;
 
           if (route.name === 'action') {
+            if (!live) return null;
             return (
               <PressableScale
                 key={route.key}

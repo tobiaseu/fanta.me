@@ -12,6 +12,9 @@ interface SessionState {
   method?: SignInMethod;
   /** Ha già creato (o saltato) la prima stanza */
   onboarded: boolean;
+  /** Ultima stanza aperta: la Home la propone per rientrare al volo */
+  lastGameId?: string;
+  setLastGame: (gameId: string) => void;
   signIn: (method: SignInMethod) => void;
   finishOnboarding: () => void;
   signOut: () => void;
@@ -45,6 +48,7 @@ export const useSessionStore = create<SessionState>()(
     (set) => ({
       signedIn: false,
       onboarded: false,
+      setLastGame: (gameId) => set({ lastGameId: gameId }),
       signIn: (method) => set({ signedIn: true, method }),
       finishOnboarding: () => set({ onboarded: true }),
       signOut: () => set({ signedIn: false, onboarded: false, method: undefined }),

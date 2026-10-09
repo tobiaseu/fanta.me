@@ -1,56 +1,66 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { EmptyLobby } from '@/components/lobby/EmptyLobby';
-import { FormatCarousel } from '@/components/lobby/FormatCarousel';
-import { RoomCard } from '@/components/lobby/RoomCard';
 import { LOBBY_ACTIONS_HEIGHT, LobbyActions } from '@/components/lobby/LobbyActions';
+import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
-import { Avatar } from '@/components/ui/Avatar';
-import { PressableScale } from '@/components/ui/PressableScale';
-import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Avatar, AvatarStack } from '@/components/ui/Avatar';
 import { Wordmark } from '@/components/ui/Brand';
+import { PressableScale } from '@/components/ui/PressableScale';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TopBar } from '@/components/ui/TopBar';
 import { ME } from '@/data/mock';
-import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { useNow } from '@/hooks/useNow';
+import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { computeStandings, useGameStore } from '@/store/useGameStore';
-import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
+import { computeStandings, gameDay, useGameStore } from '@/store/useGameStore';
+import { useSessionStore } from '@/store/useSessionStore';
+import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 import type { Game } from '@/types/game';
 
-type Filter = 'all' | 'live';
-
 /**
- * LOBBY alla Clubhouse: nessuna bottom navbar.
- * Saluto + carriera in una riga → "Le tue stanze" (card con le persone dentro) →
- * format per un nuovo evento → pillola flottante "Crea stanza" + "Entra con codice".
+ * HOME: solo il saluto e una card grande per rientrare nell'ultima stanza.
+ * Sotto, l'elenco compatto delle altre stanze. Crea / Entra con codice restano flottanti.
  */
 export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const router = useRouter();
   const now = useNow(30_000);
   const { games, events, players, friendships } = useGameStore();
+  const lastGameId = useSessionStore((s) => s.lastGameId);
   const openPlayer = useOpenPlayer();
   const requests = Object.values(friendships).filter((f) => f === 'received').length;
-  const [filter, setFilter] = useState<Filter>('all');
 
   const myGames = useMemo(() => (forceEmpty ? [] : games), [games, forceEmpty]);
-  const shown = useMemo(
-    () => (filter === 'live' ? myGames.filter((g) => g.status === 'live') : myGames),
-    [myGames, filter],
-  );
-
-  const toVoteOf = (gameId: string) =>
-    events.filter(
-      (e) => e.gameId === gameId && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
-    ).length;
-  const toVoteTotal = myGames.reduce((sum, g) => sum + toVoteOf(g.id), 0);
+  const last = myGames.find((g) => g.id === lastGameId) ?? myGames.find((g) => g.status !== 'ended');
+  const others = myGames.filter((g) => g.id !== last?.id);
 
   const openGame = (game: Game) => {
     haptics.tap();
     router.push({ pathname: '/game/[gameId]', params: { gameId: game.id } });
   };
+
+  const resume =
+    last &&
+    (() => {
+      const standings = computeStandings(last, events, players);
+      const rank = standings.findIndex((r) => r.player.id === ME.id) + 1;
+      const toVote = events.filter(
+        (e) =>
+          e.gameId === last.id && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
+      ).length;
+      const day = gameDay(last, now);
+      const line =
+        last.status === 'waiting'
+          ? 'Il mazzo si sta formando: metti le tue carte'
+          : last.status === 'ended'
+            ? 'Partita conclusa: guarda i risultati'
+            : toVote > 0
+              ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+              : `${day.label} ${day.index} di ${day.total}, sei ${rank}°`;
+      return { line, people: players.filter((p) => last.playerIds.includes(p.id)) };
+    })();
 
   return (
     <View style={styles.screen}>
@@ -67,72 +77,61 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           </PressableScale>
         }
       />
-      <FlatList
-        data={shown}
-        keyExtractor={(g) => g.id}
-        contentContainerStyle={[styles.content, { paddingBottom: LOBBY_ACTIONS_HEIGHT + space.xxl }]}
-        ItemSeparatorComponent={() => <View style={{ height: space.sm }} />}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <View style={styles.hello}>
-              <AppText variant="serifTitle">Ciao {ME.name}</AppText>
-              <AppText variant="body" color={colors.inkSoft}>
-                🏆 {ME.career.trophies} trofei, {ME.career.gamesPlayed} partite,{' '}
-                {ME.career.totalPoints.toLocaleString('it-IT')} punti in carriera
-              </AppText>
-            </View>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: LOBBY_ACTIONS_HEIGHT + space.xxl }]}>
+        <AppText variant="serifTitle">Ciao {ME.name}</AppText>
 
-            <View style={styles.section}>
-              <SectionHeader
-                title="Le tue stanze"
-                caption={toVoteTotal > 0 ? `${toVoteTotal} chiamate aspettano il tuo voto` : undefined}
-              />
-              {myGames.length > 0 && (
-                <View style={styles.filters} accessibilityRole="tablist">
-                  {(
-                    [
-                      ['all', 'Tutte'],
-                      ['live', 'In partita'],
-                    ] as const
-                  ).map(([id, label]) => (
-                    <Pressable
-                      key={id}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected: filter === id }}
-                      onPress={() => {
-                        haptics.tap();
-                        setFilter(id);
-                      }}
-                      style={[styles.filter, filter === id && styles.filterActive]}>
-                      <AppText variant="caption" color={filter === id ? colors.inkInverse : colors.inkSoft}>
-                        {label}
-                      </AppText>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
+        {last && resume ? (
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={`Rientra in ${last.name}. ${resume.line}`}
+            onPress={() => openGame(last)}
+            style={styles.resume}>
+            <AppText variant="micro" color={colors.inkSoft}>
+              RIENTRA IN PARTITA
+            </AppText>
+            <AppText variant="title" numberOfLines={2}>
+              {last.emoji} {last.name}
+            </AppText>
+            <StatusBadge status={last.status} />
+            <AppText variant="body" color={colors.inkSoft}>
+              {resume.line}
+            </AppText>
+            <View style={styles.resumeFoot}>
+              <AvatarStack players={resume.people} size={32} max={5} />
+              <View style={styles.go}>
+                <Icon name="chevron-right" size={22} strokeWidth={2.4} />
+              </View>
+            </View>
+          </PressableScale>
+        ) : (
+          <EmptyLobby />
+        )}
+
+        {others.length > 0 && (
+          <View style={styles.list}>
+            <AppText variant="caption" color={colors.inkSoft}>
+              Le altre stanze
+            </AppText>
+            <View style={styles.rows}>
+              {others.map((g, i) => (
+                <PressableScale
+                  key={g.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${g.name}.`}
+                  onPress={() => openGame(g)}
+                  style={[styles.row, i > 0 && styles.divider]}>
+                  <AppText style={styles.emoji}>{g.emoji}</AppText>
+                  <AppText variant="name" numberOfLines={1} style={styles.flex}>
+                    {g.name}
+                  </AppText>
+                  <StatusBadge status={g.status} />
+                  <Icon name="chevron-right" size={16} color={colors.inkFaint} strokeWidth={2} />
+                </PressableScale>
+              ))}
             </View>
           </View>
-        }
-        ListEmptyComponent={<EmptyLobby />}
-        ListFooterComponent={
-          <View style={[styles.section, styles.footer]}>
-            <SectionHeader title="Nuovo evento" caption="Parti da un format già pronto." />
-            <FormatCarousel
-              onPick={(f) => router.push({ pathname: '/room/new', params: { mode: f.mode, format: f.name } })}
-            />
-          </View>
-        }
-        renderItem={({ item }) => (
-          <RoomCard
-            game={item}
-            standings={computeStandings(item, events, players)}
-            toVote={toVoteOf(item.id)}
-            now={now}
-            onPress={() => openGame(item)}
-          />
         )}
-      />
+      </ScrollView>
       <LobbyActions onCreate={() => router.push('/room/new')} onJoin={() => router.push('/room/join')} />
     </View>
   );
@@ -153,22 +152,40 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: layout.gutter,
-    paddingTop: layout.section,
+    paddingTop: layout.section + space.xs,
+    gap: layout.section,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',
   },
-  header: { gap: layout.section, marginBottom: space.md },
-  hello: { gap: space.xxs },
-  section: { gap: space.sm },
-  footer: { marginTop: space.xl },
-  filters: { flexDirection: 'row', gap: space.xs },
-  filter: {
-    paddingHorizontal: space.md,
-    height: 36,
-    justifyContent: 'center',
-    borderRadius: radius.pill,
+  resume: {
     backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: space.lg,
+    gap: space.xs,
+    borderWidth: 2,
+    borderColor: colors.cta,
+    ...shadow.floating,
   },
-  filterActive: { backgroundColor: colors.ink },
+  resumeFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm },
+  go: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.cta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: { gap: space.xs },
+  rows: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingHorizontal: layout.card,
+    paddingVertical: space.sm + 2,
+  },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
+  emoji: { fontSize: 20, lineHeight: 26 },
+  flex: { flex: 1 },
 });

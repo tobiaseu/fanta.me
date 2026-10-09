@@ -8,6 +8,7 @@ import type {
   FriendStatus,
   Game,
   GameMode,
+  GameSettings,
   Player,
   PowerActivation,
   PowerUpId,
@@ -33,7 +34,13 @@ interface GameState {
   /** Annulla: rimette l'evento com'era (o lo toglie, se era appena nato) */
   restoreEvent: (previous: FeedEvent | undefined, eventId: string) => void;
   /** `startsInHours` 0 = si gioca subito; altrimenti la stanza resta in pre-partita fino all'inizio */
-  createGame: (input: { name: string; mode: GameMode; friendIds?: string[]; startsInHours?: number }) => Game;
+  createGame: (input: {
+    name: string;
+    mode: GameMode;
+    friendIds?: string[];
+    startsInHours?: number;
+    settings?: GameSettings;
+  }) => Game;
   /** Chi ha creato la stanza la fa partire prima del previsto */
   startGame: (gameId: string) => void;
 
@@ -42,6 +49,8 @@ interface GameState {
   createCustomRule: (input: Omit<Rule, 'id' | 'authorId'>) => Rule;
   proposals: CardProposal[];
   proposeCard: (gameId: string, ruleId: string) => void;
+  /** Toglie una mia carta dal mazzo (pre-partita); `replaceWith` la scambia con un'altra */
+  withdrawCard: (gameId: string, ruleId: string, replaceWith?: string) => void;
   toggleLike: (proposalId: string) => void;
 
   /* ---- Premium (mock: Fase 3 con RevenueCat) ---- */
@@ -135,7 +144,7 @@ export const useGameStore = create<GameState>((set) => ({
 
   setFriendship: (playerId, status) => set((s) => ({ friendships: { ...s.friendships, [playerId]: status } })),
 
-  createGame: ({ name, mode, friendIds = [], startsInHours = 0 }) => {
+  createGame: ({ name, mode, friendIds = [], startsInHours = 0, settings }) => {
     const start = Date.now() + startsInHours * HOUR_MS;
     const game: Game = {
       id: `g-${Date.now()}`,
@@ -145,6 +154,8 @@ export const useGameStore = create<GameState>((set) => ({
       mode,
       status: startsInHours > 0 ? 'waiting' : 'live',
       ownerId: ME.id,
+      code: randomCode(),
+      settings,
       startsAt: new Date(start).toISOString(),
       endsAt: mode === 'sprint' ? new Date(start + 48 * HOUR_MS).toISOString() : undefined,
       week: mode === 'marathon' ? { current: 1, total: 4 } : undefined,
@@ -179,6 +190,7 @@ export const useGameStore = create<GameState>((set) => ({
   },
 
   proposals: PROPOSALS,
+  // Nel pre-partita ogni carta proposta entra subito nel mazzo: il mazzo cresce davanti a tutti
   proposeCard: (gameId, ruleId) =>
     set((s) => {
       if (s.proposals.some((p) => p.gameId === gameId && p.ruleId === ruleId)) return s;
@@ -188,10 +200,22 @@ export const useGameStore = create<GameState>((set) => ({
         ruleId,
         authorId: ME.id,
         likes: [ME.id],
-        status: 'open',
+        status: 'accepted',
       };
-      return settleProposal(s, proposal, [proposal, ...s.proposals]);
+      return {
+        proposals: [...s.proposals, proposal],
+        games: s.games.map((g) =>
+          g.id === gameId && !g.ruleIds.includes(ruleId) ? { ...g, ruleIds: [...g.ruleIds, ruleId] } : g,
+        ),
+      };
     }),
+  withdrawCard: (gameId, ruleId, replaceWith) => {
+    set((s) => ({
+      proposals: s.proposals.filter((p) => !(p.gameId === gameId && p.ruleId === ruleId && p.authorId === ME.id)),
+      games: s.games.map((g) => (g.id === gameId ? { ...g, ruleIds: g.ruleIds.filter((id) => id !== ruleId) } : g)),
+    }));
+    if (replaceWith) useGameStore.getState().proposeCard(gameId, replaceWith);
+  },
   toggleLike: (proposalId) =>
     set((s) => {
       const current = s.proposals.find((p) => p.id === proposalId);
@@ -311,7 +335,13 @@ export function computeDayStandings(game: Game, events: FeedEvent[], players: Pl
 /** Maggioranza di chi può votare (tutti tranne il giocatore chiamato). */
 export const votesNeeded = (game: Game) => Math.floor((game.playerIds.length - 1) / 2) + 1;
 
-/** Codice invito di 6 lettere: quello scelto dal creatore o derivato dal nome. */
+/** Codice invito casuale: 6 caratteri, senza quelli che si confondono (0/O, 1/I). */
+export function randomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+/** Codice invito della stanza. */
 export const inviteCode = (game: Game) =>
   game.code ?? (game.name.toUpperCase().replace(/[^A-Z]/g, '') + 'XXXXXX').slice(0, 6);
 

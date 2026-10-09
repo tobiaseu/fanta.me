@@ -74,7 +74,7 @@ export function OnboardingInviteScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}>
-        <StepHeader step={2} total={2} />
+        <StepHeader step={5} total={5} />
         <View style={styles.copy}>
           <AppText variant="serifTitle">Invita la tua gente</AppText>
           <AppText variant="body" color={colors.inkSoft}>
@@ -93,7 +93,7 @@ export function OnboardingInviteScreen() {
               </View>
             ))}
           </View>
-          <Button label="Condividi invito" variant="dark" onPress={share} />
+          <Button label="Condividi invito" icon="send" variant="dark" onPress={share} />
         </View>
 
         <View style={styles.list}>

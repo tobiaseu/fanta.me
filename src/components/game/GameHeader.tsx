@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { PhaseTrack } from '@/components/game/PhaseTrack';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useNow } from '@/hooks/useNow';
 import { formatHoursLeft } from '@/lib/time';
@@ -72,28 +73,33 @@ export function GameHeader({ game, expanded }: { game: Game; expanded: boolean }
           <View style={styles.back} />
         </View>
 
-        {expanded && cd ? (
+        {expanded ? (
           <Animated.View key="open" entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)} style={styles.open}>
-            <View style={styles.eyebrow}>
-              <StatusBadge status={game.status} />
-              <AppText variant="caption" color={colors.inkSoft}>
-                {cd.eyebrow}
-              </AppText>
-            </View>
-            <View
-              style={styles.tiles}
-              accessibilityLabel={`${cd.eyebrow} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
-              {tiles.map((t) => (
-                <View key={t.label} style={styles.tile}>
-                  <AppText variant="display" style={styles.digits}>
-                    {pad(t.value)}
-                  </AppText>
-                  <AppText variant="micro" color={colors.inkSoft}>
-                    {t.label}
+            <PhaseTrack status={game.status} thick />
+            {cd && (
+              <>
+                <View style={styles.eyebrow}>
+                  <StatusBadge status={game.status} />
+                  <AppText variant="caption" color={colors.inkSoft}>
+                    {cd!.eyebrow}
                   </AppText>
                 </View>
-              ))}
-            </View>
+                <View
+                  style={styles.tiles}
+                  accessibilityLabel={`${cd!.eyebrow} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
+                  {tiles.map((t) => (
+                    <View key={t.label} style={styles.tile}>
+                      <AppText variant="display" style={styles.digits}>
+                        {pad(t.value)}
+                      </AppText>
+                      <AppText variant="micro" color={colors.inkSoft}>
+                        {t.label}
+                      </AppText>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
           </Animated.View>
         ) : (
           <Animated.View
@@ -128,17 +134,17 @@ const styles = StyleSheet.create({
   back: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },
-  open: { gap: space.sm },
+  open: { gap: space.sm, paddingTop: space.xxs },
   eyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs },
   tiles: { flexDirection: 'row', gap: space.xs },
   tile: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: space.sm,
-    borderRadius: radius.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
     backgroundColor: colors.background,
   },
-  digits: { fontSize: 30, lineHeight: 34 },
+  digits: { fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
   strip: {
     flexDirection: 'row',
     alignItems: 'center',

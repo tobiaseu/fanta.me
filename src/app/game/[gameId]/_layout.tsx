@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { GameHeader } from '@/components/game/GameHeader';
@@ -8,6 +8,7 @@ import { GameTabBar } from '@/components/game/GameTabBar';
 import { QuickActionSheet } from '@/components/game/QuickActionSheet';
 import { CurrentGameProvider } from '@/hooks/useCurrentGame';
 import { useGame } from '@/store/useGameStore';
+import { useSessionStore } from '@/store/useSessionStore';
 import { colors } from '@/theme/tokens';
 
 /**
@@ -21,6 +22,10 @@ export default function GameLayout() {
   const game = useGame(gameId);
   // Tab attivo letto dagli eventi di focus, non dal pathname: una modale sopra non lo cambia.
   const [activeTab, setActiveTab] = useState('index');
+  const setLastGame = useSessionStore((s) => s.setLastGame);
+  useEffect(() => {
+    if (gameId) setLastGame(gameId);
+  }, [gameId, setLastGame]);
   if (!game) return <Redirect href="/" />;
 
   return (

@@ -8,6 +8,6 @@ export default function LobbyRoute() {
   const { demo } = useLocalSearchParams<{ demo?: string }>();
   const { signedIn, onboarded } = useSessionStore();
   if (!signedIn) return <Redirect href="/welcome" />;
-  if (!onboarded) return <Redirect href="/onboarding/room" />;
+  if (!onboarded) return <Redirect href="/onboarding/hello" />;
   return <LobbyScreen forceEmpty={demo === 'empty'} />;
 }

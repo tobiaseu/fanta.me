@@ -12,7 +12,7 @@ export const PHASES = [
 ] as const;
 
 /** Le quattro fasi di una stanza, con quella attuale in evidenza. */
-export function PhaseTrack({ status }: { status: GameStatus | 'setup' }) {
+export function PhaseTrack({ status, thick }: { status: GameStatus | 'setup'; thick?: boolean }) {
   const current = PHASES.findIndex((p) => p.id === status);
   return (
     <View
@@ -24,7 +24,7 @@ export function PhaseTrack({ status }: { status: GameStatus | 'setup' }) {
         const now = i === current;
         return (
           <View key={p.id} style={styles.step}>
-            <View style={[styles.bar, (done || now) && styles.barOn, now && styles.barNow]} />
+            <View style={[styles.bar, thick && styles.thick, (done || now) && styles.barOn, now && styles.barNow]} />
             <AppText variant="micro" color={now ? colors.ink : done ? colors.inkSoft : colors.inkFaint}>
               {p.label}
             </AppText>
@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.xxs },
   step: { flex: 1, gap: space.xxs },
   bar: { height: 4, borderRadius: 2, backgroundColor: colors.surfaceMuted },
+  thick: { height: 6, borderRadius: 3 },
   barOn: { backgroundColor: colors.inkFaint },
   barNow: { backgroundColor: colors.ink },
 });
