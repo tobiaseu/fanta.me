@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import { GameHeader } from '@/components/game/GameHeader';
@@ -13,15 +13,13 @@ import { colors } from '@/theme/tokens';
 
 /**
  * PARTITA: header con countdown sempre in alto + Tabs a 5 voci.
- * L'header è aperto sulla Dashboard e si riduce a striscia di stato sugli altri tab.
+ * L'header è una riga di stato che si apre con un tocco.
  * `action` è un tab "fantasma": la navbar lo intercetta e apre il Bottom Sheet.
  * `feed` (cronaca completa) è nascosto dalla navbar: ci si arriva da "Vedi tutto".
  */
 export default function GameLayout() {
   const { gameId } = useLocalSearchParams<{ gameId: string }>();
   const game = useGame(gameId);
-  // Tab attivo letto dagli eventi di focus, non dal pathname: una modale sopra non lo cambia.
-  const [activeTab, setActiveTab] = useState('index');
   const setLastGame = useSessionStore((s) => s.setLastGame);
   useEffect(() => {
     if (gameId) setLastGame(gameId);
@@ -31,10 +29,9 @@ export default function GameLayout() {
   return (
     <CurrentGameProvider gameId={game.id}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <GameHeader game={game} expanded={activeTab === 'index'} />
+        <GameHeader game={game} />
         <Tabs
           tabBar={(props) => <GameTabBar {...props} />}
-          screenListeners={({ route }) => ({ focus: () => setActiveTab(route.name) })}
           screenOptions={{
             headerShown: false,
             animation: 'shift',

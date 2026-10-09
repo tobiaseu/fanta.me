@@ -8,7 +8,6 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { StepHeader } from '@/components/ui/StepHeader';
 import { ME } from '@/data/mock';
 import { haptics } from '@/lib/haptics';
 import { inviteCode, useGame, useGameStore } from '@/store/useGameStore';
@@ -74,9 +73,14 @@ export function OnboardingInviteScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}>
-        <StepHeader step={5} total={5} />
         <View style={styles.copy}>
-          <AppText variant="serifTitle">Invita la tua gente</AppText>
+          <View style={styles.done}>
+            <Icon name="check" size={16} color={colors.bonus} />
+            <AppText variant="caption" color={colors.bonus}>
+              Stanza creata
+            </AppText>
+          </View>
+          <AppText variant="serifTitle">Ora invita la tua gente</AppText>
           <AppText variant="body" color={colors.inkSoft}>
             Più siete, più figuracce. Condividi il codice nel gruppo o aggiungi chi conosci già.
           </AppText>
@@ -148,6 +152,7 @@ export function OnboardingInviteScreen() {
 }
 
 const styles = StyleSheet.create({
+  done: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: layout.gutter,

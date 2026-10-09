@@ -33,17 +33,18 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const game = useCurrentGame();
   // Il tasto centrale è sempre "la cosa da fare adesso": mazzo → punti → rivincita
-  const center: { icon: IconName; label: string; onPress: () => void } | undefined = !game
+  const center: { icon: IconName; label: string; short: string; onPress: () => void } | undefined = !game
     ? undefined
     : game.status === 'waiting'
       ? {
           icon: 'grid',
           label: 'Apri il mazzo',
+          short: 'Mazzo',
           onPress: () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } }),
         }
       : game.status === 'live'
-        ? { icon: 'plus', label: 'Aggiungi punti', onPress: openQuickAction }
-        : { icon: 'trophy', label: 'Rivincita', onPress: () => router.push('/room/new') };
+        ? { icon: 'plus', label: 'Aggiungi punti', short: 'Punti', onPress: openQuickAction }
+        : { icon: 'trophy', label: 'Rivincita', short: 'Rivincita', onPress: () => router.push('/room/new') };
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
@@ -69,13 +70,13 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
                   center.onPress();
                 }}
                 pressedScale={0.88}
-                style={styles.play}>
-                <Icon
-                  name={center.icon}
-                  size={center.icon === 'plus' ? 30 : 24}
-                  color={colors.ink}
-                  strokeWidth={center.icon === 'plus' ? 3 : 2.2}
-                />
+                style={styles.tab}>
+                <View style={styles.play}>
+                  <Icon name={center.icon} size={center.icon === 'plus' ? 26 : 22} color={colors.ink} />
+                </View>
+                <AppText style={styles.label} color={colors.ink} numberOfLines={1}>
+                  {center.short}
+                </AppText>
               </PressableScale>
             );
           }
@@ -143,9 +144,9 @@ const styles = StyleSheet.create({
   avatarRing: { padding: 1, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
   avatarRingActive: { borderColor: colors.ink },
   play: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.cta,
     alignItems: 'center',
     justifyContent: 'center',

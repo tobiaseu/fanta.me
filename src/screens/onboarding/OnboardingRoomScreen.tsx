@@ -19,7 +19,7 @@ const MODES: { id: GameMode; title: string; body: string; icon: 'clock' | 'calen
   { id: 'sprint', title: 'Sprint', body: '48 ore, giornate da 24. Per un weekend o una vacanza.', icon: 'clock' },
   { id: 'marathon', title: 'Maratona', body: '4 settimane. Per ufficio, scuola, coinquilini.', icon: 'calendar' },
 ];
-const TOTAL = 5; // 4 passi qui + inviti
+const TOTAL = 4; // poi l'invito, come schermata di successo
 
 /** Prima stanza, un passo alla volta: nome → tipo di partita → quando → avanzate (con la promessa dell'host). */
 export function OnboardingRoomScreen() {
@@ -51,9 +51,12 @@ export function OnboardingRoomScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.top}>
-          {step > 1 && (
-            <PressableScale accessibilityLabel="Indietro" hitSlop={12} onPress={() => setStep(step - 1)}>
-              <Icon name="chevron-left" size={22} strokeWidth={2.2} />
+          {(step > 1 || router.canGoBack()) && (
+            <PressableScale
+              accessibilityLabel={step > 1 ? 'Indietro' : 'Chiudi'}
+              hitSlop={12}
+              onPress={() => (step > 1 ? setStep(step - 1) : router.back())}>
+              <Icon name={step > 1 ? 'chevron-left' : 'close'} size={22} />
             </PressableScale>
           )}
           <View style={styles.flex}>

@@ -21,10 +21,10 @@ import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { FriendStatus, Player } from '@/types/game';
 
-/** Blu notte della scheda giocatore (ispirazione "Pinna"). */
-const NAVY = '#1E2836';
-const NAVY_SOFT = '#2D3949';
-const ON_NAVY_MUTED = 'rgba(255, 255, 255, 0.6)';
+/** Scheda giocatore chiara, come il resto dell'app. */
+const NAVY = colors.surface;
+const NAVY_SOFT = colors.background;
+const ON_NAVY_MUTED = colors.inkSoft;
 
 /**
  * Profilo giocatore (modale): chi è, quanto vale, cosa vi lega.
@@ -94,7 +94,7 @@ export function PlayerProfileScreen() {
       <View style={styles.hero}>
         <Avatar player={player} size={104} sticker={false} />
         <View style={styles.names}>
-          <AppText variant="title" color={colors.inkInverse}>
+          <AppText variant="title" color={colors.ink}>
             {player.name}
           </AppText>
           <AppText variant="body" color={ON_NAVY_MUTED}>
@@ -207,7 +207,7 @@ export function PlayerProfileScreen() {
 function Stat({ value, label }: { value: number | string; label: string }) {
   return (
     <View style={styles.stat}>
-      <AppText variant="number" color={colors.inkInverse}>
+      <AppText variant="number" color={colors.ink}>
         {value}
       </AppText>
       <AppText variant="caption" color={ON_NAVY_MUTED}>
@@ -247,8 +247,8 @@ function FriendAction({ player, status, onRequest, onCancel, onAccept, onDecline
     return (
       <View style={styles.action}>
         <View style={styles.pending}>
-          <Icon name="clock" size={18} color={colors.inkInverse} />
-          <AppText variant="headline" color={colors.inkInverse}>
+          <Icon name="clock" size={18} color={colors.ink} />
+          <AppText variant="headline" color={colors.ink}>
             Richiesta inviata
           </AppText>
         </View>
@@ -265,7 +265,7 @@ function FriendAction({ player, status, onRequest, onCancel, onAccept, onDecline
       <View style={styles.action}>
         <View style={styles.friendsTag}>
           <Icon name="check" size={14} color={colors.bonusBright} strokeWidth={3} />
-          <AppText variant="micro" color={colors.inkInverse}>
+          <AppText variant="micro" color={colors.ink}>
             Amici
           </AppText>
         </View>
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: colors.line,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

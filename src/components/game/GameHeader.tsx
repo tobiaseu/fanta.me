@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,11 +39,11 @@ function formatLong(ms: number) {
 }
 
 /**
- * Header della partita, sempre in alto.
- * Sulla Dashboard è aperto: giornata + countdown a tessere.
- * Sugli altri tab si comprime in una striscia di stato ("in partita", "da iniziare", "conclusa").
+ * Header della partita, sempre in alto e compatto: una riga di stato.
+ * Un tocco lo apre (fasi + countdown a tessere), un altro lo richiude.
  */
-export function GameHeader({ game, expanded }: { game: Game; expanded: boolean }) {
+export function GameHeader({ game }: { game: Game }) {
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const now = useNow();
@@ -73,48 +74,60 @@ export function GameHeader({ game, expanded }: { game: Game; expanded: boolean }
           <View style={styles.back} />
         </View>
 
-        {expanded ? (
-          <Animated.View key="open" entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)} style={styles.open}>
-            <PhaseTrack status={game.status} thick />
-            {cd && (
-              <>
-                <View style={styles.eyebrow}>
-                  <StatusBadge status={game.status} />
-                  <AppText variant="caption" color={colors.inkSoft}>
-                    {cd!.eyebrow}
-                  </AppText>
-                </View>
-                <View
-                  style={styles.tiles}
-                  accessibilityLabel={`${cd!.eyebrow} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
-                  {tiles.map((t) => (
-                    <View key={t.label} style={styles.tile}>
-                      <AppText variant="display" style={styles.digits}>
-                        {pad(t.value)}
-                      </AppText>
-                      <AppText variant="micro" color={colors.inkSoft}>
-                        {t.label}
-                      </AppText>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
-          </Animated.View>
-        ) : (
-          <Animated.View
-            key="strip"
-            entering={FadeIn.duration(220)}
-            exiting={FadeOut.duration(120)}
-            style={styles.strip}>
-            <StatusBadge status={game.status} />
-            {cd && (
-              <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.flex}>
-                {cd.short}
-              </AppText>
-            )}
-          </Animated.View>
-        )}
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          accessibilityLabel={expanded ? 'Chiudi i dettagli della partita' : 'Apri fasi e countdown'}
+          pressedScale={0.98}
+          onPress={() => setExpanded((v) => !v)}>
+          {expanded ? (
+            <Animated.View
+              key="open"
+              entering={FadeIn.duration(220)}
+              exiting={FadeOut.duration(120)}
+              style={styles.open}>
+              <PhaseTrack status={game.status} thick />
+              {cd && (
+                <>
+                  <View style={styles.eyebrow}>
+                    <StatusBadge status={game.status} />
+                    <AppText variant="caption" color={colors.inkSoft}>
+                      {cd!.eyebrow}
+                    </AppText>
+                  </View>
+                  <View
+                    style={styles.tiles}
+                    accessibilityLabel={`${cd!.eyebrow} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
+                    {tiles.map((t) => (
+                      <View key={t.label} style={styles.tile}>
+                        <AppText variant="display" style={styles.digits}>
+                          {pad(t.value)}
+                        </AppText>
+                        <AppText variant="micro" color={colors.inkSoft}>
+                          {t.label}
+                        </AppText>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </Animated.View>
+          ) : (
+            <Animated.View
+              key="strip"
+              entering={FadeIn.duration(220)}
+              exiting={FadeOut.duration(120)}
+              style={styles.strip}>
+              <StatusBadge status={game.status} />
+              {cd && (
+                <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.flex}>
+                  {cd.short}
+                </AppText>
+              )}
+              <Icon name="chevron-right" size={14} color={colors.inkFaint} />
+            </Animated.View>
+          )}
+        </PressableScale>
       </View>
     </Animated.View>
   );

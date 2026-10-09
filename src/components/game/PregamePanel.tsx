@@ -5,6 +5,7 @@ import { AvatarStack } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
+import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
 import { inviteCode, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
@@ -56,11 +57,18 @@ export function PregamePanel({ game, onOpenDeck }: { game: Game; onOpenDeck: () 
           <Button
             label="Avvia la partita adesso"
             variant="secondary"
-            onPress={() => {
-              haptics.bonus();
-              startGame(game.id);
-              showToast({ text: 'Si parte! Il mazzo è chiuso.' });
-            }}
+            onPress={() =>
+              confirmAction(
+                'Avviare la partita adesso?',
+                'Il mazzo si chiude per tutti e non si potranno più cambiare le carte.',
+                'Avvia',
+                () => {
+                  haptics.bonus();
+                  startGame(game.id);
+                  showToast({ text: 'Si parte! Il mazzo è chiuso.' });
+                },
+              )
+            }
           />
         )}
       </View>

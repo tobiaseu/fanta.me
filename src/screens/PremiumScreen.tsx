@@ -58,13 +58,13 @@ export function PremiumScreen() {
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.lg }]}>
       <PressableScale onPress={() => router.back()} style={styles.close} accessibilityLabel="Chiudi">
-        <Icon name="close" size={18} color={colors.inkInverse} strokeWidth={2} />
+        <Icon name="close" size={18} color={colors.ink} strokeWidth={2} />
       </PressableScale>
       <AppText style={styles.crown}>👑</AppText>
-      <AppText variant="serifTitle" color={colors.inkInverse} style={styles.center}>
+      <AppText variant="serifTitle" color={colors.ink} style={styles.center}>
         Più carte, più caos
       </AppText>
-      <AppText variant="body" color="rgba(255,255,255,0.7)" style={styles.center}>
+      <AppText variant="body" color={colors.inkSoft} style={styles.center}>
         Le prime 5 carte personali sono gratis. Sbloccane altre per te, o per tutta la stanza con i poteri speciali.
       </AppText>
 
@@ -87,10 +87,10 @@ export function PremiumScreen() {
               <View style={styles.planHead}>
                 <View style={[styles.radio, on && styles.radioOn]}>{on && <View style={styles.radioDot} />}</View>
                 <View style={styles.flex}>
-                  <AppText variant="name" color={colors.inkInverse}>
+                  <AppText variant="name" color={colors.ink}>
                     {p.title}
                   </AppText>
-                  <AppText variant="caption" color="rgba(255,255,255,0.6)" style={styles.regular}>
+                  <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
                     {disabled
                       ? game?.premium
                         ? 'Questa stanza è già Premium'
@@ -98,14 +98,14 @@ export function PremiumScreen() {
                       : p.when}
                   </AppText>
                 </View>
-                <AppText variant="headline" color={colors.cta}>
+                <AppText variant="headline" color={colors.ink}>
                   {p.price}
                 </AppText>
               </View>
               {p.perks.map((perk) => (
                 <View key={perk} style={styles.perk}>
-                  <Icon name="check" size={14} color={colors.cta} strokeWidth={3} />
-                  <AppText variant="caption" color={colors.inkInverse} style={styles.regular}>
+                  <Icon name="check" size={14} color={colors.bonus} />
+                  <AppText variant="caption" color={colors.ink} style={styles.regular}>
                     {perk}
                   </AppText>
                 </View>
@@ -116,7 +116,7 @@ export function PremiumScreen() {
       </View>
 
       <Button label={`Sblocca a ${PLANS[plan].price}`} onPress={buy} />
-      <AppText variant="micro" color="rgba(255,255,255,0.5)" style={styles.center}>
+      <AppText variant="micro" color={colors.inkFaint} style={styles.center}>
         Demo: nessun pagamento reale. Nell'app vera passa da Apple e Google con RevenueCat.
       </AppText>
     </ScrollView>
@@ -124,7 +124,7 @@ export function PremiumScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#14161C' },
+  screen: { flex: 1, backgroundColor: colors.background },
   content: {
     padding: layout.gutter,
     paddingTop: layout.section,
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -150,11 +150,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: layout.card,
     gap: space.xs,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'transparent',
   },
-  planOn: { borderColor: colors.cta, backgroundColor: 'rgba(255,227,130,0.08)' },
+  planOn: { borderColor: colors.ink, backgroundColor: colors.surface },
   planOff: { opacity: 0.45 },
   planHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.xxs },
   flex: { flex: 1, gap: 2 },
@@ -163,11 +163,11 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioOn: { borderColor: colors.cta },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.cta },
+  radioOn: { borderColor: colors.ink },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.ink },
   perk: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingLeft: 34 },
 });
