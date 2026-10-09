@@ -1,38 +1,39 @@
-import { Image } from 'expo-image';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { RubberHoseMascot } from './RubberHoseMascot';
+import type { Rule } from '@/types/game';
 
-import { colors } from '@/theme/tokens';
-import type { Rule, StickerId } from '@/types/game';
-
-const STICKERS: Record<StickerId, number> = {
-  smurratona: require('@/assets/images/stickers/smurratona.png'),
-};
-
-/** Ratio larghezza/altezza degli sticker esportati dal Figma. */
-const RATIO: Record<StickerId, number> = { smurratona: 244 / 219 };
+/** Font emoji di sistema: Apple Color Emoji su iPhone/Mac, l'equivalente altrove. */
+const EMOJI_FONT = Platform.select({
+  web: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+  default: undefined,
+});
 
 /**
- * Illustrazione di una "carta trofeo": lo sticker dedicato se esiste,
- * altrimenti la mascotte rubber-hose (blu per i bonus, rossa per i malus).
+ * Illustrazione di una "carta trofeo": l'emoji di sistema in grande, con
+ * un'ombra morbida sotto che la fa "posare" sulla carta come un oggetto 3D.
  */
 export function RuleSticker({ rule, size }: { rule: Rule; size: number }) {
-  if (rule.sticker) {
-    return (
-      <Image
-        source={STICKERS[rule.sticker]}
-        style={{ width: size, height: size / RATIO[rule.sticker] }}
-        contentFit="contain"
-        accessibilityIgnoresInvertColors
-      />
-    );
-  }
-  const bonus = rule.points > 0;
+  const glyph = Math.round(size * 0.62);
   return (
-    <RubberHoseMascot
-      size={size * 0.82}
-      color={bonus ? colors.toonBlue : colors.toonRed}
-      pose={bonus ? 'cheer' : 'shrug'}
-    />
+    <View
+      style={[styles.wrap, { width: size, height: size * 0.82 }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no">
+      <View
+        style={[styles.shadow, { width: glyph * 0.7, height: glyph * 0.12, borderRadius: glyph, bottom: size * 0.06 }]}
+      />
+      <Text style={{ fontSize: glyph, lineHeight: glyph * 1.15, fontFamily: EMOJI_FONT }} allowFontScaling={false}>
+        {rule.emoji}
+      </Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: { alignItems: 'center', justifyContent: 'center' },
+  shadow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+    ...Platform.select({ web: { filter: 'blur(6px)' } as object, default: {} }),
+  },
+});

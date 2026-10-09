@@ -31,8 +31,6 @@ export interface RuleCategory {
   emoji: string;
 }
 
-export type StickerId = 'smurratona';
-
 export interface Rule {
   id: string;
   categoryId: string;
@@ -40,8 +38,8 @@ export interface Rule {
   label: string;
   description: string;
   points: number; // positivo = bonus, negativo = malus
-  /** Illustrazione dedicata; senza, si usa la mascotte SVG */
-  sticker?: StickerId;
+  /** Emoji della carta: su iPhone/Mac è la emoji 3D di Apple */
+  emoji: string;
 }
 
 export interface Team {

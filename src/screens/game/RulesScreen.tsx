@@ -65,7 +65,7 @@ export function RulesScreen() {
   if (!game) return null;
 
   const rules = RULES.filter((r) => game.ruleIds.includes(r.id));
-  const featured = rules.find((r) => r.sticker) ?? rules[0];
+  const featured = rules[0];
   const deck = rules.filter(
     (r) => r.id !== featured?.id && (filter === 'all' || (filter === 'bonus' ? r.points > 0 : r.points < 0)),
   );

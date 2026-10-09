@@ -4,6 +4,7 @@ import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons/Icon';
+import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -135,6 +136,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                     backgroundColor: isBonus ? colors.bonusSoft : colors.malusSoft,
                   },
                 ]}>
+                <RuleSticker rule={r} size={44} />
                 <View style={styles.flex}>
                   <AppText variant="serifCard">{r.label}</AppText>
                   <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
@@ -213,7 +215,8 @@ const styles = StyleSheet.create({
     gap: space.sm,
     backgroundColor: colors.background,
     borderRadius: radius.lg,
-    paddingHorizontal: space.md,
+    paddingLeft: space.xs,
+    paddingRight: space.md,
     paddingVertical: space.sm,
     borderWidth: 1,
     borderColor: 'transparent',

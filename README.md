@@ -79,7 +79,7 @@ src/
 ├── components/
 │   ├── ui/                       # Primitive: AppText, Button, TopBar, Avatar, StatusBadge, Brand, PressableScale
 │   ├── icons/                    # Icone SVG in stile Vuesax (come nel Figma)
-│   ├── illustrations/            # Mascotte "Retro Rubber-Hose" + RuleSticker (sticker delle carte)
+│   ├── illustrations/            # Mascotte "Retro Rubber-Hose" + RuleSticker (emoji delle carte)
 │   ├── lobby/                    # CareerHeader, LeagueCard, FormatCarousel, LobbyActions, EmptyLobby
 │   └── game/                     # GameTabBar, QuickActionSheet, StoriesRow, CountdownStrip, FeedItem, PlayerCard
 ├── store/                        # Zustand: useGameStore (dominio), useUiStore (stato UI)
@@ -113,8 +113,8 @@ Token presi dal file Figma (pagina *Prototype* e *Component master*).
 | `radius` | 12 · 16 · **24** · 28 · 36 (top bar) · pill | Card morbide |
 | tipografia | SF/system 600, titoli carta in serif | Le carte trofeo parlano "da trofeo" |
 
-Illustrazioni: sticker rubber-hose anni '30 (corpo crema, inchiostro, accenti blu, bordo bianco
-fustellato). Lo sticker della Smurratona viene dal Figma; le altre carte usano la mascotte vettoriale.
+Carte: ogni carta ha la sua emoji di sistema in grande (su iPhone e Mac sono le emoji 3D di Apple),
+con un'ombra morbida che la "posa" sulla carta. Le mascotte rubber-hose restano solo negli stati vuoti.
 
 ## Requisiti di gioco: stato
 
