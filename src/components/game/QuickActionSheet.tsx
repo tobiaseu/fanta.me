@@ -9,12 +9,12 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { RULES } from '@/data/rules';
+import { ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
-import type { Game, RuleKind } from '@/types/game';
+import type { Rule, Game, RuleKind } from '@/types/game';
 
 /**
  * Aggiungi punti (Bottom Sheet): chi → quale carta → chiama.
@@ -45,8 +45,10 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const [kind, setKind] = useState<RuleKind>('bonus');
   const [ruleId, setRuleId] = useState<string>();
 
-  const rules = RULES.filter((r) => game.ruleIds.includes(r.id) && (kind === 'bonus' ? r.points > 0 : r.points < 0));
-  const rule = RULES.find((r) => r.id === ruleId);
+  const rules = game.ruleIds
+    .map(ruleById)
+    .filter((r): r is Rule => !!r && (kind === 'bonus' ? r.points > 0 : r.points < 0));
+  const rule = ruleId ? ruleById(ruleId) : undefined;
   const player = players.find((p) => p.id === playerId);
 
   const confirm = () => {

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { Icon } from '@/components/icons/Icon';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
@@ -112,6 +113,7 @@ export function PlayerProfileScreen() {
         )}
       </View>
 
+      {isMe && <MyPowersRow />}
       {isMe ? (
         <MyFriends
           players={players}

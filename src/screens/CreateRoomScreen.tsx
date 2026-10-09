@@ -9,6 +9,8 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { PhaseTrack } from '@/components/game/PhaseTrack';
+import { StartPicker, startOptions } from '@/components/game/StartPicker';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
@@ -41,13 +43,14 @@ export function CreateRoomScreen() {
   const [name, setName] = useState(
     params.format ? `Fanta${params.format.charAt(0)}${params.format.slice(1).toLowerCase()}` : '',
   );
+  const [start, setStart] = useState({ id: 'tonight', hours: startOptions()[1].hours });
   const [mode, setMode] = useState<GameMode>(params.mode ?? 'sprint');
   const ready = name.trim().length > 1;
 
   const submit = () => {
     if (!ready) return;
     haptics.bonus();
-    const game = createGame({ name: name.trim(), mode, friendIds: invited });
+    const game = createGame({ name: name.trim(), mode, friendIds: invited, startsInHours: start.hours });
     router.replace({ pathname: '/game/[gameId]', params: { gameId: game.id } });
   };
 
@@ -63,6 +66,7 @@ export function CreateRoomScreen() {
         </PressableScale>
       </View>
 
+      <PhaseTrack status="setup" />
       <View style={styles.art}>
         <RubberHoseMascot size={130} color={colors.toonBlue} pose="cheer" />
       </View>
@@ -107,6 +111,13 @@ export function CreateRoomScreen() {
         })}
       </View>
 
+      <AppText variant="caption" color={colors.inkSoft}>
+        Quando si parte?
+      </AppText>
+      <View style={styles.start}>
+        <StartPicker value={start.id} onChange={(id, hours) => setStart({ id, hours })} />
+      </View>
+
       {friends.length > 0 && (
         <>
           <AppText variant="caption" color={colors.inkSoft}>
@@ -145,7 +156,9 @@ export function CreateRoomScreen() {
         label={
           invited.length
             ? `Crea e invita ${invited.length === 1 ? '1 amico' : `${invited.length} amici`}`
-            : 'Crea e inizia a giocare'
+            : start.id === 'now'
+              ? 'Crea e inizia a giocare'
+              : 'Crea e apri il pre-partita'
         }
         disabled={!ready}
         onPress={submit}
@@ -184,6 +197,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: space.sm,
   },
+  start: { marginBottom: space.md },
   modes: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   mode: {
     flex: 1,

@@ -117,21 +117,165 @@ export const RULES: Rule[] = [
     points: -3,
     emoji: '😴',
   },
+  {
+    id: 'r-dj',
+    categoryId: 'social',
+    label: 'Il DJ',
+    description: 'Prende il controllo della musica e la serata decolla.',
+    points: 5,
+    emoji: '🎧',
+  },
+  {
+    id: 'r-round',
+    categoryId: 'social',
+    label: 'Offre il giro',
+    description: 'Paga da bere a tutto il tavolo senza che nessuno lo chieda.',
+    points: 15,
+    emoji: '🍻',
+  },
+  {
+    id: 'r-photo',
+    categoryId: 'social',
+    label: 'Il Paparazzo',
+    description: 'Scatta la foto di gruppo che finirà nel profilo di tutti.',
+    points: 5,
+    emoji: '📸',
+  },
+  {
+    id: 'r-spill',
+    categoryId: 'food',
+    label: 'Il Rovesciatore',
+    description: 'Rovescia il bicchiere sulla tovaglia, o peggio su qualcuno.',
+    points: -5,
+    emoji: '🍷',
+  },
+  {
+    id: 'r-encore',
+    categoryId: 'food',
+    label: 'Il Bis',
+    description: 'Fa il bis del bis, e chiede se c’è il dolce.',
+    points: 5,
+    emoji: '🍝',
+  },
+  {
+    id: 'r-peak',
+    categoryId: 'sport',
+    label: 'La Vetta',
+    description: 'Arriva in cima alla camminata per primo, senza lamentarsi.',
+    points: 20,
+    emoji: '⛰️',
+  },
+  {
+    id: 'r-sunburn',
+    categoryId: 'sport',
+    label: 'Il Gambero',
+    description: 'Si scotta al sole nonostante tutti gli abbiano offerto la crema.',
+    points: -10,
+    emoji: '🦞',
+  },
 ];
+
+/**
+ * Carte personali dei giocatori (max 5 a testa, di più con Premium).
+ * Fase 2: tabella `custom_cards` su Supabase. Qui lo store le aggiunge a questo registro,
+ * così `ruleById` le trova ovunque (Feed, voto, profilo).
+ */
+export const CUSTOM_RULES: Rule[] = [
+  {
+    id: 'c-navigatore',
+    categoryId: 'chaos',
+    label: 'Il Navigatore',
+    description: 'Trova la strada giusta senza aprire Google Maps.',
+    points: 10,
+    emoji: '🧭',
+    authorId: 'u-me',
+  },
+  {
+    id: 'c-spoiler',
+    categoryId: 'social',
+    label: 'Lo Spoiler',
+    description: 'Rivela il finale della serie a chi non l’ha ancora vista.',
+    points: -10,
+    emoji: '🙊',
+    authorId: 'u-me',
+  },
+  {
+    id: 'c-karaoke',
+    categoryId: 'social',
+    label: 'La Popstar',
+    description: 'Prende il microfono al karaoke e non lo molla più.',
+    points: 15,
+    emoji: '🎤',
+    authorId: 'u-ale',
+  },
+  {
+    id: 'c-prof',
+    categoryId: 'chaos',
+    label: 'Il Prof',
+    description: 'Chiama un compagno con il cognome, come all’appello.',
+    points: -5,
+    emoji: '🧑‍🏫',
+    authorId: 'u-giulia',
+  },
+];
+
+/** Carte personali gratis per ogni giocatore. */
+export const FREE_CUSTOM_SLOTS = 5;
 
 export const POWER_UPS: PowerUp[] = [
   {
-    id: 'veto',
-    label: 'Veto',
-    description: "Annulla un'assegnazione contro di te prima che diventi ufficiale.",
-    unlock: 'ad',
+    id: 'boost',
+    label: 'Turbo',
+    emoji: '🚀',
+    description: 'Per 3 ore i tuoi bonus valgono doppio.',
+    hours: 3,
   },
   {
-    id: 'multiplier',
-    label: 'Moltiplicatore ×2',
-    description: 'Raddoppia il prossimo bonus che ricevi.',
-    unlock: 'ad',
+    id: 'accumulator',
+    label: 'Salvadanaio',
+    emoji: '🐷',
+    description: 'Per 6 ore i tuoi punti si accumulano e a fine effetto valgono +50%.',
+    hours: 6,
+  },
+  {
+    id: 'slowdown',
+    label: 'Moviola',
+    emoji: '🐢',
+    description: 'Per 2 ore i bonus degli altri valgono la metà.',
+    hours: 2,
+  },
+  {
+    id: 'shield',
+    label: 'Scudo',
+    emoji: '🛡️',
+    description: 'Il prossimo malus che ti chiamano non vale.',
+    hours: 0,
+  },
+  {
+    id: 'veto',
+    label: 'Veto',
+    emoji: '✋',
+    description: 'Annulla una chiamata contro di te prima che diventi ufficiale.',
+    hours: 0,
+  },
+  {
+    id: 'thief',
+    label: 'Ladro',
+    emoji: '🦝',
+    description: 'Ruba il prossimo bonus del primo in classifica.',
+    hours: 0,
+    premium: true,
+  },
+  {
+    id: 'jolly',
+    label: 'Jolly',
+    emoji: '🃏',
+    description: 'Per un’ora ogni carta che ti chiamano diventa un bonus.',
+    hours: 1,
+    premium: true,
   },
 ];
 
-export const ruleById = (id: string) => RULES.find((r) => r.id === id);
+export const powerById = (id?: string) => POWER_UPS.find((p) => p.id === id);
+
+export const ruleById = (id: string) => RULES.find((r) => r.id === id) ?? CUSTOM_RULES.find((r) => r.id === id);

@@ -4,6 +4,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
+import { PhaseTrack } from '@/components/game/PhaseTrack';
+import { PowersPanel } from '@/components/game/PowersPanel';
+import { PregamePanel } from '@/components/game/PregamePanel';
+import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
@@ -56,166 +60,180 @@ export function DashboardScreen() {
     : [];
   const captainId = myTeam ? captains[myTeam.id] : undefined;
   const toVote = calls.filter((c) => !c.myVote && c.playerId !== ME.id && c.authorId !== ME.id).length;
-  const goTo = (tab: 'feed' | 'leaderboard') => {
+  const goTo = (tab: 'feed' | 'leaderboard' | 'rules') => {
     haptics.tap();
     router.navigate({ pathname: `/game/[gameId]/${tab}`, params: { gameId: game.id } });
   };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <SectionHeader
-          title={toVote > 0 ? 'Da votare' : 'Chiamate'}
-          caption={
-            toVote > 0
-              ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-              : 'Hai votato tutto. Tocca + per chiamare un punto.'
-          }
-        />
-        <StoriesRow
-          calls={calls}
-          players={players}
-          onAdd={() => {
-            haptics.press();
-            openQuickAction();
-          }}
-          onOpen={(call) => {
-            haptics.tap();
-            router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
-          }}
-        />
-      </View>
-
-      {card && (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
-          onPress={() => {
-            haptics.press();
-            openQuickAction();
-          }}
-          style={styles.dayCard}>
-          <RuleSticker rule={card} size={84} />
-          <View style={styles.flex}>
-            <AppText variant="micro" color={colors.inkSoft}>
-              CARTA DEL GIORNO
-            </AppText>
-            <AppText variant="serifCard" numberOfLines={2}>
-              {card.label}
-            </AppText>
-            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-              Fino a fine {day.label.toLowerCase()} vale +{card.points * 2} invece di +{card.points}
-            </AppText>
-          </View>
-          <View style={styles.double}>
-            <AppText variant="headline">×2</AppText>
-          </View>
-        </PressableScale>
+      {game.status !== 'live' && <PhaseTrack status={game.status} />}
+      {game.status === 'waiting' && (
+        <>
+          <PregamePanel game={game} onOpenDeck={() => goTo('rules')} />
+          <PowersPanel game={game} now={now} />
+        </>
       )}
+      {game.status === 'ended' && <ResultsPanel game={game} />}
+      {game.status === 'live' && (
+        <>
+          <View style={styles.section}>
+            <SectionHeader
+              title={toVote > 0 ? 'Da votare' : 'Chiamate'}
+              caption={
+                toVote > 0
+                  ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+                  : 'Hai votato tutto. Tocca + per chiamare un punto.'
+              }
+            />
+            <StoriesRow
+              calls={calls}
+              players={players}
+              onAdd={() => {
+                haptics.press();
+                openQuickAction();
+              }}
+              onOpen={(call) => {
+                haptics.tap();
+                router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
+              }}
+            />
+          </View>
 
-      {myTeam && game.status !== 'ended' && (
-        <View style={styles.section}>
-          <SectionHeader title="Il tuo capitano" caption="I suoi punti di oggi contano doppio per la squadra." />
-          <View style={styles.card}>
-            <View style={styles.teamRow}>
-              <View style={[styles.teamDot, { backgroundColor: teamColor(game, myTeam.id) }]} />
-              <AppText variant="name">{myTeam.name}</AppText>
+          {card && (
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
+              onPress={() => {
+                haptics.press();
+                openQuickAction();
+              }}
+              style={styles.dayCard}>
+              <RuleSticker rule={card} size={84} />
+              <View style={styles.flex}>
+                <AppText variant="micro" color={colors.inkSoft}>
+                  CARTA DEL GIORNO
+                </AppText>
+                <AppText variant="serifCard" numberOfLines={2}>
+                  {card.label}
+                </AppText>
+                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                  Fino a fine {day.label.toLowerCase()} vale +{card.points * 2} invece di +{card.points}
+                </AppText>
+              </View>
+              <View style={styles.double}>
+                <AppText variant="headline">×2</AppText>
+              </View>
+            </PressableScale>
+          )}
+
+          {myTeam && (
+            <View style={styles.section}>
+              <SectionHeader title="Il tuo capitano" caption="I suoi punti di oggi contano doppio per la squadra." />
+              <View style={styles.card}>
+                <View style={styles.teamRow}>
+                  <View style={[styles.teamDot, { backgroundColor: teamColor(game, myTeam.id) }]} />
+                  <AppText variant="name">{myTeam.name}</AppText>
+                </View>
+                <View style={styles.members} accessibilityRole="radiogroup">
+                  {members.map((p) => {
+                    const isCaptain = p.id === captainId;
+                    return (
+                      <PressableScale
+                        key={p.id}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: isCaptain }}
+                        accessibilityLabel={`Capitano: ${p.name}`}
+                        onPress={() => {
+                          if (isCaptain) return;
+                          haptics.press();
+                          setCaptain(myTeam.id, p.id);
+                          showToast({ text: `${p.id === ME.id ? 'Sei tu' : p.name} il capitano di oggi` });
+                        }}
+                        style={[styles.member, isCaptain && styles.memberActive]}>
+                        <View>
+                          <Avatar player={p} size={48} sticker={false} />
+                          {isCaptain && (
+                            <View style={styles.badge}>
+                              <AppText variant="micro">C</AppText>
+                            </View>
+                          )}
+                        </View>
+                        <AppText variant="caption" color={isCaptain ? colors.ink : colors.inkSoft}>
+                          {p.id === ME.id ? 'Tu' : p.name}
+                        </AppText>
+                      </PressableScale>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
-            <View style={styles.members} accessibilityRole="radiogroup">
-              {members.map((p) => {
-                const isCaptain = p.id === captainId;
-                return (
-                  <PressableScale
-                    key={p.id}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isCaptain }}
-                    accessibilityLabel={`Capitano: ${p.name}`}
-                    onPress={() => {
-                      if (isCaptain) return;
-                      haptics.press();
-                      setCaptain(myTeam.id, p.id);
-                      showToast({ text: `${p.id === ME.id ? 'Sei tu' : p.name} il capitano di oggi` });
-                    }}
-                    style={[styles.member, isCaptain && styles.memberActive]}>
-                    <View>
-                      <Avatar player={p} size={48} sticker={false} />
-                      {isCaptain && (
-                        <View style={styles.badge}>
-                          <AppText variant="micro">C</AppText>
+          )}
+
+          <PowersPanel game={game} now={now} />
+          <View style={styles.section}>
+            <SectionHeader
+              title={`${day.label} ${day.index}`}
+              caption={today.length ? 'Il podio di oggi. Domani si riparte da zero.' : 'Ancora nessun punto oggi.'}
+              action={{ label: 'Classifica', onPress: () => goTo('leaderboard') }}
+            />
+            {today.length > 0 && (
+              <View style={[styles.card, styles.podium]}>
+                {[today[1], today[0], today[2]].map((r, i) =>
+                  r ? (
+                    <PressableScale
+                      key={r.player.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${i === 1 ? 'MVP di oggi' : `${i === 0 ? 2 : 3}° di oggi`}: ${r.player.name}, ${r.points} punti`}
+                      onPress={() => openPlayer(r.player.id)}
+                      style={[styles.step, i === 1 && styles.stepFirst]}>
+                      {i === 1 && (
+                        <View style={styles.mvp}>
+                          <AppText variant="micro" color={colors.inkInverse}>
+                            MVP
+                          </AppText>
                         </View>
                       )}
-                    </View>
-                    <AppText variant="caption" color={isCaptain ? colors.ink : colors.inkSoft}>
-                      {p.id === ME.id ? 'Tu' : p.name}
-                    </AppText>
-                  </PressableScale>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-      )}
-
-      <View style={styles.section}>
-        <SectionHeader
-          title={`${day.label} ${day.index}`}
-          caption={today.length ? 'Il podio di oggi. Domani si riparte da zero.' : 'Ancora nessun punto oggi.'}
-          action={{ label: 'Classifica', onPress: () => goTo('leaderboard') }}
-        />
-        {today.length > 0 && (
-          <View style={[styles.card, styles.podium]}>
-            {[today[1], today[0], today[2]].map((r, i) =>
-              r ? (
-                <PressableScale
-                  key={r.player.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${i === 1 ? 'MVP di oggi' : `${i === 0 ? 2 : 3}° di oggi`}: ${r.player.name}, ${r.points} punti`}
-                  onPress={() => openPlayer(r.player.id)}
-                  style={[styles.step, i === 1 && styles.stepFirst]}>
-                  {i === 1 && (
-                    <View style={styles.mvp}>
-                      <AppText variant="micro" color={colors.inkInverse}>
-                        MVP
+                      <Avatar player={r.player} size={i === 1 ? 64 : 48} sticker={false} />
+                      <AppText variant="name" numberOfLines={1}>
+                        {r.player.id === ME.id ? 'Tu' : r.player.name}
                       </AppText>
-                    </View>
-                  )}
-                  <Avatar player={r.player} size={i === 1 ? 64 : 48} sticker={false} />
-                  <AppText variant="name" numberOfLines={1}>
-                    {r.player.id === ME.id ? 'Tu' : r.player.name}
-                  </AppText>
-                  <AppText variant="caption" color={r.points > 0 ? colors.bonus : colors.malus}>
-                    {r.points > 0 ? `+${r.points}` : r.points}
-                  </AppText>
-                </PressableScale>
-              ) : (
-                <View key={i} style={styles.step} />
-              ),
+                      <AppText variant="caption" color={r.points > 0 ? colors.bonus : colors.malus}>
+                        {r.points > 0 ? `+${r.points}` : r.points}
+                      </AppText>
+                    </PressableScale>
+                  ) : (
+                    <View key={i} style={styles.step} />
+                  ),
+                )}
+              </View>
             )}
           </View>
-        )}
-      </View>
-
-      <View style={styles.section}>
-        <SectionHeader title="Ultimi punti" action={{ label: 'Vedi tutto', onPress: () => goTo('feed') }} />
-        {latest.length ? (
-          <View style={styles.list}>
-            {latest.map((e) => (
-              <FeedItem
-                key={e.id}
-                event={e}
-                now={now}
-                player={players.find((p) => p.id === e.playerId)}
-                author={players.find((p) => p.id === e.authorId)}
-                onOpenPlayer={openPlayer}
-              />
-            ))}
-          </View>
-        ) : (
-          <AppText variant="body" color={colors.inkSoft}>
-            Ancora nessun punto ufficiale. Qualcuno dovrà pur fare la prima figuraccia.
-          </AppText>
-        )}
-      </View>
+        </>
+      )}
+      {game.status !== 'waiting' && (
+        <View style={styles.section}>
+          <SectionHeader title="Ultimi punti" action={{ label: 'Vedi tutto', onPress: () => goTo('feed') }} />
+          {latest.length ? (
+            <View style={styles.list}>
+              {latest.map((e) => (
+                <FeedItem
+                  key={e.id}
+                  event={e}
+                  now={now}
+                  player={players.find((p) => p.id === e.playerId)}
+                  author={players.find((p) => p.id === e.authorId)}
+                  onOpenPlayer={openPlayer}
+                />
+              ))}
+            </View>
+          ) : (
+            <AppText variant="body" color={colors.inkSoft}>
+              Ancora nessun punto ufficiale. Qualcuno dovrà pur fare la prima figuraccia.
+            </AppText>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }

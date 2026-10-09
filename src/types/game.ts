@@ -1,6 +1,10 @@
 /** Modello di dominio di Fanta.me (condiviso tra UI, store e futuro backend). */
 
 export type GameMode = 'sprint' | 'marathon';
+/**
+ * Fasi della stanza: setting (creazione) → pre-partita (`waiting`: si propongono carte)
+ * → in partita (`live`) → conclusa con risultati (`ended`).
+ */
 export type GameStatus = 'live' | 'waiting' | 'ended';
 export type GameSetting = 'vacation' | 'office' | 'school' | 'party';
 
@@ -48,6 +52,21 @@ export interface Rule {
   points: number; // positivo = bonus, negativo = malus
   /** Emoji della carta: su iPhone/Mac è la emoji 3D di Apple */
   emoji: string;
+  /** Carta personale: creata da un giocatore con le sue regole */
+  authorId?: string;
+}
+
+/**
+ * Proposta di carta nel pre-partita: entra nel mazzo quando la maggioranza
+ * della stanza mette "mi piace" (chi propone conta già).
+ */
+export interface CardProposal {
+  id: string;
+  gameId: string;
+  ruleId: string;
+  authorId: string;
+  likes: string[];
+  status: 'open' | 'accepted';
 }
 
 export interface Team {
@@ -56,14 +75,27 @@ export interface Team {
   memberIds: string[];
 }
 
-export type PowerUpId = 'veto' | 'multiplier';
+export type PowerUpId = 'boost' | 'accumulator' | 'slowdown' | 'shield' | 'veto' | 'thief' | 'jolly';
 
+/** Fantapotere: ogni giocatore ne porta in partita uno principale e uno secondario, usabili una volta. */
 export interface PowerUp {
   id: PowerUpId;
   label: string;
+  emoji: string;
   description: string;
-  /** Si sblocca guardando una Rewarded Ad (Fase 3, RevenueCat/AdMob) */
-  unlock: 'ad' | 'free';
+  /** Durata dell'effetto in ore (0 = istantaneo) */
+  hours: number;
+  /** Solo nelle stanze Premium */
+  premium?: boolean;
+}
+
+export interface PowerActivation {
+  gameId: string;
+  playerId: string;
+  powerId: PowerUpId;
+  slot: 'main' | 'secondary';
+  at: string;
+  until: string;
 }
 
 export interface Game {
@@ -85,6 +117,10 @@ export interface Game {
   /** Squadre (fantasquadre) della lega, se previste */
   teams?: Team[];
   ruleIds: string[];
+  /** Stanza Premium: più carte personali per tutti e fantapoteri speciali */
+  premium?: boolean;
+  /** Chi ha creato la stanza (può avviarla dal pre-partita) */
+  ownerId?: string;
   /** Colore principale della mascotte della stanza */
   accent: string;
 }

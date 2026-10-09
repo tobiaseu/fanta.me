@@ -1,5 +1,5 @@
 import { colors } from '@/theme/tokens';
-import type { FeedEvent, FriendStatus, Game, Player, User } from '@/types/game';
+import type { CardProposal, FeedEvent, FriendStatus, Game, Player, PowerUpId, User } from '@/types/game';
 
 /** Dati finti per la Fase 1: sostituiti da Supabase nella Fase 2. */
 
@@ -123,10 +123,11 @@ export const GAMES: Game[] = [
     setting: 'school',
     mode: 'sprint',
     status: 'waiting',
+    ownerId: 'u-me',
     startsAt: hoursFromNow(72),
     endsAt: hoursFromNow(48 + 72),
     playerIds: ['u-me', 'u-sara', 'u-giulia', 'u-ale'],
-    ruleIds: ['r-toast', 'r-phone', 'r-late', 'r-fall', 'r-smurratona'],
+    ruleIds: ['r-toast', 'r-phone', 'r-late', 'r-fall', 'r-smurratona', 'r-photo', 'r-spill', 'r-dj'],
     accent: colors.cta,
   },
   {
@@ -291,3 +292,34 @@ export const FEED: FeedEvent[] = [
     votes: { confirm: 3, reject: 0 },
   },
 ];
+
+/** Proposte di carte nel pre-partita della Cena di classe. */
+export const PROPOSALS: CardProposal[] = [
+  {
+    id: 'pr1',
+    gameId: 'cena-classe',
+    ruleId: 'c-karaoke',
+    authorId: 'u-ale',
+    likes: ['u-ale', 'u-sara'],
+    status: 'open',
+  },
+  { id: 'pr2', gameId: 'cena-classe', ruleId: 'c-prof', authorId: 'u-giulia', likes: ['u-giulia'], status: 'open' },
+  {
+    id: 'pr3',
+    gameId: 'cena-classe',
+    ruleId: 'r-dj',
+    authorId: 'u-sara',
+    likes: ['u-sara', 'u-ale', 'u-giulia'],
+    status: 'accepted',
+  },
+];
+
+/** Fantapoteri scelti da ciascuno (principale + secondario). */
+export const POWERS: Record<string, { main: PowerUpId; secondary: PowerUpId }> = {
+  'u-me': { main: 'boost', secondary: 'shield' },
+  'u-ale': { main: 'slowdown', secondary: 'veto' },
+  'u-giulia': { main: 'accumulator', secondary: 'shield' },
+  'u-marco': { main: 'veto', secondary: 'boost' },
+  'u-sara': { main: 'boost', secondary: 'veto' },
+  'u-luca': { main: 'slowdown', secondary: 'accumulator' },
+};

@@ -52,6 +52,14 @@ con Dashboard in-game già navigabile su dati finti.
 - **Dinamiche FantaSanremo.** La partita è divisa in giornate (Sprint: 24 ore; Maratona: settimane).
   Ogni giornata ha una *carta del giorno* che vale doppio, ogni squadra sceglie un *capitano* i cui punti
   di oggi contano due volte, e la Dashboard mostra podio e MVP della giornata.
+- **Fasi della stanza.** Setting (creazione, con "Quando si parte?") → **pre-partita** (tutti propongono carte:
+  entrano nel mazzo con la maggioranza) → in partita (mazzo chiuso, fantapoteri attivabili) → risultati con trofei.
+- **Mazzo alla Clash Royale** (tab Regolamento): 20 carte base del gioco + 5 carte personali a testa, create
+  nell'editor `/card/new` (emoji, nome, regola, punti). Più carte con il popup `/premium`: pass a uso singolo
+  (+5 carte per te) o stanza Premium (10 carte a testa e poteri speciali). Pagamento finto; Fase 3 con RevenueCat.
+- **Fantapoteri.** Dal profilo (`/powers`) ognuno sceglie un potere principale e uno secondario: Turbo, Salvadanaio,
+  Moviola, Scudo, Veto, più Ladro e Jolly nelle stanze Premium. Si attivano una volta a partita dalla Dashboard;
+  Turbo e Moviola cambiano già i punti delle nuove chiamate, gli altri per ora sono solo descritti.
 - La sessione (mock) resta salvata nel browser: riaprendo la demo si salta il login. "Esci" dal profilo la azzera.
 - La **navbar esiste solo nel layout `game/[gameId]/_layout.tsx`**: la Lobby non può mostrarla nemmeno per errore.
 - Il tab centrale **▶ Aggiungi punti** non apre una pagina: apre un bottom sheet sopra qualsiasi tab
@@ -79,6 +87,9 @@ src/
 │   │   └── join.tsx              # /room/join   → Entra con codice (modale)
 │   ├── call/[eventId].tsx        # /call/:id    → Conferma punto (voto del gruppo)
 │   ├── player/[playerId].tsx     # /player/:id  → Profilo giocatore e amicizia
+│   ├── card/new.tsx              # /card/new    → Editor carta personale
+│   ├── premium.tsx               # /premium     → Popup Premium
+│   ├── powers.tsx                # /powers      → Scelta fantapoteri
 │   └── game/[gameId]/
 │       ├── _layout.tsx           # GameHeader + Tabs a 5 + Aggiungi punti
 │       ├── index.tsx             # Dashboard della partita
@@ -105,7 +116,8 @@ src/
 │   ├── icons/                    # Icone SVG in stile Vuesax (come nel Figma)
 │   ├── illustrations/            # Mascotte "Retro Rubber-Hose" + RuleSticker (emoji delle carte)
 │   ├── lobby/                    # RoomCard, FormatCarousel, LobbyActions, EmptyLobby
-│   └── game/                     # GameHeader, GameTabBar, QuickActionSheet, StoriesRow, FeedItem
+│   ├── cards/                    # DeckCard (carta alla Clash Royale), CardSheet
+│   └── game/                     # PhaseTrack, StartPicker, PregamePanel, ResultsPanel, PowersPanel, GameHeader, GameTabBar, QuickActionSheet, StoriesRow, FeedItem
 ├── store/                        # Zustand: useGameStore (dominio), useSessionStore (login, persistito), useUiStore (stato UI)
 ├── data/                         # Mock, dizionario regole, format evento (→ Supabase in Fase 2)
 ├── types/                        # Modello di dominio (Game, Rule, FeedEvent…)

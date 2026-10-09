@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
+import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { CoinIcon } from '@/components/ui/Brand';
@@ -57,6 +58,8 @@ export function ProfileScreen() {
         <View style={styles.divider} />
         <Stat label="totale" value={`${bonus + malus}`} color={colors.ink} />
       </View>
+
+      <MyPowersRow />
 
       <SectionHeader title="In questa stanza" />
       <View style={styles.list}>

@@ -7,6 +7,7 @@ import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { StepHeader } from '@/components/ui/StepHeader';
+import { StartPicker, startOptions } from '@/components/game/StartPicker';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
@@ -24,13 +25,14 @@ export function OnboardingRoomScreen() {
   const insets = useSafeAreaInsets();
   const createGame = useGameStore((s) => s.createGame);
   const [name, setName] = useState('Weekend al mare');
+  const [start, setStart] = useState({ id: 'tonight', hours: startOptions()[1].hours });
   const [mode, setMode] = useState<GameMode>('sprint');
   const ready = name.trim().length > 1;
 
   const submit = () => {
     if (!ready) return;
     haptics.bonus();
-    const game = createGame({ name: name.trim(), mode });
+    const game = createGame({ name: name.trim(), mode, startsInHours: start.hours });
     router.replace({ pathname: '/onboarding/invite', params: { gameId: game.id } });
   };
 
@@ -103,6 +105,13 @@ export function OnboardingRoomScreen() {
               );
             })}
           </View>
+        </View>
+
+        <View style={styles.field}>
+          <AppText variant="caption" color={colors.inkSoft}>
+            Quando si parte?
+          </AppText>
+          <StartPicker value={start.id} onChange={(id, hours) => setStart({ id, hours })} />
         </View>
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.md) }]}>

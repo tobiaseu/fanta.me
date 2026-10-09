@@ -9,7 +9,7 @@ import type { GameStatus } from '@/types/game';
 
 const CONFIG: Record<GameStatus, { label: string; color: string }> = {
   live: { label: 'in partita', color: colors.live },
-  waiting: { label: 'da iniziare', color: '#777777' },
+  waiting: { label: 'pre-partita', color: '#777777' },
   ended: { label: 'conclusa', color: colors.inkFaint },
 };
 

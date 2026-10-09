@@ -19,6 +19,9 @@ import { colors, MAX_APP_WIDTH } from '@/theme/tokens';
  *   /room/join        → Entra con codice (modale)
  *   /call/[eventId]   → Conferma punto: voto su una chiamata (modale a schermo intero)
  *   /player/[playerId]→ Profilo giocatore: carriera, leghe in comune, amicizia (modale)
+ *   /card/new         → Editor di una carta personale (modale)
+ *   /premium          → Popup Premium: pass a uso singolo o stanza Premium (modale)
+ *   /powers           → Scelta dei fantapoteri principale e secondario (modale)
  *   /game/[gameId]/*  → DASHBOARD IN-GAME (Tabs a 5 icone, vedi game/[gameId]/_layout)
  *
  * La navbar esiste solo dentro il layout della partita: la Lobby non può
