@@ -316,7 +316,9 @@ function Draggable({
     .onFinalize(() => setLifted(false));
   return (
     <GestureDetector gesture={pan}>
-      <View ref={cellRef} collapsable={false} style={[styles.cell, lifted && styles.liftedCell]}>{children}</View>
+      <View ref={cellRef} collapsable={false} style={[styles.cell, lifted && styles.liftedCell]}>
+        {children}
+      </View>
     </GestureDetector>
   );
 }

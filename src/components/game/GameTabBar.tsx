@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,13 +25,25 @@ export const TAB_BAR_SPACE = 72 + space.lg + space.md;
 
 /**
  * "Navbar 2" del Figma: pillola flottante in vetro sopra un gradiente.
- * Il tasto centrale (+ giallo su nero) non naviga: apre il Bottom Sheet "Aggiungi punti".
+ * Il tasto centrale giallo cambia con la fase: apri il mazzo, aggiungi punti, rivincita.
  */
 export function GameTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const openQuickAction = useUiStore((s) => s.openQuickAction);
-  // I punti si chiamano solo in partita: fuori dal "live" il + centrale sparisce
-  const live = useCurrentGame()?.status === 'live';
+  const router = useRouter();
+  const game = useCurrentGame();
+  // Il tasto centrale è sempre "la cosa da fare adesso": mazzo → punti → rivincita
+  const center: { icon: IconName; label: string; onPress: () => void } | undefined = !game
+    ? undefined
+    : game.status === 'waiting'
+      ? {
+          icon: 'grid',
+          label: 'Apri il mazzo',
+          onPress: () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } }),
+        }
+      : game.status === 'live'
+        ? { icon: 'plus', label: 'Aggiungi punti', onPress: openQuickAction }
+        : { icon: 'trophy', label: 'Rivincita', onPress: () => router.push('/room/new') };
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
@@ -45,19 +58,24 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
           const tint = focused ? colors.ink : colors.inkSoft;
 
           if (route.name === 'action') {
-            if (!live) return null;
+            if (!center) return null;
             return (
               <PressableScale
                 key={route.key}
                 accessibilityRole="button"
-                accessibilityLabel="Aggiungi punti"
+                accessibilityLabel={center.label}
                 onPress={() => {
                   haptics.press();
-                  openQuickAction();
+                  center.onPress();
                 }}
                 pressedScale={0.88}
                 style={styles.play}>
-                <Icon name="plus" size={30} color={colors.cta} strokeWidth={3} />
+                <Icon
+                  name={center.icon}
+                  size={center.icon === 'plus' ? 30 : 24}
+                  color={colors.ink}
+                  strokeWidth={center.icon === 'plus' ? 3 : 2.2}
+                />
               </PressableScale>
             );
           }
@@ -128,9 +146,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.cta,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 3,
+    ...shadow.card,
   },
 });

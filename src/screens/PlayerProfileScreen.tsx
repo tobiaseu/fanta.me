@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PlayerGameSection } from '@/components/game/PlayerGameSection';
 import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { Icon } from '@/components/icons/Icon';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
@@ -31,7 +32,8 @@ const ON_NAVY_MUTED = 'rgba(255, 255, 255, 0.6)';
  * Aperto su di me mostra amici e richieste.
  */
 export function PlayerProfileScreen() {
-  const { playerId } = useLocalSearchParams<{ playerId: string }>();
+  const { playerId, gameId, focus } = useLocalSearchParams<{ playerId: string; gameId?: string; focus?: string }>();
+  const scrollRef = useRef<ScrollView>(null);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const players = useGameStore((s) => s.players);
@@ -58,6 +60,11 @@ export function PlayerProfileScreen() {
     };
   }, [player, games, events, isMe]);
 
+  // La partita da raccontare: quella da cui arrivo, altrimenti una in corso che abbiamo in comune
+  const game =
+    games.find((g) => g.id === gameId) ??
+    (isMe ? undefined : shared.find((g) => g.status === 'live' && g.playerIds.includes(player?.id ?? '')));
+
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   if (!player) return null;
 
@@ -71,6 +78,7 @@ export function PlayerProfileScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.screen}
       contentContainerStyle={[
         styles.content,
@@ -108,10 +116,20 @@ export function PlayerProfileScreen() {
             onCancel={() => change('none', 'Richiesta annullata')}
             onAccept={() => change('friends', `Tu e ${player.name} ora siete amici`)}
             onDecline={() => change('none', 'Richiesta rifiutata')}
-            onCreateRoom={() => router.push({ pathname: '/room/new', params: { invite: player.id } })}
           />
         )}
       </View>
+
+      {game && !isMe && (
+        <View
+          style={styles.gameBlock}
+          onLayout={(e) => {
+            if (focus === 'formazione')
+              scrollRef.current?.scrollTo({ y: e.nativeEvent.layout.y - space.md, animated: true });
+          }}>
+          <PlayerGameSection game={game} player={player} />
+        </View>
+      )}
 
       {isMe && <MyPowersRow />}
       {isMe ? (
@@ -206,11 +224,10 @@ interface FriendActionProps {
   onCancel: () => void;
   onAccept: () => void;
   onDecline: () => void;
-  onCreateRoom: () => void;
 }
 
 /** Un solo passo alla volta: chiedi → in attesa → amici → giocate insieme. */
-function FriendAction({ player, status, onRequest, onCancel, onAccept, onDecline, onCreateRoom }: FriendActionProps) {
+function FriendAction({ player, status, onRequest, onCancel, onAccept, onDecline }: FriendActionProps) {
   if (status === 'received') {
     return (
       <View style={styles.action}>
@@ -252,7 +269,6 @@ function FriendAction({ player, status, onRequest, onCancel, onAccept, onDecline
             Amici
           </AppText>
         </View>
-        <Button label="Crea una stanza insieme" onPress={onCreateRoom} />
       </View>
     );
   }
@@ -314,6 +330,7 @@ function MyFriends({
 }
 
 const styles = StyleSheet.create({
+  gameBlock: { gap: space.lg },
   signOut: { alignSelf: 'center', paddingVertical: space.sm },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {

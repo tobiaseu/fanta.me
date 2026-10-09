@@ -5,6 +5,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PlayerMenu } from '@/components/ui/PlayerMenu';
 import { ToastHost } from '@/components/ui/ToastHost';
 import { colors, MAX_APP_WIDTH } from '@/theme/tokens';
 
@@ -63,6 +64,7 @@ export default function RootLayout() {
               options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
             />
           </Stack>
+          <PlayerMenu />
           <ToastHost />
         </View>
       </SafeAreaProvider>

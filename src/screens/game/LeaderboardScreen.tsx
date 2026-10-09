@@ -11,12 +11,13 @@ import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { computeStandings, computeTeamStandings, useGameStore } from '@/store/useGameStore';
+import { computeStandings, computeTeamStandings, gameDay, useGameStore } from '@/store/useGameStore';
 import { teamColor } from '@/lib/teams';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
 
 type View_ = 'teams' | 'players';
+type Period = 'all' | 'today';
 
 interface Row {
   id: string;
@@ -41,6 +42,7 @@ export function LeaderboardScreen() {
   const players = useGameStore((s) => s.players);
   const captains = useGameStore((s) => s.captains);
   const [mode, setMode] = useState<View_>(game?.teams?.length ? 'teams' : 'players');
+  const [period, setPeriod] = useState<Period>('all');
   const openPlayer = useOpenPlayer();
 
   const rows = useMemo<Row[]>(() => {
@@ -70,14 +72,23 @@ export function LeaderboardScreen() {
         trend: 0,
       }));
     };
-    const now = build(events);
-    const before = build(events.filter((e) => Date.now() - new Date(e.createdAt).getTime() > TREND_WINDOW_MS));
+    // "Oggi": solo i punti della giornata in corso, si riparte da zero ogni giorno
+    const { start, end } = gameDay(game, Date.now());
+    const inPeriod =
+      period === 'all'
+        ? events
+        : events.filter((e) => {
+            const t = new Date(e.createdAt).getTime();
+            return t >= start && t < end;
+          });
+    const now = build(inPeriod);
+    const before = build(inPeriod.filter((e) => Date.now() - new Date(e.createdAt).getTime() > TREND_WINDOW_MS));
     return now.map((r, i) => ({
       ...r,
       place: now.findIndex((x) => x.points === r.points) + 1,
       trend: before.findIndex((b) => b.id === r.id) - i,
     }));
-  }, [game, events, players, mode, captains]);
+  }, [game, events, players, mode, captains, period]);
 
   if (!game) return null;
 
@@ -116,6 +127,29 @@ export function LeaderboardScreen() {
           ))}
         </View>
       ) : null}
+
+      <View style={styles.periods} accessibilityRole="tablist">
+        {(
+          [
+            ['all', 'Tutta la partita'],
+            ['today', `Oggi · ${gameDay(game, Date.now()).label} ${gameDay(game, Date.now()).index}`],
+          ] as const
+        ).map(([id, label]) => (
+          <Pressable
+            key={id}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: period === id }}
+            onPress={() => {
+              haptics.tap();
+              setPeriod(id);
+            }}
+            style={[styles.period, period === id && styles.periodActive]}>
+            <AppText variant="caption" color={period === id ? colors.inkInverse : colors.inkSoft}>
+              {label}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
 
       <View style={styles.podium}>
         {podium.map((row, i) => {
@@ -207,6 +241,15 @@ const styles = StyleSheet.create({
   segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md + 4, padding: 4 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.sm, borderRadius: radius.md },
   segmentActive: { backgroundColor: colors.surface },
+  periods: { flexDirection: 'row', gap: space.xs, marginTop: -space.sm },
+  period: {
+    paddingHorizontal: space.sm,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.inkFaint,
+  },
+  periodActive: { backgroundColor: colors.ink, borderColor: colors.ink },
   podium: { flexDirection: 'row', alignItems: 'flex-end', gap: space.xs },
   podiumCol: { flex: 1, alignItems: 'center', gap: space.sm },
   podiumHead: { alignItems: 'center', gap: space.xs },

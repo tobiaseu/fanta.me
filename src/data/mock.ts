@@ -1,5 +1,14 @@
 import { colors } from '@/theme/tokens';
-import type { CardProposal, FeedEvent, FriendStatus, Game, Player, PowerUpId, User } from '@/types/game';
+import type {
+  CardProposal,
+  FeedEvent,
+  FriendStatus,
+  Game,
+  Player,
+  PowerActivation,
+  PowerUpId,
+  User,
+} from '@/types/game';
 
 /** Dati finti per la Fase 1: sostituiti da Supabase nella Fase 2. */
 
@@ -203,6 +212,17 @@ export const FEED: FeedEvent[] = [
     createdAt: minutesAgo(26),
     votes: { confirm: 1, reject: 2 },
   },
+  {
+    id: 'p5',
+    status: 'pending',
+    gameId: 'fantapasquetta',
+    playerId: 'u-sara',
+    ruleId: 'r-fall',
+    points: -5,
+    authorId: 'u-giulia',
+    createdAt: minutesAgo(6),
+    votes: { confirm: 1, reject: 0 },
+  },
   // Punteggi ufficiali
   {
     id: 'e1',
@@ -247,6 +267,7 @@ export const FEED: FeedEvent[] = [
     authorId: 'u-me',
     createdAt: minutesAgo(180),
     votes: { confirm: 3, reject: 0 },
+    review: 'Acqua a 14 gradi, è entrata urlando ma è entrata. Rispetto.',
   },
   {
     id: 'e5',
@@ -269,6 +290,55 @@ export const FEED: FeedEvent[] = [
     authorId: 'u-ale',
     createdAt: minutesAgo(300),
     votes: { confirm: 3, reject: 0 },
+  },
+  // Il diario di Sara nella Fantapasquetta
+  {
+    id: 'e10',
+    status: 'confirmed',
+    gameId: 'fantapasquetta',
+    playerId: 'u-sara',
+    ruleId: 'r-sunrise',
+    points: 25,
+    authorId: 'u-luca',
+    createdAt: minutesAgo(60 * 26),
+    votes: { confirm: 4, reject: 0 },
+    review: "Sveglia alle 5:40 per vedere l'alba dal pontile. Unica sopravvissuta.",
+  },
+  {
+    id: 'e11',
+    status: 'confirmed',
+    gameId: 'fantapasquetta',
+    playerId: 'u-sara',
+    ruleId: 'r-burn',
+    points: -10,
+    authorId: 'u-marco',
+    createdAt: minutesAgo(60 * 21),
+    votes: { confirm: 3, reject: 1 },
+    review: 'Salsicce carbonizzate "per sicurezza". Il cane ha rifiutato.',
+  },
+  {
+    id: 'e12',
+    status: 'confirmed',
+    gameId: 'fantapasquetta',
+    playerId: 'u-sara',
+    ruleId: 'r-dishes',
+    points: 15,
+    authorId: 'u-giulia',
+    createdAt: minutesAgo(60 * 9),
+    votes: { confirm: 4, reject: 0 },
+    review: 'Ha lavato i piatti di tutti senza che nessuno lo chiedesse. Sospetto.',
+  },
+  {
+    id: 'e13',
+    status: 'confirmed',
+    gameId: 'fantapasquetta',
+    playerId: 'u-sara',
+    ruleId: 'r-nap',
+    points: -3,
+    authorId: 'u-ale',
+    createdAt: minutesAgo(60 * 5),
+    votes: { confirm: 3, reject: 0 },
+    review: "Pennichella sull'amaca durante la partita a carte. Russava.",
   },
   {
     id: 'e7',
@@ -305,8 +375,35 @@ export const FEED: FeedEvent[] = [
   },
 ];
 
+const toProposals = (gameId: string, pairs: readonly (readonly [string, string])[], from = 0): CardProposal[] =>
+  pairs.map(([ruleId, authorId], i) => ({
+    id: `pr${from + i + 1}`,
+    gameId,
+    ruleId,
+    authorId,
+    likes: [authorId],
+    status: 'accepted' as const,
+  }));
+
+/** Chi ha messo quale carta nel mazzo della Fantapasquetta: la "formazione" di ognuno. */
+const PASQUETTA_PAIRS = [
+  ['r-smurratona', 'u-ale'],
+  ['r-cook', 'u-me'],
+  ['r-dishes', 'u-giulia'],
+  ['r-burn', 'u-marco'],
+  ['r-toast', 'u-ale'],
+  ['r-new', 'u-giulia'],
+  ['r-phone', 'u-marco'],
+  ['r-late', 'u-luca'],
+  ['r-lost', 'u-luca'],
+  ['r-swim', 'u-sara'],
+  ['r-sunrise', 'u-sara'],
+  ['r-nap', 'u-sara'],
+  ['r-fall', 'u-sara'],
+] as const;
+
 /** Proposte di carte nel pre-partita della Cena di classe. */
-export const PROPOSALS: CardProposal[] = (
+const CENA_PROPOSALS: CardProposal[] = (
   [
     ['r-toast', 'u-ale'],
     ['r-phone', 'u-giulia'],
@@ -327,6 +424,20 @@ export const PROPOSALS: CardProposal[] = (
   likes: [authorId],
   status: 'accepted' as const,
 }));
+
+export const PROPOSALS: CardProposal[] = [...CENA_PROPOSALS, ...toProposals('fantapasquetta', PASQUETTA_PAIRS, 100)];
+
+/** Fantapoteri già attivati: Sara è in Turbo nella Fantapasquetta. */
+export const ACTIVATIONS: PowerActivation[] = [
+  {
+    gameId: 'fantapasquetta',
+    playerId: 'u-sara',
+    powerId: 'boost',
+    slot: 'main',
+    at: minutesAgo(40),
+    until: hoursFromNow(1.4),
+  },
+];
 
 /** Fantapoteri scelti da ciascuno (principale + secondario). */
 export const POWERS: Record<string, { main: PowerUpId; secondary: PowerUpId }> = {

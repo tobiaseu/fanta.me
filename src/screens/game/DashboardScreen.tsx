@@ -20,7 +20,7 @@ import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
 import { teamColor } from '@/lib/teams';
-import { cardOfDay, computeDayStandings, gameDay, useGameStore } from '@/store/useGameStore';
+import { cardOfDay, gameDay, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
@@ -42,12 +42,11 @@ export function DashboardScreen() {
   const showToast = useUiStore((s) => s.showToast);
   const openPlayer = useOpenPlayer();
 
-  const { calls, latest, today } = useMemo(() => {
+  const { calls, latest } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id);
     return {
       calls: mine.filter((e) => e.status === 'pending').sort((a, b) => Number(!!a.myVote) - Number(!!b.myVote)),
       latest: mine.filter((e) => e.status === 'confirmed').slice(0, 3),
-      today: game ? computeDayStandings(game, events, players, now).filter((r) => r.points !== 0) : [],
     };
   }, [events, players, game, now]);
 
@@ -173,44 +172,6 @@ export function DashboardScreen() {
           )}
 
           <PowersPanel game={game} now={now} />
-          <View style={styles.section}>
-            <SectionHeader
-              title={`${day.label} ${day.index}`}
-              caption={today.length ? 'Il podio di oggi. Domani si riparte da zero.' : 'Ancora nessun punto oggi.'}
-              action={{ label: 'Classifica', onPress: () => goTo('leaderboard') }}
-            />
-            {today.length > 0 && (
-              <View style={[styles.card, styles.podium]}>
-                {[today[1], today[0], today[2]].map((r, i) =>
-                  r ? (
-                    <PressableScale
-                      key={r.player.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${i === 1 ? 'MVP di oggi' : `${i === 0 ? 2 : 3}° di oggi`}: ${r.player.name}, ${r.points} punti`}
-                      onPress={() => openPlayer(r.player.id)}
-                      style={[styles.step, i === 1 && styles.stepFirst]}>
-                      {i === 1 && (
-                        <View style={styles.mvp}>
-                          <AppText variant="micro" color={colors.inkInverse}>
-                            MVP
-                          </AppText>
-                        </View>
-                      )}
-                      <Avatar player={r.player} size={i === 1 ? 64 : 48} sticker={false} />
-                      <AppText variant="name" numberOfLines={1}>
-                        {r.player.id === ME.id ? 'Tu' : r.player.name}
-                      </AppText>
-                      <AppText variant="caption" color={r.points > 0 ? colors.bonus : colors.malus}>
-                        {r.points > 0 ? `+${r.points}` : r.points}
-                      </AppText>
-                    </PressableScale>
-                  ) : (
-                    <View key={i} style={styles.step} />
-                  ),
-                )}
-              </View>
-            )}
-          </View>
         </>
       )}
       {game.status !== 'waiting' && (

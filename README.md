@@ -83,6 +83,13 @@ con Dashboard in-game già navigabile su dati finti.
 - **Il Libro del Fanta** (`/rulebook`): regole, momenti del gioco, etica.
 - Il pulsante centrale **+** della navbar appare solo con la partita in corso.
 
+### Flusso round 6
+
+- **Classifica**: toggle "Tutta la partita / Oggi" (la classifica del giorno non è più in Dashboard).
+- **Tasto centrale giallo** che cambia con la fase: Apri il mazzo → + Aggiungi punti → Rivincita.
+- **Menù giocatore stile Clash** (`PlayerMenu`): Guarda formazione, Guarda profilo, Chiedi l'amicizia (se non siete amici).
+- **Profilo in partita**: formazione (carte messe nel mazzo, ombreggiatura Rara = carta del giorno, Furia = chiamata in corso), fantapoteri con quello attivo evidenziato, diario cronologico dei punti con data/ora e commento di chi ha chiamato.
+
 ## Albero delle directory
 
 ```

@@ -160,4 +160,6 @@ export interface FeedEvent {
   votes: { confirm: number; reject: number };
   /** Chiamata sulla carta del giorno: punti già raddoppiati */
   double?: boolean;
+  /** Il commento di chi ha chiamato il punto: la "recensione" del momento */
+  review?: string;
 }

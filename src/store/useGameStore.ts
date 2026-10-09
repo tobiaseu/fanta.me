@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { FEED, FRIENDSHIPS, GAMES, ME, PLAYERS, POWERS, PROPOSALS } from '@/data/mock';
+import { ACTIVATIONS, FEED, FRIENDSHIPS, GAMES, ME, PLAYERS, POWERS, PROPOSALS } from '@/data/mock';
 import { CUSTOM_RULES, FREE_CUSTOM_SLOTS, POWER_UPS, RULES, ruleById } from '@/data/rules';
 import type {
   CardProposal,
@@ -244,7 +244,7 @@ export const useGameStore = create<GameState>((set) => ({
       const next = { ...mine, [slot]: powerId, ...(mine[other] === powerId ? { [other]: mine[slot] } : {}) };
       return { powers: { ...s.powers, [ME.id]: next } };
     }),
-  activations: [],
+  activations: ACTIVATIONS,
   activatePower: (gameId, slot) => {
     const s = useGameStore.getState();
     if (s.activations.some((a) => a.gameId === gameId && a.playerId === ME.id && a.slot === slot)) return undefined;

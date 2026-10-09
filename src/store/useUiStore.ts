@@ -15,6 +15,10 @@ interface UiState {
   toast?: Toast;
   showToast: (toast: Omit<Toast, 'id'>) => void;
   hideToast: () => void;
+  /** Menù rapido su un giocatore (stile Clash): formazione, profilo, amicizia */
+  playerMenu?: { playerId: string; gameId?: string };
+  openPlayerMenu: (playerId: string, gameId?: string) => void;
+  closePlayerMenu: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -24,4 +28,7 @@ export const useUiStore = create<UiState>((set) => ({
   toast: undefined,
   showToast: (toast) => set({ toast: { ...toast, id: Date.now() } }),
   hideToast: () => set({ toast: undefined }),
+  playerMenu: undefined,
+  openPlayerMenu: (playerId, gameId) => set({ playerMenu: { playerId, gameId } }),
+  closePlayerMenu: () => set({ playerMenu: undefined }),
 }));
