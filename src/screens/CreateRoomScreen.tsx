@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons/Icon';
 import { RubberHoseMascot } from '@/components/illustrations/RubberHoseMascot';
 import { AppText } from '@/components/ui/AppText';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { haptics } from '@/lib/haptics';
@@ -22,8 +23,16 @@ const MODES: { id: GameMode; title: string; body: string; icon: 'clock' | 'calen
 export function CreateRoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ mode?: GameMode; format?: string }>();
+  const params = useLocalSearchParams<{ mode?: GameMode; format?: string; invite?: string }>();
   const createGame = useGameStore((s) => s.createGame);
+  const players = useGameStore((s) => s.players);
+  const friendships = useGameStore((s) => s.friendships);
+  const friends = useMemo(() => players.filter((p) => friendships[p.id] === 'friends'), [players, friendships]);
+  const [invited, setInvited] = useState<string[]>(params.invite ? [params.invite] : []);
+  const toggle = (id: string) => {
+    haptics.tap();
+    setInvited((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+  };
   const [name, setName] = useState(params.format ? `Fanta${params.format.charAt(0)}${params.format.slice(1).toLowerCase()}` : '');
   const [mode, setMode] = useState<GameMode>(params.mode ?? 'sprint');
   const ready = name.trim().length > 1;
@@ -31,7 +40,7 @@ export function CreateRoomScreen() {
   const submit = () => {
     if (!ready) return;
     haptics.bonus();
-    const game = createGame({ name: name.trim(), mode });
+    const game = createGame({ name: name.trim(), mode, friendIds: invited });
     router.replace({ pathname: '/game/[gameId]', params: { gameId: game.id } });
   };
 
@@ -91,7 +100,45 @@ export function CreateRoomScreen() {
         })}
       </View>
 
-      <Button label="Crea e inizia a giocare" disabled={!ready} onPress={submit} />
+      {friends.length > 0 && (
+        <>
+          <AppText variant="caption" color={colors.inkSoft}>
+            Invita amici
+          </AppText>
+          <View style={styles.friends}>
+            {friends.map((f) => {
+              const selected = invited.includes(f.id);
+              return (
+                <Pressable
+                  key={f.id}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: selected }}
+                  accessibilityLabel={`Invita ${f.name}`}
+                  onPress={() => toggle(f.id)}
+                  style={styles.friend}>
+                  <View style={[styles.ring, selected && styles.ringActive]}>
+                    <Avatar player={f} size={48} sticker={false} />
+                    {selected && (
+                      <View style={styles.check}>
+                        <Icon name="check" size={12} color={colors.ink} strokeWidth={3} />
+                      </View>
+                    )}
+                  </View>
+                  <AppText variant="micro" color={selected ? colors.ink : colors.inkSoft}>
+                    {f.name}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
+      )}
+
+      <Button
+        label={invited.length ? `Crea e invita ${invited.length === 1 ? '1 amico' : `${invited.length} amici`}` : 'Crea e inizia a giocare'}
+        disabled={!ready}
+        onPress={submit}
+      />
     </ScrollView>
   );
 }
@@ -138,4 +185,19 @@ const styles = StyleSheet.create({
   },
   modeSelected: { borderColor: colors.cta },
   regular: { fontWeight: '400' },
+  friends: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, marginBottom: space.md },
+  friend: { alignItems: 'center', gap: space.xxs },
+  ring: { padding: 3, borderRadius: 30, borderWidth: 3, borderColor: 'transparent' },
+  ringActive: { borderColor: colors.cta },
+  check: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.cta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

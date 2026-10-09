@@ -38,7 +38,8 @@ con Dashboard in-game già navigabile su dati finti.
                    navbar flottante: Feed · Regolamento · ▶ Punti · Classifica · Profilo
    │ tap su una storia
    ▼
-/call/[eventId]    CONFERMA PUNTO (modale a schermo intero): Rifiuta · Conferma · Ignora
+/call/[eventId]    CONFERMA PUNTO (modale a schermo intero): Rifiuta · Conferma · Decido dopo
+/player/[id]       PROFILO GIOCATORE (modale): carriera, leghe in comune, amicizia
 ```
 
 - La **navbar esiste solo nel layout `game/[gameId]/_layout.tsx`**: la Lobby non può mostrarla nemmeno per errore.
@@ -47,6 +48,11 @@ con Dashboard in-game già navigabile su dati finti.
 - **I punti sono chiamate, non sentenze.** Chi assegna punti crea una *chiamata* (`status: 'pending'`)
   che compare nelle storie del Feed; il gruppo la vota in "Conferma punto". Classifica e profilo
   contano solo le chiamate confermate. Così il gioco resta sociale e nessuno si autoassegna +50.
+  Una chiamata diventa ufficiale (o scartata) quando una parte raggiunge la maggioranza di chi può
+  votare, cioè tutti tranne il giocatore chiamato.
+- **Ogni persona è toccabile** (Feed, Classifica, Profilo, Conferma punto) e apre il suo profilo:
+  da lì si chiede l'amicizia, e tra amici si crea una stanza insieme (gli amici si invitano con un tocco).
+- Ogni azione che cambia lo stato mostra un toast in alto con **Annulla**.
 
 ## Albero delle directory
 
@@ -59,6 +65,7 @@ src/
 │   │   ├── new.tsx               # /room/new    → Crea stanza (modale)
 │   │   └── join.tsx              # /room/join   → Entra con codice (modale)
 │   ├── call/[eventId].tsx        # /call/:id    → Conferma punto (voto del gruppo)
+│   ├── player/[playerId].tsx     # /player/:id  → Profilo giocatore e amicizia
 │   └── game/[gameId]/
 │       ├── _layout.tsx           # Tabs a 5 + Top Bar + Aggiungi punti
 │       ├── index.tsx             # Feed live
@@ -71,21 +78,22 @@ src/
 │   ├── CreateRoomScreen.tsx
 │   ├── JoinRoomScreen.tsx
 │   ├── CallScreen.tsx
+│   ├── PlayerProfileScreen.tsx
 │   └── game/
 │       ├── FeedScreen.tsx
 │       ├── RulesScreen.tsx
 │       ├── LeaderboardScreen.tsx
 │       └── ProfileScreen.tsx
 ├── components/
-│   ├── ui/                       # Primitive: AppText, Button, TopBar, Avatar, StatusBadge, Brand, PressableScale
+│   ├── ui/                       # Primitive: AppText, Button, TopBar, Avatar, StatusBadge, Brand, ToastHost, PressableScale
 │   ├── icons/                    # Icone SVG in stile Vuesax (come nel Figma)
 │   ├── illustrations/            # Mascotte "Retro Rubber-Hose" + RuleSticker (emoji delle carte)
 │   ├── lobby/                    # CareerHeader, LeagueCard, FormatCarousel, LobbyActions, EmptyLobby
-│   └── game/                     # GameTabBar, QuickActionSheet, StoriesRow, CountdownStrip, FeedItem, PlayerCard
+│   └── game/                     # GameTabBar, QuickActionSheet, StoriesRow, CountdownStrip, FeedItem
 ├── store/                        # Zustand: useGameStore (dominio), useUiStore (stato UI)
 ├── data/                         # Mock, dizionario regole, format evento (→ Supabase in Fase 2)
 ├── types/                        # Modello di dominio (Game, Rule, FeedEvent…)
-├── hooks/                        # useNow (countdown), useCurrentGame
+├── hooks/                        # useNow (countdown), useCurrentGame, useOpenPlayer
 ├── lib/                          # haptics, formattazione tempi
 └── theme/                        # Design tokens (colori, spazi, raggi, tipografia)
 ```
@@ -111,7 +119,7 @@ Token presi dal file Figma (pagina *Prototype* e *Component master*).
 | `bonusBright` / `malus` | `#1CB100` / `#D92D20` | Punti di una carta |
 | `space` | 4 · 8 · 12 · **16** · **24** · 32 · 48 | Gap costanti |
 | `radius` | 12 · 16 · **24** · 28 · 36 (top bar) · pill | Card morbide |
-| tipografia | SF/system 600, titoli carta in serif | Le carte trofeo parlano "da trofeo" |
+| tipografia | SF/system 600, titoli delle carte in **Fraunces** | Serif morbido e un po' storto, coerente con le mascotte |
 
 Carte: ogni carta ha la sua emoji di sistema in grande (su iPhone e Mac sono le emoji 3D di Apple),
 con un'ombra morbida che la "posa" sulla carta. Le mascotte rubber-hose restano solo negli stati vuoti.

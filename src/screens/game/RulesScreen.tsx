@@ -7,6 +7,7 @@ import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
 import { POWER_UPS, RULE_CATEGORIES, RULES } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
+import { useGameStore } from '@/store/useGameStore';
 import { haptics } from '@/lib/haptics';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Rule } from '@/types/game';
@@ -32,15 +33,17 @@ function Pills({ rule, big }: { rule: Rule; big?: boolean }) {
   );
 }
 
-function TrophyCard({ rule, featured }: { rule: Rule; featured?: boolean }) {
+function TrophyCard({ rule, featured, note }: { rule: Rule; featured?: boolean; note?: string }) {
   return (
     <View style={[styles.card, featured && styles.featured]}>
       <AppText variant={featured ? 'serifTitle' : 'serifCard'} color={featured ? colors.inkSoft : colors.ink} numberOfLines={1}>
         {rule.label}
       </AppText>
-      <AppText variant={featured ? 'headline' : 'micro'} color={colors.inkSoft} style={styles.subtitle}>
-        Carta trofeo
-      </AppText>
+      {note && (
+        <AppText variant="headline" color={colors.inkSoft} style={styles.subtitle}>
+          {note}
+        </AppText>
+      )}
       <View style={styles.art}>
         <RuleSticker rule={rule} size={featured ? 190 : 120} />
       </View>
@@ -62,17 +65,23 @@ function TrophyCard({ rule, featured }: { rule: Rule; featured?: boolean }) {
 export function RulesScreen() {
   const game = useCurrentGame();
   const [filter, setFilter] = useState<Filter>('all');
+  const events = useGameStore((s) => s.events);
   if (!game) return null;
 
   const rules = RULES.filter((r) => game.ruleIds.includes(r.id));
-  const featured = rules[0];
+  // In evidenza la carta più confermata in questa lega (all'inizio, la prima del mazzo)
+  const counts = new Map<string, number>();
+  for (const e of events) if (e.gameId === game.id && e.status === 'confirmed') counts.set(e.ruleId, (counts.get(e.ruleId) ?? 0) + 1);
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const featured = rules.find((r) => r.id === top?.[0]) ?? rules[0];
+  const featuredNote = top ? (top[1] === 1 ? 'La più confermata finora' : `Confermata ${top[1]} volte`) : 'Prima carta del mazzo';
   const deck = rules.filter(
     (r) => r.id !== featured?.id && (filter === 'all' || (filter === 'bonus' ? r.points > 0 : r.points < 0)),
   );
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {featured && <TrophyCard rule={featured} featured />}
+      {featured && <TrophyCard rule={featured} featured note={featuredNote} />}
 
       <View style={styles.headerRow}>
         <AppText variant="title">Il mazzo</AppText>
@@ -193,7 +202,7 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: space.xs,
     alignSelf: 'flex-start',
-    backgroundColor: colors.cta,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radius.pill,
     paddingHorizontal: space.sm,
     paddingVertical: 5,

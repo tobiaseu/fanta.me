@@ -38,6 +38,8 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const allPlayers = useGameStore((s) => s.players);
   const players = useMemo(() => allPlayers.filter((p) => game.playerIds.includes(p.id)), [allPlayers, game.playerIds]);
   const assignPoints = useGameStore((s) => s.assignPoints);
+  const restoreEvent = useGameStore((s) => s.restoreEvent);
+  const showToast = useUiStore((s) => s.showToast);
 
   const [playerId, setPlayerId] = useState<string>();
   const [kind, setKind] = useState<RuleKind>('bonus');
@@ -51,10 +53,16 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
 
   const confirm = () => {
     if (!player || !rule) return;
-    assignPoints({ gameId: game.id, playerId: player.id, ruleId: rule.id });
+    const event = assignPoints({ gameId: game.id, playerId: player.id, ruleId: rule.id });
     if (rule.points > 0) haptics.bonus();
     else haptics.malus();
     onDone();
+    if (event) {
+      showToast({
+        text: `Chiamata inviata: ${rule.label} su ${player.name}`,
+        action: { label: 'Annulla', onPress: () => restoreEvent(undefined, event.id) },
+      });
+    }
   };
 
   return (

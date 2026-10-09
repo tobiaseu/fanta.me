@@ -5,8 +5,10 @@ import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { CoinIcon } from '@/components/ui/Brand';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
+import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { computeStandings, useGameStore } from '@/store/useGameStore';
 import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 
@@ -15,6 +17,7 @@ export function ProfileScreen() {
   const game = useCurrentGame();
   const events = useGameStore((s) => s.events);
   const players = useGameStore((s) => s.players);
+  const openPlayer = useOpenPlayer();
 
   const { bonus, malus, standings, team } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id && e.playerId === ME.id && e.status === 'confirmed');
@@ -35,10 +38,15 @@ export function ProfileScreen() {
         <View style={[shadow.avatar, styles.avatarShadow]}>
           <Avatar player={ME} size={120} sticker={false} />
         </View>
-        <AppText variant="title">{team?.name ?? ME.name}</AppText>
-        <AppText variant="caption" color={colors.inkFaint}>
-          {ME.name} · {myRank}° in {game.name}
+        <AppText variant="title">{ME.name}</AppText>
+        <AppText variant="caption" color={colors.inkSoft}>
+          {myRank}° in classifica{team ? `, squadra ${team.name}` : ''}
         </AppText>
+        <PressableScale accessibilityRole="button" onPress={() => openPlayer(ME.id)} hitSlop={8} style={styles.link}>
+          <AppText variant="caption" color={colors.live}>
+            Carriera e amici
+          </AppText>
+        </PressableScale>
       </View>
 
       <View style={styles.balance}>
@@ -54,7 +62,12 @@ export function ProfileScreen() {
         {standings
           .filter((r) => r.player.id !== ME.id)
           .map((r) => (
-            <View key={r.player.id} style={styles.row}>
+            <PressableScale
+              key={r.player.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Profilo di ${r.player.name}`}
+              onPress={() => openPlayer(r.player.id)}
+              style={styles.row}>
               <Avatar player={r.player} size={40} sticker={false} />
               <View style={styles.flex}>
                 <AppText variant="name">{r.player.name}</AppText>
@@ -66,7 +79,7 @@ export function ProfileScreen() {
               <AppText variant="name" color="#D9A400">
                 {r.points}
               </AppText>
-            </View>
+            </PressableScale>
           ))}
       </View>
     </ScrollView>
@@ -97,6 +110,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   avatarShadow: { borderRadius: 60 },
+  link: { paddingVertical: 4 },
   hero: { alignItems: 'center', gap: space.xs, paddingTop: space.md },
   balance: {
     flexDirection: 'row',

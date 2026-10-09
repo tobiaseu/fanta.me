@@ -23,7 +23,7 @@ export const TAB_BAR_SPACE = 72 + space.lg + space.md;
 
 /**
  * "Navbar 2" del Figma: pillola flottante in vetro sopra un gradiente.
- * Il tasto centrale giallo non naviga: apre il Bottom Sheet "Aggiungi punti".
+ * Il tasto centrale (+ giallo su nero) non naviga: apre il Bottom Sheet "Aggiungi punti".
  */
 export function GameTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -36,7 +36,8 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
           const tab = TABS[route.name];
           if (!tab) return null;
           const focused = state.index === index;
-          const tint = focused ? colors.ink : colors.inkFaint;
+          // inattivi in #6E6E6E: contrasto 4,9:1 sul vetro chiaro (WCAG AA)
+          const tint = focused ? colors.ink : colors.inkSoft;
 
           if (route.name === 'action') {
             return (
@@ -50,7 +51,7 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
                 }}
                 pressedScale={0.88}
                 style={styles.play}>
-                <Icon name="play" size={30} color={colors.cta} />
+                <Icon name="plus" size={30} color={colors.cta} strokeWidth={3} />
               </PressableScale>
             );
           }

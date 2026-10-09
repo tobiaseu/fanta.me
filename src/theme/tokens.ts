@@ -78,8 +78,12 @@ export const radius = {
   pill: 999,
 } as const;
 
-/** Serif da "carta trofeo" (Apple Garamond nel Figma). */
-const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' });
+/**
+ * Serif delle carte: Fraunces, un "old style" morbido e un po' storto che parla
+ * la stessa lingua delle mascotte rubber-hose (caricata in app/_layout.tsx).
+ * Con un font custom il peso sta nel nome della famiglia, non in fontWeight.
+ */
+export const fonts = { serifBold: 'Fraunces_700Bold', serifSemi: 'Fraunces_600SemiBold' } as const;
 
 export const type = {
   display: { fontSize: 28, lineHeight: 34, fontWeight: '600', letterSpacing: -0.4 },
@@ -92,8 +96,8 @@ export const type = {
   micro: { fontSize: 12, lineHeight: 14, fontWeight: '700' },
   number: { fontSize: 24, lineHeight: 28, fontWeight: '700', fontVariant: ['tabular-nums'] },
   watermark: { fontSize: 128, lineHeight: 136, fontWeight: '600', letterSpacing: -4 },
-  serifTitle: { fontFamily: serif, fontSize: 32, lineHeight: 38, fontWeight: '700' },
-  serifCard: { fontFamily: serif, fontSize: 17, lineHeight: 21, fontWeight: '700' },
+  serifTitle: { fontFamily: fonts.serifBold, fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
+  serifCard: { fontFamily: fonts.serifSemi, fontSize: 18, lineHeight: 22, letterSpacing: -0.2 },
 } as const;
 
 /** Ombra morbida unica: niente "muro di mattoni". */

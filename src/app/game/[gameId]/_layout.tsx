@@ -38,7 +38,6 @@ export default function GameLayout() {
               <Icon name="chevron-left" size={24} strokeWidth={2} />
             </PressableScale>
           }
-          right={<Icon name="bell" size={24} />}
         />
         <Tabs
           tabBar={(props) => <GameTabBar {...props} />}

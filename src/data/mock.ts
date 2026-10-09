@@ -1,5 +1,5 @@
 import { colors } from '@/theme/tokens';
-import type { FeedEvent, Game, Player, User } from '@/types/game';
+import type { FeedEvent, FriendStatus, Game, Player, User } from '@/types/game';
 
 /** Dati finti per la Fase 1: sostituiti da Supabase nella Fase 2. */
 
@@ -13,12 +13,23 @@ export const ME: User = {
 
 export const PLAYERS: Player[] = [
   ME,
-  { id: 'u-ale', name: 'Ale', handle: 'aleilie99', color: colors.toonRed },
-  { id: 'u-giulia', name: 'Giulia', handle: 'giuly.g', color: colors.toonPurple },
-  { id: 'u-marco', name: 'Marco', handle: 'marcopolo', color: colors.toonYellow },
-  { id: 'u-sara', name: 'Sara', handle: 'sarettah', color: colors.toonGreen },
-  { id: 'u-luca', name: 'Luca', handle: 'lucky.luca', color: '#FF9F1C' },
+  { id: 'u-ale', name: 'Ale', handle: 'aleilie99', color: colors.toonRed, career: { trophies: 5, gamesPlayed: 14, wins: 5, totalPoints: 1630 } },
+  { id: 'u-giulia', name: 'Giulia', handle: 'giuly.g', color: colors.toonPurple, career: { trophies: 2, gamesPlayed: 9, wins: 2, totalPoints: 980 } },
+  { id: 'u-marco', name: 'Marco', handle: 'marcopolo', color: colors.toonYellow, career: { trophies: 0, gamesPlayed: 6, wins: 0, totalPoints: 310 } },
+  { id: 'u-sara', name: 'Sara', handle: 'sarettah', color: colors.toonGreen, career: { trophies: 1, gamesPlayed: 7, wins: 1, totalPoints: 655 } },
+  { id: 'u-luca', name: 'Luca', handle: 'lucky.luca', color: '#FF9F1C', career: { trophies: 3, gamesPlayed: 12, wins: 3, totalPoints: 1105 } },
+  // Non è in nessuna tua lega: ti ha chiesto l'amicizia
+  { id: 'u-bea', name: 'Bea', handle: 'bea.in.viaggio', color: '#4FB3BF', career: { trophies: 1, gamesPlayed: 4, wins: 1, totalPoints: 420 } },
 ];
+
+/** Amicizie viste da Tobia. */
+export const FRIENDSHIPS: Record<string, FriendStatus> = {
+  'u-ale': 'friends',
+  'u-giulia': 'friends',
+  'u-sara': 'friends',
+  'u-luca': 'sent',
+  'u-bea': 'received',
+};
 
 const hoursFromNow = (h: number) => new Date(Date.now() + h * 3_600_000).toISOString();
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
@@ -80,18 +91,18 @@ export const GAMES: Game[] = [
 
 export const FEED: FeedEvent[] = [
   // Chiamate da votare (storie)
-  { id: 'p1', status: 'pending', gameId: 'fantapasquetta', playerId: 'u-ale', ruleId: 'r-smurratona', points: 15, authorId: 'u-luca', createdAt: minutesAgo(3) },
-  { id: 'p2', status: 'pending', gameId: 'fantapasquetta', playerId: 'u-marco', ruleId: 'r-burn', points: -10, authorId: 'u-sara', createdAt: minutesAgo(12) },
-  { id: 'p3', status: 'pending', myVote: 'confirm', gameId: 'fantapasquetta', playerId: 'u-giulia', ruleId: 'r-sunrise', points: 25, authorId: 'u-ale', createdAt: minutesAgo(20) },
-  { id: 'p4', status: 'pending', myVote: 'reject', gameId: 'fantapasquetta', playerId: 'u-luca', ruleId: 'r-nap', points: -3, authorId: 'u-marco', createdAt: minutesAgo(26) },
+  { id: 'p1', status: 'pending', gameId: 'fantapasquetta', playerId: 'u-ale', ruleId: 'r-smurratona', points: 15, authorId: 'u-luca', createdAt: minutesAgo(3), votes: { confirm: 2, reject: 0 } },
+  { id: 'p2', status: 'pending', gameId: 'fantapasquetta', playerId: 'u-marco', ruleId: 'r-burn', points: -10, authorId: 'u-sara', createdAt: minutesAgo(12), votes: { confirm: 1, reject: 0 } },
+  { id: 'p3', status: 'pending', myVote: 'confirm', gameId: 'fantapasquetta', playerId: 'u-giulia', ruleId: 'r-sunrise', points: 25, authorId: 'u-ale', createdAt: minutesAgo(20), votes: { confirm: 2, reject: 1 } },
+  { id: 'p4', status: 'pending', myVote: 'reject', gameId: 'fantapasquetta', playerId: 'u-luca', ruleId: 'r-nap', points: -3, authorId: 'u-marco', createdAt: minutesAgo(26), votes: { confirm: 1, reject: 2 } },
   // Punteggi ufficiali
-  { id: 'e1', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-ale', ruleId: 'r-new', points: 20, authorId: 'u-giulia', createdAt: minutesAgo(40) },
-  { id: 'e2', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-marco', ruleId: 'r-lost', points: -15, authorId: 'u-sara', createdAt: minutesAgo(75) },
-  { id: 'e3', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-me', ruleId: 'r-cook', points: 10, authorId: 'u-giulia', createdAt: minutesAgo(95) },
-  { id: 'e4', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-sara', ruleId: 'r-swim', points: 10, authorId: 'u-me', createdAt: minutesAgo(180) },
-  { id: 'e5', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-giulia', ruleId: 'r-dishes', points: 15, authorId: 'u-luca', createdAt: minutesAgo(260) },
-  { id: 'e6', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-luca', ruleId: 'r-late', points: -10, authorId: 'u-ale', createdAt: minutesAgo(300) },
-  { id: 'e7', status: 'confirmed', gameId: 'ufficio-q4', playerId: 'u-luca', ruleId: 'r-cook', points: 10, authorId: 'u-me', createdAt: minutesAgo(30) },
-  { id: 'e8', status: 'confirmed', gameId: 'ufficio-q4', playerId: 'u-marco', ruleId: 'r-late', points: -10, authorId: 'u-luca', createdAt: minutesAgo(400) },
-  { id: 'e9', status: 'confirmed', gameId: 'sardegna-25', playerId: 'u-me', ruleId: 'r-sunrise', points: 25, authorId: 'u-sara', createdAt: minutesAgo(60 * 24 * 90) },
+  { id: 'e1', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-ale', ruleId: 'r-new', points: 20, authorId: 'u-giulia', createdAt: minutesAgo(40), votes: { confirm: 3, reject: 0 } },
+  { id: 'e2', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-marco', ruleId: 'r-lost', points: -15, authorId: 'u-sara', createdAt: minutesAgo(75), votes: { confirm: 3, reject: 0 } },
+  { id: 'e3', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-me', ruleId: 'r-cook', points: 10, authorId: 'u-giulia', createdAt: minutesAgo(95), votes: { confirm: 3, reject: 0 } },
+  { id: 'e4', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-sara', ruleId: 'r-swim', points: 10, authorId: 'u-me', createdAt: minutesAgo(180), votes: { confirm: 3, reject: 0 } },
+  { id: 'e5', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-giulia', ruleId: 'r-dishes', points: 15, authorId: 'u-luca', createdAt: minutesAgo(260), votes: { confirm: 3, reject: 0 } },
+  { id: 'e6', status: 'confirmed', gameId: 'fantapasquetta', playerId: 'u-luca', ruleId: 'r-late', points: -10, authorId: 'u-ale', createdAt: minutesAgo(300), votes: { confirm: 3, reject: 0 } },
+  { id: 'e7', status: 'confirmed', gameId: 'ufficio-q4', playerId: 'u-luca', ruleId: 'r-cook', points: 10, authorId: 'u-me', createdAt: minutesAgo(30), votes: { confirm: 3, reject: 0 } },
+  { id: 'e8', status: 'confirmed', gameId: 'ufficio-q4', playerId: 'u-marco', ruleId: 'r-late', points: -10, authorId: 'u-luca', createdAt: minutesAgo(400), votes: { confirm: 3, reject: 0 } },
+  { id: 'e9', status: 'confirmed', gameId: 'sardegna-25', playerId: 'u-me', ruleId: 'r-sunrise', points: 25, authorId: 'u-sara', createdAt: minutesAgo(60 * 24 * 90), votes: { confirm: 3, reject: 0 } },
 ];

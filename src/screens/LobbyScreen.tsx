@@ -1,9 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Icon } from '@/components/icons/Icon';
 import { CareerHeader } from '@/components/lobby/CareerHeader';
 import { EmptyLobby } from '@/components/lobby/EmptyLobby';
 import { FormatCarousel } from '@/components/lobby/FormatCarousel';
@@ -11,9 +9,11 @@ import { LeagueCard } from '@/components/lobby/LeagueCard';
 import { LOBBY_ACTIONS_HEIGHT, LobbyActions } from '@/components/lobby/LobbyActions';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { Wordmark } from '@/components/ui/Brand';
 import { TopBar } from '@/components/ui/TopBar';
 import { ME } from '@/data/mock';
+import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { useNow } from '@/hooks/useNow';
 import { haptics } from '@/lib/haptics';
 import { computeStandings, useGameStore } from '@/store/useGameStore';
@@ -30,7 +30,9 @@ type Filter = 'all' | 'live';
 export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const router = useRouter();
   const now = useNow(30_000);
-  const { games, events, players } = useGameStore();
+  const { games, events, players, friendships } = useGameStore();
+  const openPlayer = useOpenPlayer();
+  const requests = Object.values(friendships).filter((f) => f === 'received').length;
   const [filter, setFilter] = useState<Filter>('all');
 
   const myGames = useMemo(() => (forceEmpty ? [] : games), [games, forceEmpty]);
@@ -48,8 +50,16 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
     <View style={styles.screen}>
       <TopBar
         title={<Wordmark />}
-        left={<Avatar player={ME} size={32} sticker={false} />}
-        right={<Icon name="bell" size={24} />}
+        left={
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={requests ? `Il tuo profilo, ${requests} richieste di amicizia` : 'Il tuo profilo'}
+            onPress={() => openPlayer(ME.id)}
+            hitSlop={8}>
+            <Avatar player={ME} size={32} sticker={false} />
+            {requests > 0 && <View style={styles.dot} />}
+          </PressableScale>
+        }
       />
       <FlatList
         data={shown}
@@ -98,19 +108,28 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
             />
           </View>
         }
-        renderItem={({ item, index }) => {
+        renderItem={({ item }) => {
           const standings = computeStandings(item, events, players);
-          const myRank = standings.findIndex((r) => r.player.id === ME.id) + 1;
+          const mine = standings.find((r) => r.player.id === ME.id);
+          const myRank = mine ? standings.indexOf(mine) + 1 : 0;
+          const toVote = events.filter(
+            (e) =>
+              e.gameId === item.id &&
+              e.status === 'pending' &&
+              !e.myVote &&
+              e.playerId !== ME.id &&
+              e.authorId !== ME.id,
+          ).length;
           return (
-            <Animated.View entering={FadeInDown.delay(70 * index).springify().damping(18)}>
-              <LeagueCard
-                game={item}
-                playerCount={item.playerIds.length}
-                myRank={myRank}
-                now={now}
-                onPress={() => openGame(item)}
-              />
-            </Animated.View>
+            <LeagueCard
+              game={item}
+              playerCount={item.playerIds.length}
+              myRank={myRank}
+              gapToFirst={mine && standings[0] ? standings[0].points - mine.points : 0}
+              toVote={toVote}
+              now={now}
+              onPress={() => openGame(item)}
+            />
           );
         }}
       />
@@ -121,6 +140,17 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  dot: {
+    position: 'absolute',
+    top: -1,
+    right: -1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.malus,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
   footer: { marginTop: space.xl },
   content: {
     paddingHorizontal: space.md,

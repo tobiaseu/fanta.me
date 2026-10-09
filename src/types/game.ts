@@ -10,6 +10,8 @@ export interface Player {
   handle: string;
   /** Colore dell'avatar sticker */
   color: string;
+  /** Carriera pubblica (mostrata nel profilo giocatore) */
+  career?: Career;
 }
 
 export interface Career {
@@ -22,6 +24,12 @@ export interface Career {
 export interface User extends Player {
   career: Career;
 }
+
+/**
+ * Amicizia vista da me: nessuna, richiesta inviata da me, richiesta ricevuta, amici.
+ * Gli amici si invitano con un tocco quando si crea una stanza.
+ */
+export type FriendStatus = 'none' | 'sent' | 'received' | 'friends';
 
 export type RuleKind = 'bonus' | 'malus';
 
@@ -95,4 +103,6 @@ export interface FeedEvent {
   points: number;
   authorId: string;
   createdAt: string;
+  /** Voti raccolti finora (chi chiama conta già come conferma) */
+  votes: { confirm: number; reject: number };
 }
