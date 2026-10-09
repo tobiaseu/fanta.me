@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 0.78,
     borderRadius: radius.sm,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.inkFaint,
     alignItems: 'center',

@@ -67,7 +67,7 @@ export function PowersPanel({ game, now }: { game: Game; now: number }) {
                 (locked || (used && left <= 60_000)) && styles.spent,
               ]}>
               <AppText variant="micro" color={colors.inkSoft}>
-                {slot === 'main' ? 'PRINCIPALE' : 'SECONDARIO'}
+                {slot === 'main' ? 'Principale' : 'Secondario'}
               </AppText>
               <AppText style={styles.emoji}>{p.emoji}</AppText>
               <AppText variant="name">{p.label}</AppText>
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: layout.card,
     gap: 2,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
   main: { borderColor: colors.cta },

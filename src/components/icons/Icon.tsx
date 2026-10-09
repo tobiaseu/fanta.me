@@ -28,10 +28,11 @@ interface Props {
 }
 
 /** Icone a tratto lineare 24×24, nello stile Vuesax usato nel Figma. */
-export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 1.6 }: Props) {
+export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 1.4 }: Props) {
+  // Tratto sottile e uniforme in tutta l'app (massimo 1,6)
   const p = {
     stroke: color,
-    strokeWidth,
+    strokeWidth: Math.min(strokeWidth, 1.6),
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
     fill: 'none',

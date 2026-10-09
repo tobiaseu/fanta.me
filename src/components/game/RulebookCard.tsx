@@ -13,14 +13,12 @@ export function RulebookCard() {
     <PressableScale accessibilityRole="button" onPress={() => router.push('/rulebook')} style={styles.card}>
       <AppText style={styles.emoji}>📖</AppText>
       <View style={styles.flex}>
-        <AppText variant="serifCard" color={colors.inkInverse}>
-          Il Libro del Fanta
-        </AppText>
-        <AppText variant="caption" color="rgba(255,255,255,0.7)" style={styles.regular}>
+        <AppText variant="serifCard">Il Libro del Fanta</AppText>
+        <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
           Regole, momenti del gioco e come si gioca bene
         </AppText>
       </View>
-      <Icon name="chevron-right" size={20} color={colors.inkInverse} strokeWidth={2} />
+      <Icon name="chevron-right" size={20} color={colors.inkFaint} />
     </PressableScale>
   );
 }
@@ -30,7 +28,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    backgroundColor: '#1E2836',
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: layout.card,
   },

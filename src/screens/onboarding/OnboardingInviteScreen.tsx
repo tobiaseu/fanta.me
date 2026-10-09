@@ -84,7 +84,7 @@ export function OnboardingInviteScreen() {
 
         <View style={styles.codeCard}>
           <AppText variant="micro" color={colors.inkSoft}>
-            CODICE DI {game.name.toUpperCase()}
+            Codice di {game.name}
           </AppText>
           <View style={styles.code} accessibilityLabel={`Codice ${code.split('').join(' ')}`}>
             {code.split('').map((ch, i) => (
@@ -93,7 +93,7 @@ export function OnboardingInviteScreen() {
               </View>
             ))}
           </View>
-          <Button label="Condividi invito" icon="send" variant="dark" onPress={share} />
+          <Button label="Condividi invito" icon="send" variant="secondary" onPress={share} />
         </View>
 
         <View style={styles.list}>
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: space.md,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.ink,
   },
   toggleOn: { backgroundColor: colors.cta, borderColor: colors.cta },

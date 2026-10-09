@@ -87,7 +87,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
             onPress={() => openGame(last)}
             style={styles.resume}>
             <AppText variant="micro" color={colors.inkSoft}>
-              RIENTRA IN PARTITA
+              Rientra in partita
             </AppText>
             <AppText variant="title" numberOfLines={2}>
               {last.emoji} {last.name}
@@ -132,7 +132,11 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           </View>
         )}
       </ScrollView>
-      <LobbyActions onCreate={() => router.push('/room/new')} onJoin={() => router.push('/room/join')} />
+      <LobbyActions
+        primary={!resume}
+        onCreate={() => router.push('/room/new')}
+        onJoin={() => router.push('/room/join')}
+      />
     </View>
   );
 }
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: colors.malus,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.surface,
   },
   content: {
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: space.lg,
     gap: space.xs,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.cta,
     ...shadow.floating,
   },

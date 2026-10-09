@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     padding: space.sm,
     paddingLeft: space.md,
   },
-  rowMe: { borderWidth: 2, borderColor: colors.cta },
+  rowMe: { borderWidth: 1, borderColor: colors.cta },
   rank: { width: 22 },
   flex: { flex: 1, gap: 4 },
   coinRow: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 56, justifyContent: 'flex-end' },

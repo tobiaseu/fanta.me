@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   noShrink: { flexGrow: 0, flexShrink: 0 },
   players: { gap: space.md, paddingVertical: space.xxs },
   player: { alignItems: 'center', gap: space.xxs },
-  ring: { padding: 3, borderRadius: 32, borderWidth: 3, borderColor: 'transparent' },
+  ring: { padding: 3, borderRadius: 32, borderWidth: 1, borderColor: 'transparent' },
   ringActive: { borderColor: colors.cta },
   segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md + 4, padding: 4 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs + 2, borderRadius: radius.md },

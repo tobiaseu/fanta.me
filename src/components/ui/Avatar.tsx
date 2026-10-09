@@ -72,5 +72,5 @@ const styles = StyleSheet.create({
     borderColor: colors.sticker,
   },
   stack: { flexDirection: 'row', alignItems: 'center' },
-  extra: { backgroundColor: colors.surfaceMuted, borderWidth: 2 },
+  extra: { backgroundColor: colors.surfaceMuted, borderWidth: 1 },
 });

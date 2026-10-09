@@ -74,7 +74,7 @@ export function WelcomeScreen() {
       </Animated.View>
 
       <View style={styles.actions}>
-        <Button label="Continua con Apple" variant="dark" onPress={() => go('apple')} />
+        <Button label="Continua con Apple" onPress={() => go('apple')} />
         <Button label="Continua con Google" variant="secondary" onPress={() => go('google')} style={styles.google} />
         <PressableScale accessibilityRole="button" onPress={() => go('email')} hitSlop={8} style={styles.link}>
           <AppText variant="headline">Usa la tua email</AppText>

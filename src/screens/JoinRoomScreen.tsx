@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 8,
     color: colors.ink,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
   inputError: { borderColor: colors.malus },

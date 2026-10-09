@@ -5,15 +5,24 @@ import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { haptics } from '@/lib/haptics';
-import { colors, radius, shadow, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 
 export const LOBBY_ACTIONS_HEIGHT = 56 + space.lg;
 
 /**
- * Azioni flottanti alla Clubhouse: pillola gialla "+ Crea stanza" al centro,
+ * Azioni flottanti: "+ Crea stanza" al centro (giallo solo se è l'azione principale),
  * bottone tondo per entrare con codice accanto. Sopra un gradiente che sfuma la lista.
  */
-export function LobbyActions({ onCreate, onJoin }: { onCreate: () => void; onJoin: () => void }) {
+export function LobbyActions({
+  onCreate,
+  onJoin,
+  primary = true,
+}: {
+  onCreate: () => void;
+  onJoin: () => void;
+  /** Giallo solo se in home non c'è già una partita da riprendere (un solo CTA per schermata) */
+  primary?: boolean;
+}) {
   const insets = useSafeAreaInsets();
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
@@ -24,8 +33,8 @@ export function LobbyActions({ onCreate, onJoin }: { onCreate: () => void; onJoi
           haptics.press();
           onCreate();
         }}
-        style={styles.create}>
-        <Icon name="plus" size={20} strokeWidth={2.6} />
+        style={[styles.create, !primary && styles.createSecondary]}>
+        <Icon name="plus" size={20} />
         <AppText variant="headline">Crea stanza</AppText>
       </PressableScale>
       <View style={styles.side}>
@@ -66,15 +75,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     borderRadius: radius.pill,
     backgroundColor: colors.cta,
-    ...shadow.floating,
   },
+  createSecondary: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.line },
   join: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.card,
   },
 });

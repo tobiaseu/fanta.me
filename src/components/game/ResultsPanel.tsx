@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: space.lg,
-    ...shadow.card,
   },
   confetti: { fontSize: 36, lineHeight: 44 },
   center: { textAlign: 'center' },

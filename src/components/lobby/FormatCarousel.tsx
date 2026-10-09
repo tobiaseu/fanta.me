@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
     gap: space.sm,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.06)',
-    ...shadow.card,
   },
   tag: {
     alignSelf: 'flex-start',

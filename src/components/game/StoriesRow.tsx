@@ -12,34 +12,19 @@ const SIZE = 76;
 interface Props {
   calls: FeedEvent[];
   players: Player[];
-  onAdd: () => void;
   onOpen: (event: FeedEvent) => void;
 }
 
 /**
- * Riga "storie" del Figma: il primo cerchio aggiunge punti, gli altri sono
- * chiamate del gruppo da votare (anello giallo) o già votate (badge ✓ / ✕).
+ * Riga "storie": le chiamate del gruppo da votare (anello giallo) o già votate (badge ✓ / ✕).
  */
-export function StoriesRow({ calls, players, onAdd, onOpen }: Props) {
+export function StoriesRow({ calls, players, onOpen }: Props) {
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.scroll}
       contentContainerStyle={styles.row}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel="Aggiungi punti"
-        onPress={onAdd}
-        style={styles.item}>
-        <View style={[styles.circle, styles.add]}>
-          <Icon name="plus" size={40} color={colors.cta} strokeWidth={4} />
-        </View>
-        <AppText variant="micro" style={styles.label}>
-          Aggiungi{'\n'}punti
-        </AppText>
-      </PressableScale>
-
       {calls.map((call) => {
         const player = players.find((p) => p.id === call.playerId);
         if (!player) return null;
@@ -86,7 +71,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   add: { backgroundColor: colors.surface },
-  ring: { borderWidth: 4, borderColor: colors.cta, backgroundColor: colors.surface },
+  ring: { borderWidth: 2, borderColor: colors.cta, backgroundColor: colors.surface },
   ringVoted: { borderColor: colors.placeholder },
   badge: {
     position: 'absolute',

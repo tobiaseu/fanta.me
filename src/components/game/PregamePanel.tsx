@@ -55,6 +55,7 @@ export function PregamePanel({ game, onOpenDeck }: { game: Game; onOpenDeck: () 
         {game.ownerId === ME.id && (
           <Button
             label="Avvia la partita adesso"
+            variant="secondary"
             onPress={() => {
               haptics.bonus();
               startGame(game.id);
@@ -77,8 +78,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: layout.card,
   },
+  // Secondario: il giallo è già sul tasto centrale della navbar, che fa la stessa cosa
   cta: {
-    backgroundColor: colors.cta,
+    borderWidth: 1,
+    borderColor: colors.line,
     borderRadius: radius.pill,
     paddingHorizontal: space.md,
     height: 40,

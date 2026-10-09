@@ -5,7 +5,6 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
-import { PhaseTrack } from '@/components/game/PhaseTrack';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -98,7 +97,6 @@ export function RulesScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.phase}>
-        <PhaseTrack status={game.status} />
         <AppText variant="body" color={colors.inkSoft}>
           {pregame
             ? `Pre-partita: fino a ${DATE.format(new Date(game.startsAt ?? Date.now()))} tutti possono proporre carte. Entrano con la maggioranza.`

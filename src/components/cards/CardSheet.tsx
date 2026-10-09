@@ -14,7 +14,7 @@ interface Props {
   author?: Player;
   /** Riga di stato sotto la carta (es. "Nel mazzo", "2 su 3 mi piace") */
   status?: string;
-  action?: { label: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'dark' };
+  action?: { label: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'tertiary' };
   onClose: () => void;
 }
 

@@ -84,16 +84,12 @@ export function DashboardScreen() {
               caption={
                 toVote > 0
                   ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-                  : 'Hai votato tutto. Tocca + per chiamare un punto.'
+                  : 'Hai votato tutto. Usa il + giallo per chiamare un punto.'
               }
             />
             <StoriesRow
               calls={calls}
               players={players}
-              onAdd={() => {
-                haptics.press();
-                openQuickAction();
-              }}
               onOpen={(call) => {
                 haptics.tap();
                 router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
@@ -113,7 +109,7 @@ export function DashboardScreen() {
               <RuleSticker rule={card} size={84} />
               <View style={styles.flex}>
                 <AppText variant="micro" color={colors.inkSoft}>
-                  CARTA DEL GIORNO
+                  Carta del giorno
                 </AppText>
                 <AppText variant="serifCard" numberOfLines={2}>
                   {card.label}
@@ -225,9 +221,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.sm,
     paddingRight: layout.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.cta,
-    ...shadow.card,
   },
   double: {
     width: 48,
@@ -248,7 +243,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm,
     borderRadius: radius.md,
     backgroundColor: colors.background,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
   memberActive: { borderColor: colors.cta, backgroundColor: colors.ctaSoft },
@@ -260,7 +255,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 8,
     backgroundColor: colors.cta,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',

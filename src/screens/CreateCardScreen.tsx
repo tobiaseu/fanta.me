@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
   emojiOn: { borderColor: colors.toonPurple },

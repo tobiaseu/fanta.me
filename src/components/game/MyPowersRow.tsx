@@ -33,7 +33,7 @@ export function MyPowersRow() {
               <AppText style={styles.emoji}>{p.emoji}</AppText>
               <View style={styles.flex}>
                 <AppText variant="micro" color={colors.inkSoft}>
-                  {slot === 'main' ? 'PRINCIPALE' : 'SECONDARIO'}
+                  {slot === 'main' ? 'Principale' : 'Secondario'}
                 </AppText>
                 <AppText variant="name">{p.label}</AppText>
               </View>
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: layout.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
   main: { borderColor: colors.cta },

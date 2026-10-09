@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   },
   tab: { alignItems: 'center', justifyContent: 'center', gap: 3, width: 64, height: 56 },
   label: { fontSize: 10, lineHeight: 12, fontWeight: '600' },
-  avatarRing: { padding: 1, borderRadius: 14, borderWidth: 1.5, borderColor: 'transparent' },
+  avatarRing: { padding: 1, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
   avatarRingActive: { borderColor: colors.ink },
   play: {
     width: 56,
@@ -149,6 +149,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cta,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.card,
   },
 });

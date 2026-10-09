@@ -141,8 +141,8 @@ export function CallScreen() {
           </AppText>
         ) : (
           <View style={styles.row}>
-            <Button label="Rifiuta" variant="reject" onPress={() => cast('reject')} style={styles.flex} />
-            <Button label="Conferma" variant="confirm" onPress={() => cast('confirm')} style={styles.flex} />
+            <Button label="Rifiuta" variant="secondary" onPress={() => cast('reject')} style={styles.flex} />
+            <Button label="Conferma" variant="primary" onPress={() => cast('confirm')} style={styles.flex} />
           </View>
         )}
         <PressableScale accessibilityRole="button" onPress={close} hitSlop={8} style={styles.later}>

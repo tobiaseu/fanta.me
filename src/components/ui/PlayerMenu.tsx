@@ -4,7 +4,7 @@ import Animated, { FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from './AppText';
 import { Avatar } from './Avatar';
-import { PressableScale } from './PressableScale';
+import { Button } from './Button';
 
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
@@ -12,8 +12,8 @@ import { useUiStore } from '@/store/useUiStore';
 import { colors, radius, space } from '@/theme/tokens';
 
 /**
- * Menù rapido su un giocatore, in stile Clash of Clans: una piccola scheda
- * che salta fuori con tre bottoni "a mattoncino" (bordo spesso sotto).
+ * Menù rapido su un giocatore: una piccola scheda che salta fuori (stile Clash)
+ * con al massimo tre azioni, una sola gialla.
  */
 export function PlayerMenu() {
   const menu = useUiStore((s) => s.playerMenu);
@@ -51,12 +51,12 @@ export function PlayerMenu() {
             </AppText>
           </View>
         </View>
-        {menu.gameId && <Brick label="Guarda formazione" tone="cta" onPress={() => go('formazione')} />}
-        <Brick label="Guarda profilo" tone="plain" onPress={() => go()} />
+        {menu.gameId && <Button label="Guarda formazione" variant="primary" onPress={() => go('formazione')} />}
+        <Button label="Guarda profilo" variant={menu.gameId ? 'secondary' : 'primary'} onPress={() => go()} />
         {status === 'none' && (
-          <Brick
+          <Button
             label="Chiedi l'amicizia"
-            tone="green"
+            variant="secondary"
             onPress={() => {
               haptics.bonus();
               setFriendship(player.id, 'sent');
@@ -78,29 +78,6 @@ export function PlayerMenu() {
   );
 }
 
-const TONES = {
-  cta: { bg: colors.cta, edge: '#D9B54A', ink: colors.ink },
-  plain: { bg: colors.surface, edge: '#C7C7CC', ink: colors.ink },
-  green: { bg: '#5BD13F', edge: '#3E9B2A', ink: colors.inkInverse },
-} as const;
-
-/** Bottone "a mattoncino": bordo più scuro sotto, si schiaccia quando lo premi. */
-function Brick({ label, tone, onPress }: { label: string; tone: keyof typeof TONES; onPress: () => void }) {
-  const t = TONES[tone];
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      pressedScale={0.96}
-      style={[styles.brick, { backgroundColor: t.bg, borderColor: t.edge }]}>
-      <AppText variant="headline" color={t.ink}>
-        {label}
-      </AppText>
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
@@ -119,21 +96,11 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     backgroundColor: colors.background,
     borderRadius: radius.xl,
-    borderWidth: 2,
-    borderColor: colors.ink,
     padding: space.md,
     gap: space.sm,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.xs },
   flex: { flex: 1 },
   regular: { fontWeight: '400' },
-  brick: {
-    height: 52,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderBottomWidth: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   note: { textAlign: 'center', fontWeight: '400' },
 });

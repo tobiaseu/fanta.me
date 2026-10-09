@@ -14,7 +14,9 @@ export const colors = {
   surface: '#FFFFFF',
   surfaceMuted: '#E9E9EE',
   placeholder: '#D9D9D9',
-  hairline: 'rgba(0, 0, 0, 0.06)',
+  hairline: 'rgba(0, 0, 0, 0.08)',
+  /** Bordo dei bottoni secondari e delle carte: grigio scuro, sottile */
+  line: '#3A3A3C',
 
   // Testo
   ink: '#000000',
@@ -105,30 +107,13 @@ export const type = {
 } as const;
 
 /** Layout: margine laterale, spazio tra sezioni, padding delle card. */
-export const layout = { gutter: 16, section: 24, card: 16 } as const;
+export const layout = { gutter: 20, section: 32, card: 20 } as const;
 
-/** Ombra morbida unica: niente "muro di mattoni". */
+/** Una sola ombra, solo per ciò che galleggia (navbar, toast, popup). */
 export const shadow = {
-  card: Platform.select({
-    web: { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)' },
-    default: {
-      shadowColor: '#000',
-      shadowOpacity: 0.04,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 2,
-    },
-  }),
-  avatar: Platform.select({
-    web: { boxShadow: '0 6px 14px rgba(0, 0, 0, 0.18)' },
-    default: {
-      shadowColor: '#000',
-      shadowOpacity: 0.18,
-      shadowRadius: 14,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 6,
-    },
-  }),
+  /** Niente ombre su card e bottoni: la gerarchia la fanno superfici e spazi. */
+  card: {},
+  avatar: {},
   floating: Platform.select({
     web: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)' },
     default: {
