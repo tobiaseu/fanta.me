@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
-import { MyPowersRow } from '@/components/game/MyPowersRow';
+import { PlayerGameSection } from '@/components/game/PlayerGameSection';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { CoinIcon } from '@/components/ui/Brand';
@@ -12,9 +12,9 @@ import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { computeStandings, useGameStore } from '@/store/useGameStore';
-import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
+import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 
-/** Profilo in-game (frame "Home" del Figma): avatar grande, il tuo bilancio, chi c'è in questa lega. */
+/** Profilo in partita: posizione in classifica, bilancio, formazione schierata, fantapoteri e diario di questa stanza. */
 export function ProfileScreen() {
   const game = useCurrentGame();
   const events = useGameStore((s) => s.events);
@@ -37,18 +37,23 @@ export function ProfileScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
-        <View style={[shadow.avatar, styles.avatarShadow]}>
-          <Avatar player={ME} size={120} sticker={false} />
-        </View>
+        <Avatar player={ME} size={88} sticker={false} />
         <AppText variant="title">{ME.name}</AppText>
-        <AppText variant="caption" color={colors.inkSoft}>
-          {myRank}° in classifica{team ? `, squadra ${team.name}` : ''}
-        </AppText>
-        <PressableScale accessibilityRole="button" onPress={() => openPlayer(ME.id)} hitSlop={8} style={styles.link}>
-          <AppText variant="caption" color={colors.live}>
-            Carriera e amici
+        {team && (
+          <AppText variant="caption" color={colors.inkSoft}>
+            Squadra {team.name}
           </AppText>
-        </PressableScale>
+        )}
+      </View>
+
+      <View style={styles.rankCard} accessibilityLabel={`${myRank}° su ${standings.length} in ${game.name}`}>
+        <AppText style={styles.rankNumber}>{myRank}°</AppText>
+        <View style={styles.flex}>
+          <AppText variant="headline">in classifica</AppText>
+          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+            su {standings.length} giocatori in {game.name}
+          </AppText>
+        </View>
       </View>
 
       <View style={styles.balance}>
@@ -59,7 +64,7 @@ export function ProfileScreen() {
         <Stat label="totale" value={`${bonus + malus}`} color={colors.ink} />
       </View>
 
-      <MyPowersRow />
+      <PlayerGameSection game={game} player={ME} />
 
       <SectionHeader title="In questa stanza" />
       <View style={styles.list}>
@@ -84,6 +89,9 @@ export function ProfileScreen() {
             </PressableScale>
           ))}
       </View>
+      <PressableScale accessibilityRole="button" onPress={() => openPlayer(ME.id)} hitSlop={8} style={styles.link}>
+        <AppText variant="caption">Carriera, bacheca e amici</AppText>
+      </PressableScale>
     </ScrollView>
   );
 }
@@ -112,8 +120,17 @@ const styles = StyleSheet.create({
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',
   },
-  avatarShadow: { borderRadius: 60 },
-  link: { paddingVertical: 4 },
+  link: { paddingVertical: space.sm, alignSelf: 'center' },
+  regular: { fontWeight: '400' },
+  rankCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: layout.card,
+  },
+  rankNumber: { fontSize: 44, lineHeight: 50, fontWeight: '800', letterSpacing: -1 },
   hero: { alignItems: 'center', gap: space.xs },
   balance: {
     flexDirection: 'row',

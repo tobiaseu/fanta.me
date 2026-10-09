@@ -10,11 +10,11 @@ interface Props {
   size?: number;
   /** Bordo bianco spesso stile sticker fustellato */
   sticker?: boolean;
-  /** Squircle alla Clubhouse (predefinito) o cerchio (solo storie e anelli) */
+  /** Deprecato: gli avatar sono sempre tondi */
   shape?: 'circle' | 'square';
 }
 
-export function Avatar({ player, size = 40, sticker = true, shape = 'square' }: Props) {
+export function Avatar({ player, size = 40, sticker = true }: Props) {
   const border = sticker ? Math.max(2, Math.round(size / 14)) : 0;
   return (
     <View
@@ -23,7 +23,7 @@ export function Avatar({ player, size = 40, sticker = true, shape = 'square' }: 
         {
           width: size,
           height: size,
-          borderRadius: shape === 'circle' ? size / 2 : size * 0.38,
+          borderRadius: size / 2,
           backgroundColor: player.color,
           borderWidth: border,
         },
@@ -54,7 +54,7 @@ export function AvatarStack({ players, size = 28, max = 4 }: { players: Player[]
           style={[
             styles.base,
             styles.extra,
-            { width: size, height: size, borderRadius: size * 0.38, marginLeft: -size / 3 },
+            { width: size, height: size, borderRadius: size / 2, marginLeft: -size / 3 },
           ]}>
           <AppText variant="caption" color={colors.inkSoft}>
             +{extra}

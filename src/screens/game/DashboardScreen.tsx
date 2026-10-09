@@ -6,7 +6,6 @@ import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { PowersPanel } from '@/components/game/PowersPanel';
 import { PregamePanel } from '@/components/game/PregamePanel';
-import { RulebookCard } from '@/components/game/RulebookCard';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
@@ -193,7 +192,6 @@ export function DashboardScreen() {
           )}
         </View>
       )}
-      <RulebookCard />
     </ScrollView>
   );
 }

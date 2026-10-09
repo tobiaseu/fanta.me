@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { RulebookCard } from '@/components/game/RulebookCard';
 import { EmptyLobby } from '@/components/lobby/EmptyLobby';
 import { LOBBY_ACTIONS_HEIGHT, LobbyActions } from '@/components/lobby/LobbyActions';
 import { Icon } from '@/components/icons/Icon';
@@ -18,11 +19,11 @@ import { haptics } from '@/lib/haptics';
 import { computeStandings, gameDay, useGameStore } from '@/store/useGameStore';
 import { useSessionStore } from '@/store/useSessionStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
-import type { Game } from '@/types/game';
+import type { Game, Player } from '@/types/game';
 
 /**
  * HOME: solo il saluto e una card grande per rientrare nell'ultima stanza.
- * Sotto, l'elenco compatto delle altre stanze. Crea / Entra con codice restano flottanti.
+ * Sotto, le altre stanze con la stessa card (CTA secondario) e il Libro del Fanta. Crea / Entra con codice restano flottanti.
  */
 export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const router = useRouter();
@@ -41,26 +42,25 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
     router.push({ pathname: '/game/[gameId]', params: { gameId: game.id } });
   };
 
-  const resume =
-    last &&
-    (() => {
-      const standings = computeStandings(last, events, players);
-      const rank = standings.findIndex((r) => r.player.id === ME.id) + 1;
-      const toVote = events.filter(
-        (e) =>
-          e.gameId === last.id && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
-      ).length;
-      const day = gameDay(last, now);
-      const line =
-        last.status === 'waiting'
-          ? 'Il mazzo si sta formando: metti le tue carte'
-          : last.status === 'ended'
-            ? 'Partita conclusa: guarda i risultati'
-            : toVote > 0
-              ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-              : `${day.label} ${day.index} di ${day.total}, sei ${rank}°`;
-      return { line, people: players.filter((p) => last.playerIds.includes(p.id)) };
-    })();
+  const infoOf = (last: Game) => {
+    const standings = computeStandings(last, events, players);
+    const rank = standings.findIndex((r) => r.player.id === ME.id) + 1;
+    const toVote = events.filter(
+      (e) =>
+        e.gameId === last.id && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
+    ).length;
+    const day = gameDay(last, now);
+    const line =
+      last.status === 'waiting'
+        ? 'Il mazzo si sta formando: metti le tue carte'
+        : last.status === 'ended'
+          ? 'Partita conclusa: guarda i risultati'
+          : toVote > 0
+            ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+            : `${day.label} ${day.index} di ${day.total}, sei ${rank}°`;
+    return { line, people: players.filter((p) => last.playerIds.includes(p.id)) };
+  };
+  const resume = last && infoOf(last);
 
   return (
     <View style={styles.screen}>
@@ -81,56 +81,21 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
         <AppText variant="serifTitle">Ciao {ME.name}</AppText>
 
         {last && resume ? (
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={`Rientra in ${last.name}. ${resume.line}`}
-            onPress={() => openGame(last)}
-            style={styles.resume}>
-            <AppText variant="micro" color={colors.inkSoft}>
-              Rientra in partita
-            </AppText>
-            <AppText variant="title" numberOfLines={2}>
-              {last.emoji} {last.name}
-            </AppText>
-            <StatusBadge status={last.status} />
-            <AppText variant="body" color={colors.inkSoft}>
-              {resume.line}
-            </AppText>
-            <View style={styles.resumeFoot}>
-              <AvatarStack players={resume.people} size={32} max={5} />
-              <View style={styles.go}>
-                <Icon name="chevron-right" size={22} strokeWidth={2.4} />
-              </View>
-            </View>
-          </PressableScale>
+          <RoomCard game={last} info={resume} primary onPress={() => openGame(last)} />
         ) : (
           <EmptyLobby />
         )}
 
         {others.length > 0 && (
           <View style={styles.list}>
-            <AppText variant="caption" color={colors.inkSoft}>
-              Le altre stanze
-            </AppText>
-            <View style={styles.rows}>
-              {others.map((g, i) => (
-                <PressableScale
-                  key={g.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${g.name}.`}
-                  onPress={() => openGame(g)}
-                  style={[styles.row, i > 0 && styles.divider]}>
-                  <AppText style={styles.emoji}>{g.emoji}</AppText>
-                  <AppText variant="name" numberOfLines={1} style={styles.flex}>
-                    {g.name}
-                  </AppText>
-                  <StatusBadge status={g.status} />
-                  <Icon name="chevron-right" size={16} color={colors.inkFaint} strokeWidth={2} />
-                </PressableScale>
-              ))}
-            </View>
+            <AppText variant="headline">Le altre stanze</AppText>
+            {others.map((g) => (
+              <RoomCard key={g.id} game={g} info={infoOf(g)} onPress={() => openGame(g)} />
+            ))}
           </View>
         )}
+
+        <RulebookCard />
       </ScrollView>
       <LobbyActions
         primary={!resume}
@@ -138,6 +103,56 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
         onJoin={() => router.push('/room/join')}
       />
     </View>
+  );
+}
+
+/**
+ * Card stanza, uguale per tutte: quella da riprendere ha il CTA giallo,
+ * le altre un bottone secondario trasparente (un solo giallo per schermata).
+ */
+function RoomCard({
+  game,
+  info,
+  primary,
+  onPress,
+}: {
+  game: Game;
+  info: { line: string; people: Player[] };
+  primary?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${primary ? 'Rientra in' : 'Apri'} ${game.name}. ${info.line}`}
+      onPress={onPress}
+      pressedScale={0.98}
+      style={styles.resume}>
+      {primary && (
+        <AppText variant="micro" color={colors.inkSoft}>
+          Rientra in partita
+        </AppText>
+      )}
+      <AppText variant="title" numberOfLines={2}>
+        {game.emoji} {game.name}
+      </AppText>
+      <StatusBadge status={game.status} />
+      <AppText variant="body" color={colors.inkSoft}>
+        {info.line}
+      </AppText>
+      <View style={styles.resumeFoot}>
+        <AvatarStack players={info.people} size={32} max={5} />
+        {primary ? (
+          <View style={styles.go}>
+            <Icon name="chevron-right" size={22} />
+          </View>
+        ) : (
+          <View style={styles.open}>
+            <AppText variant="caption">Apri</AppText>
+          </View>
+        )}
+      </View>
+    </PressableScale>
   );
 }
 
@@ -167,9 +182,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: space.lg,
     gap: space.xs,
-    borderWidth: 1,
-    borderColor: colors.cta,
-    ...shadow.floating,
   },
   resumeFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm },
   go: {
@@ -180,7 +192,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  list: { gap: space.xs },
+  open: {
+    height: 40,
+    paddingHorizontal: space.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    justifyContent: 'center',
+  },
+  list: { gap: space.sm },
   rows: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
   row: {
     flexDirection: 'row',

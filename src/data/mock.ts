@@ -448,3 +448,38 @@ export const POWERS: Record<string, { main: PowerUpId; secondary: PowerUpId }> =
   'u-sara': { main: 'boost', secondary: 'veto' },
   'u-luca': { main: 'slowdown', secondary: 'accumulator' },
 };
+
+/** Bacheca dei giocatori: trofei vinti e scudi (lo stemma di ogni stanza giocata). */
+export const COLLECTIONS: Record<
+  string,
+  {
+    trophies: { emoji: string; label: string; game: string }[];
+    shields: { emoji: string; label: string; note: string }[];
+  }
+> = {
+  'u-me': {
+    trophies: [
+      { emoji: '🏆', label: 'Campione', game: 'FantaSardegna 2025' },
+      { emoji: '😇', label: 'Re dei bonus', game: 'FantaSardegna 2025' },
+      { emoji: '📣', label: 'Il Cronista', game: 'FantaNatale 2024' },
+    ],
+    shields: [
+      { emoji: '🏖️', label: 'FantaSardegna 2025', note: '1° su 6' },
+      { emoji: '🎄', label: 'FantaNatale 2024', note: '3° su 5' },
+      { emoji: '🧺', label: 'Fantapasquetta', note: 'in corso' },
+    ],
+  },
+  'u-sara': {
+    trophies: [{ emoji: '🌅', label: "Regina dell'alba", game: 'FantaCampeggio 2024' }],
+    shields: [
+      { emoji: '⛺', label: 'FantaCampeggio 2024', note: '1° su 8' },
+      { emoji: '🏖️', label: 'FantaSardegna 2025', note: '4° su 6' },
+    ],
+  },
+};
+
+/** Chi vede la bacheca degli altri (la mia si imposta nelle Impostazioni). */
+export const COLLECTION_VISIBILITY: Record<string, 'private' | 'friends' | 'everyone'> = {
+  'u-sara': 'friends',
+  'u-ale': 'everyone',
+};

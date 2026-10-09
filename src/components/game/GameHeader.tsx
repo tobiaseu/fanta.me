@@ -71,7 +71,14 @@ export function GameHeader({ game }: { game: Game }) {
           <AppText variant="headline" numberOfLines={1} style={styles.title} accessibilityRole="header">
             {game.emoji} {game.name}
           </AppText>
-          <View style={styles.back} />
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Il Libro del Fanta: le regole"
+            hitSlop={12}
+            onPress={() => router.push('/rulebook')}
+            style={[styles.back, styles.right]}>
+            <Icon name="book" size={22} />
+          </PressableScale>
         </View>
 
         <PressableScale
@@ -145,6 +152,7 @@ const styles = StyleSheet.create({
   inner: { width: '100%', maxWidth: MAX_APP_WIDTH, alignSelf: 'center', paddingHorizontal: space.md, gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', height: 40 },
   back: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
+  right: { alignItems: 'flex-end' },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },
   open: { gap: space.sm, paddingTop: space.xxs },

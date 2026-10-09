@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 
 export type SignInMethod = 'apple' | 'google' | 'email';
+/** Chi vede trofei, scudi e carte nel profilo: si parte da privato */
+export type Visibility = 'private' | 'friends' | 'everyone';
 
 /**
  * Sessione utente (mock). Fase 2: Supabase Auth con Sign in with Apple / Google.
@@ -15,6 +17,8 @@ interface SessionState {
   /** Ultima stanza aperta: la Home la propone per rientrare al volo */
   lastGameId?: string;
   setLastGame: (gameId: string) => void;
+  collectionVisibility: Visibility;
+  setCollectionVisibility: (v: Visibility) => void;
   signIn: (method: SignInMethod) => void;
   finishOnboarding: () => void;
   signOut: () => void;
@@ -49,6 +53,8 @@ export const useSessionStore = create<SessionState>()(
       signedIn: false,
       onboarded: false,
       setLastGame: (gameId) => set({ lastGameId: gameId }),
+      collectionVisibility: 'private',
+      setCollectionVisibility: (collectionVisibility) => set({ collectionVisibility }),
       signIn: (method) => set({ signedIn: true, method }),
       finishOnboarding: () => set({ onboarded: true }),
       signOut: () => set({ signedIn: false, onboarded: false, method: undefined }),

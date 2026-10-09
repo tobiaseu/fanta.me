@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PlayerGameSection } from '@/components/game/PlayerGameSection';
+import { CollectionSection } from '@/components/profile/CollectionSection';
 import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { Icon } from '@/components/icons/Icon';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
@@ -11,15 +12,16 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { Segmented } from '@/components/ui/Segmented';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { ME } from '@/data/mock';
+import { COLLECTION_VISIBILITY, ME } from '@/data/mock';
 import { ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { useSessionStore } from '@/store/useSessionStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
-import type { FriendStatus, Player } from '@/types/game';
+import type { FriendStatus, Game, Player } from '@/types/game';
 
 /** Scheda giocatore chiara, come il resto dell'app. */
 const NAVY = colors.surface;
@@ -44,8 +46,11 @@ export function PlayerProfileScreen() {
   const showToast = useUiStore((s) => s.showToast);
 
   const player = players.find((p) => p.id === playerId);
+  const myVisibility = useSessionStore((s) => s.collectionVisibility);
   const isMe = player?.id === ME.id;
   const status: FriendStatus = (player && friendships[player.id]) ?? 'none';
+  const visibility = isMe ? myVisibility : (COLLECTION_VISIBILITY[player?.id ?? ''] ?? 'private');
+  const canSee = isMe || visibility === 'everyone' || (visibility === 'friends' && status === 'friends');
 
   const { shared, favorite } = useMemo(() => {
     if (!player) return { shared: [], favorite: undefined };
@@ -86,9 +91,20 @@ export function PlayerProfileScreen() {
       ]}>
       <View style={styles.head}>
         <AppText variant="title">{isMe ? 'Il tuo profilo' : 'Profilo'}</AppText>
-        <PressableScale onPress={close} style={styles.close} accessibilityLabel="Chiudi">
-          <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
-        </PressableScale>
+        <View style={styles.headActions}>
+          {isMe && (
+            <PressableScale
+              onPress={() => router.push('/settings')}
+              style={styles.close}
+              accessibilityRole="button"
+              accessibilityLabel="Impostazioni">
+              <Icon name="settings" size={18} color={colors.inkSoft} />
+            </PressableScale>
+          )}
+          <PressableScale onPress={close} style={styles.close} accessibilityLabel="Chiudi">
+            <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
+          </PressableScale>
+        </View>
       </View>
 
       <View style={styles.hero}>
@@ -131,12 +147,18 @@ export function PlayerProfileScreen() {
         </View>
       )}
 
+      <CollectionSection player={player} isMe={isMe} visibility={visibility} canSee={canSee} />
       {isMe && <MyPowersRow />}
       {isMe ? (
         <MyFriends
           players={players}
           friendships={friendships}
+          rooms={shared}
           onOpen={(id) => router.push({ pathname: '/player/[playerId]', params: { playerId: id } })}
+          onOpenRoom={(id) => {
+            haptics.tap();
+            router.push({ pathname: '/game/[gameId]', params: { gameId: id } });
+          }}
         />
       ) : (
         favorite?.rule && (
@@ -158,47 +180,33 @@ export function PlayerProfileScreen() {
         )
       )}
 
-      <View style={styles.section}>
-        <AppText variant="headline">{isMe ? 'Le tue stanze' : 'Stanze in comune'}</AppText>
-        {shared.length === 0 ? (
-          <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
-            Nessuna stanza insieme, per ora.
-          </AppText>
-        ) : (
-          shared.map((g) => (
-            <PressableScale
-              key={g.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Apri ${g.name}`}
-              onPress={() => {
-                haptics.tap();
-                router.push({ pathname: '/game/[gameId]', params: { gameId: g.id } });
-              }}
-              style={styles.row}>
-              <AppText style={styles.rowEmoji}>{g.emoji}</AppText>
-              <AppText variant="headline" style={styles.flex} numberOfLines={1}>
-                {g.name}
-              </AppText>
-              <StatusBadge status={g.status} size="sm" />
-            </PressableScale>
-          ))
-        )}
-      </View>
-      {isMe && (
-        <PressableScale
-          accessibilityRole="button"
-          hitSlop={8}
-          style={styles.signOut}
-          onPress={() => {
-            haptics.tap();
-            useSessionStore.getState().signOut();
-            if (router.canDismiss()) router.dismissAll();
-            router.replace('/welcome');
-          }}>
-          <AppText variant="caption" color={colors.malus}>
-            Esci
-          </AppText>
-        </PressableScale>
+      {!isMe && (
+        <View style={styles.section}>
+          <AppText variant="headline">Stanze in comune</AppText>
+          {shared.length === 0 ? (
+            <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
+              Nessuna stanza insieme, per ora.
+            </AppText>
+          ) : (
+            shared.map((g) => (
+              <PressableScale
+                key={g.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Apri ${g.name}`}
+                onPress={() => {
+                  haptics.tap();
+                  router.push({ pathname: '/game/[gameId]', params: { gameId: g.id } });
+                }}
+                style={styles.row}>
+                <AppText style={styles.rowEmoji}>{g.emoji}</AppText>
+                <AppText variant="headline" style={styles.flex} numberOfLines={1}>
+                  {g.name}
+                </AppText>
+                <StatusBadge status={g.status} size="sm" />
+              </PressableScale>
+            ))
+          )}
+        </View>
       )}
     </ScrollView>
   );
@@ -279,59 +287,90 @@ function FriendAction({ player, status, onRequest, onCancel, onAccept, onDecline
   );
 }
 
+type SocialTab = 'friends' | 'requests' | 'sent' | 'rooms';
+
+/** Amici, richieste e stanze in un'unica sezione a schede: si sceglie, non si scorre. */
 function MyFriends({
   players,
   friendships,
+  rooms,
   onOpen,
+  onOpenRoom,
 }: {
   players: Player[];
   friendships: Record<string, FriendStatus>;
+  rooms: Game[];
   onOpen: (id: string) => void;
+  onOpenRoom: (id: string) => void;
 }) {
   const by = (s: FriendStatus) => players.filter((p) => friendships[p.id] === s);
-  const groups: { title: string; list: Player[]; note: string }[] = [
-    { title: 'Richieste per te', list: by('received'), note: 'vuole essere tuo amico' },
-    { title: 'Amici', list: by('friends'), note: 'tocca per creare una stanza insieme' },
-    { title: 'In attesa di risposta', list: by('sent'), note: 'richiesta inviata' },
-  ];
+  const requests = by('received');
+  const [tab, setTab] = useState<SocialTab>(requests.length ? 'requests' : 'friends');
+  const lists: Record<Exclude<SocialTab, 'rooms'>, { list: Player[]; note: string; empty: string }> = {
+    friends: { list: by('friends'), note: 'amico', empty: 'Ancora nessun amico.' },
+    requests: { list: requests, note: 'vuole essere tuo amico', empty: 'Nessuna richiesta.' },
+    sent: { list: by('sent'), note: 'richiesta inviata', empty: 'Nessuna richiesta in attesa.' },
+  };
   return (
-    <>
-      {groups
-        .filter((g) => g.list.length > 0)
-        .map((g) => (
-          <View key={g.title} style={styles.section}>
-            <AppText variant="headline">
-              {g.title} ({g.list.length})
+    <View style={styles.section}>
+      <Segmented
+        value={tab}
+        onChange={setTab}
+        options={[
+          { id: 'friends', label: `Amici ${lists.friends.list.length}` },
+          { id: 'requests', label: `Richieste ${requests.length}` },
+          { id: 'sent', label: 'In attesa' },
+          { id: 'rooms', label: 'Stanze' },
+        ]}
+      />
+      {tab === 'rooms' ? (
+        rooms.map((g) => (
+          <PressableScale
+            key={g.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Apri ${g.name}`}
+            onPress={() => onOpenRoom(g.id)}
+            style={styles.row}>
+            <AppText style={styles.rowEmoji}>{g.emoji}</AppText>
+            <AppText variant="headline" style={styles.flex} numberOfLines={1}>
+              {g.name}
             </AppText>
-            {g.list.map((p) => (
-              <PressableScale
-                key={p.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Profilo di ${p.name}`}
-                onPress={() => {
-                  haptics.tap();
-                  onOpen(p.id);
-                }}
-                style={styles.row}>
-                <Avatar player={p} size={40} sticker={false} />
-                <View style={styles.flex}>
-                  <AppText variant="name">{p.name}</AppText>
-                  <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-                    {g.note}
-                  </AppText>
-                </View>
-                <Icon name="chevron-right" size={20} color={colors.inkFaint} />
-              </PressableScale>
-            ))}
-          </View>
-        ))}
-    </>
+            <StatusBadge status={g.status} size="sm" />
+          </PressableScale>
+        ))
+      ) : lists[tab].list.length === 0 ? (
+        <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
+          {lists[tab].empty}
+        </AppText>
+      ) : (
+        lists[tab].list.map((p) => (
+          <PressableScale
+            key={p.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Profilo di ${p.name}`}
+            onPress={() => {
+              haptics.tap();
+              onOpen(p.id);
+            }}
+            style={styles.row}>
+            <Avatar player={p} size={40} sticker={false} />
+            <View style={styles.flex}>
+              <AppText variant="name">{p.name}</AppText>
+              <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                {lists[tab].note}
+              </AppText>
+            </View>
+            <Icon name="chevron-right" size={20} color={colors.inkFaint} />
+          </PressableScale>
+        ))
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   gameBlock: { gap: space.lg },
-  signOut: { alignSelf: 'center', paddingVertical: space.sm },
+  headActions: { flexDirection: 'row', gap: space.xs },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: space.md,
