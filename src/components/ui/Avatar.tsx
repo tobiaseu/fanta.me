@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
 
@@ -6,7 +6,7 @@ import { colors } from '@/theme/tokens';
 import type { Player } from '@/types/game';
 
 interface Props {
-  player: Pick<Player, 'name' | 'color'>;
+  player: Pick<Player, 'name' | 'color'> & { photo?: string };
   size?: number;
   /** Bordo bianco spesso stile sticker fustellato */
   sticker?: boolean;
@@ -28,12 +28,20 @@ export function Avatar({ player, size = 40, sticker = true }: Props) {
           borderWidth: border,
         },
       ]}>
-      <AppText
-        variant="headline"
-        color={colors.inkInverse}
-        style={{ fontSize: size * 0.42, lineHeight: size * 0.5, fontWeight: '800', letterSpacing: 0 }}>
-        {player.name.charAt(0).toUpperCase()}
-      </AppText>
+      {player.photo ? (
+        <Image
+          source={{ uri: player.photo }}
+          style={{ width: size - border * 2, height: size - border * 2, borderRadius: size / 2 }}
+          accessibilityIgnoresInvertColors
+        />
+      ) : (
+        <AppText
+          variant="headline"
+          color={colors.inkInverse}
+          style={{ fontSize: size * 0.42, lineHeight: size * 0.5, fontWeight: '800', letterSpacing: 0 }}>
+          {player.name.charAt(0).toUpperCase()}
+        </AppText>
+      )}
     </View>
   );
 }

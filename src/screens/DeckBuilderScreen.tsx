@@ -54,6 +54,7 @@ export function DeckBuilderScreen() {
     transform: [{ translateX: gx.value - 40 }, { translateY: gy.value - 52 }, { rotate: '-5deg' }, { scale: 1.08 }],
   }));
 
+  const savedIds = useGameStore((s) => s.savedRuleIds);
   const mineOwn = useMemo(() => customRules.filter((r) => r.authorId === ME.id), [customRules]);
   if (!game) return <Redirect href="/" />;
 
@@ -62,7 +63,12 @@ export function DeckBuilderScreen() {
   const deck = game.ruleIds.map(ruleById).filter((r): r is Rule => !!r);
   const pile = deck.slice(-7);
   const open = game.status === 'waiting';
-  const pool = tab === 'mine' ? mineOwn : RULES;
+  // Personali = carte create da me + carte salvate (anche di altri) per le partite future
+  const mineAll = [
+    ...mineOwn,
+    ...savedIds.map(ruleById).filter((r): r is Rule => !!r && !mineOwn.some((m) => m.id === r.id)),
+  ];
+  const pool = tab === 'mine' ? mineAll : RULES;
   const freeCustom = customSlots(extraSlots, game) - mineOwn.length;
 
   const place = (rule: Rule, slot?: number) => {
@@ -200,7 +206,7 @@ export function DeckBuilderScreen() {
           <View style={styles.segment} accessibilityRole="tablist">
             {(
               [
-                ['mine', `Personali ${mineOwn.length}`],
+                ['mine', `Personali ${mineAll.length}`],
                 ['base', `Base ${RULES.length}`],
               ] as const
             ).map(([id, label]) => (
@@ -351,8 +357,8 @@ const styles = StyleSheet.create({
   pileCard: { position: 'absolute', width: 70, ...shadow.card },
   pileInner: { width: '100%' },
   section: { gap: space.sm },
-  slots: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '3.33%', rowGap: space.sm },
-  slot: { width: '22.5%' },
+  slots: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.sm },
+  slot: { width: '30%' },
   fill: { width: '100%' },
   emptySlot: {
     width: '100%',
@@ -367,8 +373,8 @@ const styles = StyleSheet.create({
   segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, padding: 4 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs, borderRadius: radius.pill },
   segmentActive: { backgroundColor: colors.surface },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '3.33%', rowGap: space.md },
-  cell: { width: '22.5%' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
+  cell: { width: '30%' },
   liftedCell: { opacity: 0.25 },
   fixed: { paddingBottom: space.sm, gap: space.md },
   ghost: { position: 'absolute', left: 0, top: 0, width: 80, zIndex: 100, ...shadow.floating },

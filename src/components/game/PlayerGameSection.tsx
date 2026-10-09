@@ -186,8 +186,8 @@ function ShadeTag({ shade }: { shade: Shade }) {
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '3.33%', rowGap: space.md },
-  cell: { width: '22.5%', alignItems: 'center' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
+  cell: { width: '30%', alignItems: 'center' },
   shadeWrap: { width: '100%', borderRadius: radius.sm + 3, borderWidth: 1, borderColor: 'transparent', padding: 1 },
   fill: { width: '100%' },
   tag: { marginTop: 4, borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 1 },

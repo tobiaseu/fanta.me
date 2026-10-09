@@ -98,7 +98,7 @@ export function EmptySlot({ locked, onPress, label }: { locked?: boolean; onPres
 }
 
 const styles = StyleSheet.create({
-  wrap: { width: '22.5%', alignItems: 'center', gap: space.xxs },
+  wrap: { width: '30%', alignItems: 'center', gap: space.xxs },
   dimmed: { opacity: 0.38 },
   card: {
     width: '100%',
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  emoji: { fontSize: 34, lineHeight: 42, fontFamily: EMOJI_FONT },
+  emoji: { fontSize: 44, lineHeight: 54, fontFamily: EMOJI_FONT },
   gem: {
     position: 'absolute',
     top: 3,

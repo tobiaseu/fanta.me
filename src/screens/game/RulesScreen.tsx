@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   phase: { gap: space.sm },
   section: { gap: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '3.33%', rowGap: space.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
   segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, padding: 4 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs, borderRadius: radius.pill },
   segmentActive: { backgroundColor: colors.surface },

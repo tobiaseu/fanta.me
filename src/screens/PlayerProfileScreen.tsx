@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PlayerGameSection } from '@/components/game/PlayerGameSection';
+import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import { CollectionSection } from '@/components/profile/CollectionSection';
 import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { Icon } from '@/components/icons/Icon';
@@ -206,6 +207,12 @@ export function PlayerProfileScreen() {
               </PressableScale>
             ))
           )}
+        </View>
+      )}
+      {isMe && (
+        <View style={styles.section}>
+          <AppText variant="title">Impostazioni</AppText>
+          <SettingsPanel />
         </View>
       )}
     </ScrollView>

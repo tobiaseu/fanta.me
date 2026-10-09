@@ -46,6 +46,9 @@ interface GameState {
 
   /* ---- Carte personali e proposte (pre-partita) ---- */
   customRules: Rule[];
+  /** Carte salvate nella mia collezione per le partite future */
+  savedRuleIds: string[];
+  toggleSaved: (ruleId: string) => boolean;
   createCustomRule: (input: Omit<Rule, 'id' | 'authorId'>) => Rule;
   proposals: CardProposal[];
   proposeCard: (gameId: string, ruleId: string) => void;
@@ -75,7 +78,7 @@ interface GameState {
   setFriendship: (playerId: string, status: FriendStatus) => void;
 }
 
-export const useGameStore = create<GameState>((set) => ({
+export const useGameStore = create<GameState>((set, get) => ({
   games: GAMES,
   players: PLAYERS,
   events: FEED,
@@ -182,6 +185,12 @@ export const useGameStore = create<GameState>((set) => ({
     })),
 
   customRules: CUSTOM_RULES.slice(),
+  savedRuleIds: [],
+  toggleSaved: (ruleId) => {
+    const saved = get().savedRuleIds.includes(ruleId);
+    set((s) => ({ savedRuleIds: saved ? s.savedRuleIds.filter((id) => id !== ruleId) : [...s.savedRuleIds, ruleId] }));
+    return !saved;
+  },
   createCustomRule: (input) => {
     const rule: Rule = { ...input, id: `c-${Date.now()}`, authorId: ME.id };
     CUSTOM_RULES.push(rule); // registro per ruleById (vedi data/rules)

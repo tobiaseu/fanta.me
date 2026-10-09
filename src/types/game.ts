@@ -14,6 +14,8 @@ export interface Player {
   handle: string;
   /** Colore dell'avatar sticker */
   color: string;
+  /** Foto profilo (per ora immagini di prova) */
+  photo?: string;
   /** Carriera pubblica (mostrata nel profilo giocatore) */
   career?: Career;
 }

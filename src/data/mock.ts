@@ -17,6 +17,7 @@ export const ME: User = {
   name: 'Tobia',
   handle: 'tobia.fanta',
   color: colors.toonBlue,
+  photo: 'https://i.pravatar.cc/240?img=12',
   career: { trophies: 3, gamesPlayed: 11, wins: 3, totalPoints: 1240 },
 };
 
@@ -27,6 +28,7 @@ export const PLAYERS: Player[] = [
     name: 'Ale',
     handle: 'aleilie99',
     color: colors.toonRed,
+    photo: 'https://i.pravatar.cc/240?img=15',
     career: { trophies: 5, gamesPlayed: 14, wins: 5, totalPoints: 1630 },
   },
   {
@@ -34,6 +36,7 @@ export const PLAYERS: Player[] = [
     name: 'Giulia',
     handle: 'giuly.g',
     color: colors.toonPurple,
+    photo: 'https://i.pravatar.cc/240?img=47',
     career: { trophies: 2, gamesPlayed: 9, wins: 2, totalPoints: 980 },
   },
   {
@@ -41,6 +44,7 @@ export const PLAYERS: Player[] = [
     name: 'Marco',
     handle: 'marcopolo',
     color: colors.toonYellow,
+    photo: 'https://i.pravatar.cc/240?img=53',
     career: { trophies: 0, gamesPlayed: 6, wins: 0, totalPoints: 310 },
   },
   {
@@ -48,6 +52,7 @@ export const PLAYERS: Player[] = [
     name: 'Sara',
     handle: 'sarettah',
     color: colors.toonGreen,
+    photo: 'https://i.pravatar.cc/240?img=44',
     career: { trophies: 1, gamesPlayed: 7, wins: 1, totalPoints: 655 },
   },
   {
@@ -55,6 +60,7 @@ export const PLAYERS: Player[] = [
     name: 'Luca',
     handle: 'lucky.luca',
     color: '#FF9F1C',
+    photo: 'https://i.pravatar.cc/240?img=59',
     career: { trophies: 3, gamesPlayed: 12, wins: 3, totalPoints: 1105 },
   },
   // Non è in nessuna tua lega: ti ha chiesto l'amicizia
@@ -63,6 +69,7 @@ export const PLAYERS: Player[] = [
     name: 'Bea',
     handle: 'bea.in.viaggio',
     color: '#4FB3BF',
+    photo: 'https://i.pravatar.cc/240?img=32',
     career: { trophies: 1, gamesPlayed: 4, wins: 1, totalPoints: 420 },
   },
 ];

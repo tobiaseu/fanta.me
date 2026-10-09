@@ -8,10 +8,11 @@ import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { Segmented } from '@/components/ui/Segmented';
 import { COLLECTIONS } from '@/data/mock';
+import { ruleById } from '@/data/rules';
 import { useGameStore } from '@/store/useGameStore';
 import type { Visibility } from '@/store/useSessionStore';
 import { colors, radius, space } from '@/theme/tokens';
-import type { Player } from '@/types/game';
+import type { Player, Rule } from '@/types/game';
 
 type Tab = 'trophies' | 'shields' | 'cards';
 
@@ -40,7 +41,11 @@ export function CollectionSection({
   const [tab, setTab] = useState<Tab>('trophies');
   const customRules = useGameStore((s) => s.customRules);
   const data = COLLECTIONS[player.id] ?? { trophies: [], shields: [] };
-  const cards = customRules.filter((r) => r.authorId === player.id);
+  const savedIds = useGameStore((s) => s.savedRuleIds);
+  const cards = [
+    ...customRules.filter((r) => r.authorId === player.id),
+    ...(isMe ? savedIds.map(ruleById).filter((r): r is Rule => !!r && r.authorId !== player.id) : []),
+  ];
 
   return (
     <View style={styles.section}>
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.md,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '3.33%', rowGap: space.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
   list: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
