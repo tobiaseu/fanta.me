@@ -164,11 +164,11 @@ export function GameHeader({ game }: { game: Game }) {
               exiting={FadeOut.duration(120)}
               style={styles.strip}>
               <View style={[styles.dot, { backgroundColor: phase.dot }]} />
-              <AppText variant="caption" numberOfLines={1} style={styles.flex}>
+              <AppText variant="micro" numberOfLines={1} style={styles.flex}>
                 {phase.title}
-                {cd ? <AppText variant="caption" color={colors.inkSoft}>{`  ${cd.short}`}</AppText> : null}
+                {cd ? <AppText variant="micro" color={colors.inkSoft}>{` ${cd.short}`}</AppText> : null}
               </AppText>
-              <Icon name="chevron-right" size={14} color={colors.inkFaint} />
+              <Icon name="chevron-right" size={12} color={colors.inkFaint} />
             </Animated.View>
           )}
         </PressableScale>
@@ -182,25 +182,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomLeftRadius: radius.bar,
     borderBottomRightRadius: radius.bar,
-    paddingBottom: space.md,
+    paddingBottom: space.sm,
     zIndex: 5,
     overflow: 'hidden',
   },
-  inner: { width: '100%', maxWidth: MAX_APP_WIDTH, alignSelf: 'center', paddingHorizontal: space.md, gap: space.sm },
+  inner: { width: '100%', maxWidth: MAX_APP_WIDTH, alignSelf: 'center', paddingHorizontal: space.md, gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', height: 40 },
   back: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
   right: { alignItems: 'flex-end' },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },
-  panel: {
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    paddingHorizontal: space.md,
-    paddingTop: space.sm,
-    paddingBottom: space.sm,
-    gap: space.xs,
-  },
-  panelOpen: { paddingTop: space.md, paddingBottom: space.md, gap: space.md },
+  // Chiusa: solo una linea sottile e una riga di testo, senza riquadro. Aperta: il pannello guida.
+  panel: { paddingHorizontal: space.xxs, paddingVertical: space.xxs, gap: 6, borderRadius: radius.lg },
+  panelOpen: { backgroundColor: colors.background, padding: space.md, gap: space.md },
   open: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
   guide: { flex: 1, gap: space.xxs },
   phaseTitle: { fontSize: 26, lineHeight: 30 },
@@ -218,6 +212,6 @@ const styles = StyleSheet.create({
   },
   digits: { fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
   trophy: { fontSize: 40, lineHeight: 48 },
-  strip: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  dot: { width: 8, height: 8, borderRadius: 4 },
+  strip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
 });

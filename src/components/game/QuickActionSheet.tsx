@@ -1,7 +1,8 @@
+import { pickPhoto } from '@/lib/pickPhoto';
 import { timeAgo } from '@/lib/time';
 import { Segmented } from '@/components/ui/Segmented';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,6 +48,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const [playerId, setPlayerId] = useState<string>();
   const [kind, setKind] = useState<RuleKind>('bonus');
   const [ruleId, setRuleId] = useState<string>();
+  const [photo, setPhoto] = useState<string>();
 
   // In cima le carte chiamate di recente in questa stanza: di solito si richiamano quelle
   const recent = events
@@ -66,7 +68,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
 
   const confirm = () => {
     if (!player || !rule) return;
-    const event = assignPoints({ gameId: game.id, playerId: player.id, ruleId: rule.id });
+    const event = assignPoints({ gameId: game.id, playerId: player.id, ruleId: rule.id, photo });
     if (rule.points > 0) haptics.bonus();
     else haptics.malus();
     onDone();
@@ -186,6 +188,29 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
           })}
         </ScrollView>
 
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={photo ? 'Cambia la foto' : 'Aggiungi una foto'}
+          onPress={async () => {
+            const uri = await pickPhoto();
+            if (uri) setPhoto(uri);
+          }}
+          style={styles.photoRow}>
+          {photo ? (
+            <Image source={{ uri: photo }} style={styles.photoThumb} />
+          ) : (
+            <View style={[styles.photoThumb, styles.photoEmpty]}>
+              <Icon name="camera" size={20} color={colors.inkSoft} />
+            </View>
+          )}
+          <View style={styles.flex1}>
+            <AppText variant="name">{photo ? 'Foto aggiunta' : 'Aggiungi una foto'}</AppText>
+            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+              {photo ? 'Tocca per cambiarla' : 'Esce nella storia e resta sul punto confermato'}
+            </AppText>
+          </View>
+        </PressableScale>
+
         <Button
           disabled={!player || !rule}
           onPress={confirm}
@@ -206,6 +231,17 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  photoRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  photoThumb: { width: 44, height: 44, borderRadius: radius.sm },
+  photoEmpty: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flex1: { flex: 1 },
+  regular: { fontWeight: '400' },
   taken: { opacity: 0.4 },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.3)' },
   anchor: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
@@ -260,6 +296,5 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   flex: { flex: 1, gap: 2 },
-  regular: { fontWeight: '400' },
   hint: { textAlign: 'center', fontWeight: '500' },
 });

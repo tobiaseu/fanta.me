@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import { Image, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons/Icon';
@@ -9,18 +9,23 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { ruleById } from '@/data/rules';
-import { haptics } from '@/lib/haptics';
+import { Scrim } from '@/components/ui/Scrim';
 import { ME } from '@/data/mock';
+import { ruleById } from '@/data/rules';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
-import { useGameStore, votesNeeded } from '@/store/useGameStore';
+import { haptics } from '@/lib/haptics';
+import { timeAgo } from '@/lib/time';
+import { nameIn, useGameStore, votesNeeded } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
-import { colors, MAX_APP_WIDTH, space } from '@/theme/tokens';
-import type { Vote } from '@/types/game';
+import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
+
+const WHITE = '#FFFFFF';
+const WHITE_SOFT = 'rgba(255,255,255,0.78)';
 
 /**
- * "Conferma punto" del Figma: una chiamata del gruppo da votare.
- * Sticker + nome serif della carta + descrizione + punti, poi Rifiuta / Conferma / Ignora.
+ * Una chiamata da votare, come una storia: la foto a tutto schermo, una sfumatura scura dal basso
+ * e sopra, in bianco e allineati a sinistra, carta, punti e voti. Due scelte: confermi o decidi dopo.
+ * Si esce con la X; "Segnala" avvisa l'host.
  */
 export function CallScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
@@ -41,24 +46,32 @@ export function CallScreen() {
   const rule = event && ruleById(event.ruleId);
   const player = players.find((p) => p.id === event?.playerId);
   const author = players.find((p) => p.id === event?.authorId);
+  const host = players.find((p) => p.id === game?.playerIds[0]);
   if (!event || !rule || !player) return null;
 
   const isBonus = event.points > 0;
   const needed = game ? votesNeeded(game) : 1;
   const voters = game ? game.playerIds.length - 1 : 1;
-  const cast = (v: Vote) => {
+  const name = nameIn(game, player);
+
+  const confirm = () => {
     const before = event;
-    vote(event.id, v);
-    if (v === 'confirm') haptics.bonus();
-    else haptics.malus();
+    vote(event.id, 'confirm');
+    haptics.bonus();
     const after = useGameStore.getState().events.find((e) => e.id === event.id);
-    const text =
-      after?.status === 'confirmed'
-        ? `Punto ufficiale: ${isBonus ? '+' : ''}${event.points} a ${player.name}`
-        : after?.status === 'rejected'
-          ? 'Chiamata scartata dal gruppo'
-          : `Voto registrato. ${needed - (after?.votes[v] ?? 0) === 1 ? 'Manca 1 voto' : `Mancano ${needed - (after?.votes[v] ?? 0)} voti`}`;
-    showToast({ text, action: { label: 'Annulla', onPress: () => restoreEvent(before, event.id) } });
+    const missing = needed - (after?.votes.confirm ?? 0);
+    showToast({
+      text:
+        after?.status === 'confirmed'
+          ? `Punto ufficiale: ${isBonus ? '+' : ''}${event.points} a ${name}`
+          : `Confermato. ${missing === 1 ? 'Manca 1 voto' : `Mancano ${missing} voti`}`,
+      action: { label: 'Annulla', onPress: () => restoreEvent(before, event.id) },
+    });
+    close();
+  };
+  const report = () => {
+    haptics.tap();
+    showToast({ text: `Segnalata a ${host ? nameIn(game, host) : "l'host"}, che deciderà cosa fare` });
     close();
   };
   /** Non si vota su se stessi, e chi chiama ha già votato */
@@ -67,132 +80,142 @@ export function CallScreen() {
       ? 'Questa chiamata è su di te: decidono gli altri.'
       : event.authorId === ME.id
         ? "L'hai chiamata tu, il tuo voto è già dentro."
-        : undefined;
+        : event.myVote === 'confirm'
+          ? 'Hai già confermato. Aspettiamo gli altri.'
+          : undefined;
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.head}>
+    <View style={styles.screen}>
+      {event.photo ? (
+        <Animated.View entering={FadeIn.duration(300)} style={StyleSheet.absoluteFill}>
+          <Image source={{ uri: event.photo }} style={styles.photo} resizeMode="cover" />
+        </Animated.View>
+      ) : (
+        <View style={styles.noPhoto}>
+          <RuleSticker rule={rule} size={220} />
+        </View>
+      )}
+      <Scrim />
+
+      <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <PressableScale
           onPress={() => openPlayer(player.id)}
           accessibilityRole="button"
-          accessibilityLabel={`Profilo di ${player.name}`}>
-          <Avatar player={player} size={40} sticker={false} />
-        </PressableScale>
-        <View style={styles.flex}>
-          <AppText variant="name" onPress={() => openPlayer(player.id)}>
-            {player.name}
-          </AppText>
-          <AppText variant="body" color={colors.inkMuted}>
-            chiamato da{' '}
-            <AppText variant="body" color={colors.inkMuted} style={styles.bold}>
-              {author?.name ?? '—'}
+          accessibilityLabel={`Profilo di ${name}`}
+          style={styles.who}>
+          <Avatar player={player} size={36} sticker={false} />
+          <View>
+            <AppText variant="headline" color={WHITE}>
+              {name}
             </AppText>
-          </AppText>
-        </View>
-        <PressableScale onPress={close} accessibilityLabel="Chiudi" hitSlop={12} style={styles.close}>
-          <Icon name="close" size={24} strokeWidth={1.8} />
+            <AppText variant="micro" color={WHITE_SOFT}>
+              chiamata da {author ? nameIn(game, author) : '—'}, {timeAgo(event.createdAt)}
+            </AppText>
+          </View>
+        </PressableScale>
+        <PressableScale onPress={close} accessibilityLabel="Esci dalla storia" hitSlop={12} style={styles.close}>
+          <Icon name="close" size={24} color={WHITE} />
         </PressableScale>
       </View>
 
-      <ScrollView contentContainerStyle={styles.body}>
-        <Animated.View entering={ZoomIn.springify().damping(14)}>
-          <RuleSticker rule={rule} size={260} />
-        </Animated.View>
-        <AppText variant="serifTitle" style={styles.center}>
-          {rule.label}
+      <Animated.View
+        entering={FadeInDown.delay(120).duration(320)}
+        style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
+        <AppText style={[styles.points, { color: isBonus ? '#7CF29A' : '#FF8A80' }]}>
+          {isBonus ? `+${event.points}` : event.points} punti
         </AppText>
-        <AppText variant="body" style={[styles.center, styles.description]}>
+        <AppText variant="serifTitle" color={WHITE}>
+          {rule.emoji} {rule.label}
+        </AppText>
+        <AppText variant="body" color={WHITE_SOFT} style={styles.regular}>
           {rule.description}
         </AppText>
-        <AppText style={[styles.points, { color: isBonus ? colors.bonusBright : colors.malus }]}>
-          {isBonus ? `+${event.points}` : event.points} pt
-        </AppText>
+
         <View
           style={styles.tally}
-          accessibilityLabel={`${event.votes.confirm} conferme e ${event.votes.reject} rifiuti su ${voters} votanti`}>
+          accessibilityLabel={`${event.votes.confirm} conferme su ${voters}, ne servono ${needed}`}>
           <View style={styles.bar}>
-            <View style={[styles.barFill, { flex: event.votes.confirm, backgroundColor: colors.bonusBright }]} />
-            <View
-              style={[
-                styles.barFill,
-                {
-                  flex: Math.max(0, voters - event.votes.confirm - event.votes.reject),
-                  backgroundColor: colors.placeholder,
-                },
-              ]}
-            />
-            <View style={[styles.barFill, { flex: event.votes.reject, backgroundColor: colors.malus }]} />
+            {Array.from({ length: voters }, (_, i) => (
+              <View key={i} style={[styles.seg, i < event.votes.confirm && styles.segOn]} />
+            ))}
           </View>
-          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-            {event.votes.confirm} sì, {event.votes.reject} no. Ne servono {needed} su {voters} per decidere.
+          <AppText variant="micro" color={WHITE_SOFT}>
+            {event.votes.confirm} di {needed} conferme per renderla ufficiale
           </AppText>
         </View>
-        {event.myVote && !lock && (
-          <AppText variant="caption" color={colors.inkFaint}>
-            Hai già votato: {event.myVote === 'confirm' ? 'confermata' : 'rifiutata'}. Puoi cambiare idea.
-          </AppText>
-        )}
-      </ScrollView>
 
-      <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
         {lock ? (
-          <AppText variant="body" color={colors.inkSoft} style={[styles.center, styles.regular]}>
+          <AppText variant="body" color={WHITE} style={styles.regular}>
             {lock}
           </AppText>
         ) : (
           <View style={styles.row}>
-            <Button label="Rifiuta" variant="secondary" onPress={() => cast('reject')} style={styles.flex} />
-            <Button label="Conferma" variant="primary" onPress={() => cast('confirm')} style={styles.flex} />
+            <Button label="Confermo" onPress={confirm} style={styles.flex} />
+            <Button
+              label="Decido dopo"
+              variant="secondary"
+              onDark
+              onPress={close}
+              style={[styles.flex, styles.ghost]}
+            />
           </View>
         )}
-        <PressableScale accessibilityRole="button" onPress={close} hitSlop={8} style={styles.later}>
-          <AppText variant="headline" color={colors.inkSoft}>
-            {lock ? 'Chiudi' : 'Decido dopo'}
+        <PressableScale accessibilityRole="button" onPress={report} hitSlop={8} style={styles.report}>
+          <AppText variant="caption" color={WHITE_SOFT}>
+            Segnala la chiamata all'host
           </AppText>
         </PressableScale>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface },
-  head: {
+  screen: { flex: 1, backgroundColor: '#1C1C1E' },
+  photo: { width: '100%', height: '100%' },
+  noPhoto: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 220,
+  },
+  top: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space.sm,
-    padding: space.md,
-    width: '100%',
-    maxWidth: MAX_APP_WIDTH,
-    alignSelf: 'center',
-  },
-  flex: { flex: 1 },
-  bold: { fontWeight: '700' },
-  close: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  body: {
-    alignItems: 'center',
-    gap: space.md,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.lg,
-    width: '100%',
-    maxWidth: MAX_APP_WIDTH,
-    alignSelf: 'center',
-  },
-  center: { textAlign: 'center' },
-  description: { fontWeight: '400', lineHeight: 21 },
-  points: { fontSize: 24, lineHeight: 28, fontWeight: '700' },
-  actions: {
-    gap: space.md,
     paddingHorizontal: space.md,
-    paddingTop: space.md,
-    width: '100%',
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',
+    width: '100%',
   },
-  row: { flexDirection: 'row', gap: space.md },
-  later: { alignSelf: 'center', paddingVertical: space.xs },
+  who: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  close: { width: 40, height: 40, alignItems: 'flex-end', justifyContent: 'center' },
+  bottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    maxWidth: MAX_APP_WIDTH,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  points: { fontSize: 18, lineHeight: 22, fontWeight: '700' },
   regular: { fontWeight: '400' },
-  tally: { alignSelf: 'stretch', gap: space.xs, alignItems: 'center' },
-  bar: { flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', alignSelf: 'stretch', gap: 2 },
-  barFill: { height: 8 },
+  tally: { gap: space.xxs, marginVertical: space.xs },
+  bar: { flexDirection: 'row', gap: 3 },
+  seg: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
+  segOn: { backgroundColor: WHITE },
+  row: { flexDirection: 'row', gap: space.sm },
+  flex: { flex: 1 },
+  ghost: { borderColor: 'rgba(255,255,255,0.7)', backgroundColor: 'transparent', borderRadius: radius.pill },
+  report: { alignSelf: 'flex-start', paddingVertical: space.xs },
 });

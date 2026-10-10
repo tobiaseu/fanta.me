@@ -28,7 +28,7 @@ interface GameState {
   players: Player[];
   events: FeedEvent[];
   /** "Chiama" un punto: nasce in attesa del voto del gruppo */
-  assignPoints: (input: { gameId: string; playerId: string; ruleId: string }) => FeedEvent | undefined;
+  assignPoints: (input: { gameId: string; playerId: string; ruleId: string; photo?: string }) => FeedEvent | undefined;
   /** Voto su una chiamata: diventa ufficiale (o scartata) quando una parte raggiunge la maggioranza. */
   vote: (eventId: string, vote: Vote) => void;
   /** Annulla: rimette l'evento com'era (o lo toglie, se era appena nato) */
@@ -95,7 +95,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ),
     })),
 
-  assignPoints: ({ gameId, playerId, ruleId }) => {
+  assignPoints: ({ gameId, playerId, ruleId, photo }) => {
     const rule = ruleById(ruleId);
     if (!rule) return undefined;
     const game = useGameStore.getState().games.find((g) => g.id === gameId);
@@ -119,6 +119,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       authorId: ME.id,
       createdAt: new Date().toISOString(),
       votes: { confirm: 1, reject: 0 },
+      photo,
     };
     set((s) => ({ events: [event, ...s.events] }));
     return event;

@@ -12,6 +12,9 @@ import type {
 
 /** Dati finti per la Fase 1: sostituiti da Supabase nella Fase 2. */
 
+/** Foto di prova, verticali come quelle del telefono */
+const testPhoto = (seed: string) => `https://picsum.photos/seed/fanta-${seed}/900/1600`;
+
 export const ME: User = {
   id: 'u-me',
   name: 'Tobia',
@@ -176,6 +179,7 @@ export const FEED: FeedEvent[] = [
   // Chiamate da votare (storie)
   {
     id: 'p1',
+    photo: testPhoto('p1'),
     status: 'pending',
     gameId: 'fantapasquetta',
     playerId: 'u-ale',
@@ -187,6 +191,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'p2',
+    photo: testPhoto('p2'),
     status: 'pending',
     gameId: 'fantapasquetta',
     playerId: 'u-marco',
@@ -198,6 +203,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'p3',
+    photo: testPhoto('p3'),
     status: 'pending',
     myVote: 'confirm',
     gameId: 'fantapasquetta',
@@ -210,6 +216,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'p4',
+    photo: testPhoto('p4'),
     status: 'pending',
     myVote: 'reject',
     gameId: 'fantapasquetta',
@@ -222,6 +229,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'p5',
+    photo: testPhoto('p5'),
     status: 'pending',
     gameId: 'fantapasquetta',
     playerId: 'u-sara',
@@ -234,6 +242,7 @@ export const FEED: FeedEvent[] = [
   // Punteggi ufficiali
   {
     id: 'e1',
+    photo: testPhoto('e1'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
     playerId: 'u-ale',
@@ -245,6 +254,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'e2',
+    photo: testPhoto('e2'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
     playerId: 'u-marco',
@@ -256,6 +266,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'e3',
+    photo: testPhoto('e3'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
     playerId: 'u-me',
@@ -279,6 +290,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'e5',
+    photo: testPhoto('e5'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
     playerId: 'u-giulia',
@@ -302,6 +314,7 @@ export const FEED: FeedEvent[] = [
   // Il diario di Sara nella Fantapasquetta
   {
     id: 'e10',
+    photo: testPhoto('e10'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
     playerId: 'u-sara',
@@ -326,6 +339,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'e12',
+    photo: testPhoto('e12'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
     playerId: 'u-sara',
@@ -350,6 +364,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'e7',
+    photo: testPhoto('e7'),
     status: 'confirmed',
     gameId: 'ufficio-q4',
     playerId: 'u-luca',

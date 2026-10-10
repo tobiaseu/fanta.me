@@ -174,4 +174,6 @@ export interface FeedEvent {
   double?: boolean;
   /** Il commento di chi ha chiamato il punto: la "recensione" del momento */
   review?: string;
+  /** Foto scattata da chi chiama: sfondo della storia e del punto confermato */
+  photo?: string;
 }

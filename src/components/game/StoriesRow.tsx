@@ -1,5 +1,5 @@
 import { nameIn, useGameStore } from '@/store/useGameStore';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
@@ -42,8 +42,20 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
             onPress={() => onOpen(call)}
             style={styles.item}>
             <View style={[styles.circle, styles.ring, voted && styles.ringVoted]}>
-              <Avatar player={player} size={SIZE - 14} sticker={false} shape="circle" />
+              {call.photo ? (
+                <View style={styles.photoWrap}>
+                  <Avatar player={player} size={SIZE - 14} sticker={false} />
+                  <Image source={{ uri: call.photo }} style={styles.photo} />
+                </View>
+              ) : (
+                <Avatar player={player} size={SIZE - 14} sticker={false} shape="circle" />
+              )}
             </View>
+            {call.photo ? (
+              <View style={styles.mini}>
+                <Avatar player={player} size={22} sticker={false} />
+              </View>
+            ) : null}
             {voted && (
               <View style={styles.badge}>
                 <Icon
@@ -68,6 +80,16 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
 }
 
 const styles = StyleSheet.create({
+  photoWrap: { width: SIZE - 14, height: SIZE - 14, borderRadius: SIZE, overflow: 'hidden' },
+  photo: { position: 'absolute', width: SIZE - 14, height: SIZE - 14 },
+  mini: {
+    position: 'absolute',
+    left: 0,
+    top: SIZE - 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
   scroll: { marginHorizontal: -space.md, flexGrow: 0 },
   row: { gap: space.md, paddingHorizontal: space.md, paddingVertical: space.xs },
   item: { width: SIZE, alignItems: 'center', gap: space.xs },

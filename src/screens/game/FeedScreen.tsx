@@ -13,7 +13,7 @@ import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { useGameStore } from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, space } from '@/theme/tokens';
 
-/** Cronaca completa della partita: tutti i punti ufficiali, dal più recente. Si apre da "Vedi tutto". */
+/** Cronologia completa: ogni punto con foto, ora, chi l'ha chiamato e i voti. Si apre da "Guarda tutti i punti". */
 export function FeedScreen() {
   const game = useCurrentGame();
   const now = useNow(30_000);
@@ -22,7 +22,10 @@ export function FeedScreen() {
   const openPlayer = useOpenPlayer();
 
   const confirmed = useMemo(
-    () => allEvents.filter((e) => e.gameId === game?.id && e.status === 'confirmed'),
+    () =>
+      allEvents
+        .filter((e) => e.gameId === game?.id && e.status !== 'pending')
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [allEvents, game?.id],
   );
 
@@ -38,8 +41,8 @@ export function FeedScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           <SectionHeader
-            title="Cronaca"
-            caption={`${confirmed.length} ${confirmed.length === 1 ? 'punto ufficiale' : 'punti ufficiali'}, dal più recente`}
+            title="Tutti i punti"
+            caption={`${confirmed.filter((e) => e.status === 'confirmed').length} confermati, dal più recente. Quelli scartati restano in grigio.`}
           />
         </View>
       }
@@ -59,6 +62,7 @@ export function FeedScreen() {
             player={players.find((p) => p.id === item.playerId)}
             author={players.find((p) => p.id === item.authorId)}
             onOpenPlayer={openPlayer}
+            detailed
           />
         </Animated.View>
       )}

@@ -96,7 +96,8 @@ export function LeaderboardScreen() {
   // Podio solo con tre posizioni nette: con pari merito o tutti a zero basta la lista
   const showPodium = rows.length >= 3 && new Set(rows.slice(0, 3).map((r) => r.points)).size === 3;
   const podium = [rows[1], rows[0], rows[2]]; // 2° · 1° · 3°
-  const rest = showPodium ? rows.slice(3) : rows;
+  // Sotto il podio la classifica completa: tutte le squadre (o tutti i giocatori), podio compreso
+  const rest = rows;
   /** Giocatore → profilo; squadra → classifica individuale, per vedere chi ha portato i punti. */
   const open = (row: Row) => {
     if (!row.isTeam) return openPlayer(row.lead.id);

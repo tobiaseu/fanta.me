@@ -18,6 +18,8 @@ interface Props {
   style?: StyleProp<ViewStyle>;
   /** Icona a sinistra del testo */
   icon?: IconName;
+  /** Su foto o fondo scuro: secondario e terziario in bianco */
+  onDark?: boolean;
 }
 
 /**
@@ -26,8 +28,8 @@ interface Props {
  * secondary = trasparente con bordo grigio scuro sottile,
  * tertiary = solo testo, stesso colore del secondario.
  */
-export function Button({ label, onPress, variant = 'primary', disabled, style, icon }: Props) {
-  const tint = disabled ? colors.inkMuted : colors.ink;
+export function Button({ label, onPress, variant = 'primary', disabled, style, icon, onDark }: Props) {
+  const tint = disabled ? colors.inkMuted : onDark && variant !== 'primary' ? '#FFFFFF' : colors.ink;
   return (
     <PressableScale
       accessibilityRole="button"

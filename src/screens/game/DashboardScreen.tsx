@@ -10,6 +10,7 @@ import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -19,7 +20,7 @@ import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
 import { teamColor } from '@/lib/teams';
-import { cardOfDay, gameDay, useGameStore } from '@/store/useGameStore';
+import { cardOfDay, computeStandings, computeTeamStandings, gameDay, nameIn, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
@@ -45,7 +46,7 @@ export function DashboardScreen() {
     const mine = events.filter((e) => e.gameId === game?.id);
     return {
       calls: mine.filter((e) => e.status === 'pending').sort((a, b) => Number(!!a.myVote) - Number(!!b.myVote)),
-      latest: mine.filter((e) => e.status === 'confirmed').slice(0, 3),
+      latest: mine.filter((e) => e.status === 'confirmed').slice(0, 5),
     };
   }, [events, players, game, now]);
 
@@ -57,6 +58,14 @@ export function DashboardScreen() {
     ? (myTeam.memberIds.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[])
     : [];
   const captainId = myTeam ? captains[myTeam.id] : undefined;
+  // Primi tre: squadre se ci sono, altrimenti giocatori
+  const top = game.teams?.length
+    ? computeTeamStandings(game, events, players, captains, now)
+        .slice(0, 3)
+        .map((t) => ({ id: t.team.id, name: t.team.name, points: t.points, color: teamColor(game, t.team.id) }))
+    : computeStandings(game, events, players)
+        .slice(0, 3)
+        .map((r) => ({ id: r.player.id, name: nameIn(game, r.player), points: r.points, color: r.player.color }));
   const toVote = calls.filter((c) => !c.myVote && c.playerId !== ME.id && c.authorId !== ME.id).length;
   const goTo = (tab: 'feed' | 'leaderboard' | 'rules') => {
     haptics.tap();
@@ -76,154 +85,29 @@ export function DashboardScreen() {
       )}
       {game.status === 'ended' && <ResultsPanel game={game} />}
       {game.status === 'live' && (
-        <>
-          <View style={styles.section}>
-            <SectionHeader
-              title={toVote > 0 ? 'Da votare' : 'Chiamate'}
-              caption={
-                toVote > 0
-                  ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-                  : 'Hai votato tutto. Usa il + giallo per chiamare un punto.'
-              }
-            />
-            <StoriesRow
-              calls={calls}
-              players={players}
-              onOpen={(call) => {
-                haptics.tap();
-                router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
-              }}
-            />
-          </View>
-
-          {card && (
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
-              onPress={() => {
-                haptics.press();
-                openQuickAction();
-              }}
-              style={styles.dayCard}>
-              <RuleSticker rule={card} size={84} />
-              <View style={styles.flex}>
-                <AppText variant="micro" color={colors.inkSoft}>
-                  Carta del giorno
-                </AppText>
-                <AppText variant="serifCard" numberOfLines={2}>
-                  {card.label}
-                </AppText>
-                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-                  Fino a fine {day.label.toLowerCase()} vale +{card.points * 2} invece di +{card.points}
-                </AppText>
-              </View>
-              <View style={styles.double}>
-                <AppText variant="headline">×2</AppText>
-              </View>
-            </PressableScale>
-          )}
-
-          <PowersPanel game={game} now={now} />
-        </>
+        <View style={styles.section}>
+          <SectionHeader
+            title={toVote > 0 ? 'Da votare' : 'Chiamate'}
+            caption={
+              toVote > 0
+                ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+                : 'Hai votato tutto. Usa il + giallo per chiamare un punto.'
+            }
+          />
+          <StoriesRow
+            calls={calls}
+            players={players}
+            onOpen={(call) => {
+              haptics.tap();
+              router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
+            }}
+          />
+        </View>
       )}
-      {game.status === 'ended' && <ResultsPanel game={game} />}
-      {game.status === 'live' && (
-        <>
-          <View style={styles.section}>
-            <SectionHeader
-              title={toVote > 0 ? 'Da votare' : 'Chiamate'}
-              caption={
-                toVote > 0
-                  ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-                  : 'Hai votato tutto. Usa il + giallo per chiamare un punto.'
-              }
-            />
-            <StoriesRow
-              calls={calls}
-              players={players}
-              onOpen={(call) => {
-                haptics.tap();
-                router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
-              }}
-            />
-          </View>
 
-          {card && (
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
-              onPress={() => {
-                haptics.press();
-                openQuickAction();
-              }}
-              style={styles.dayCard}>
-              <RuleSticker rule={card} size={84} />
-              <View style={styles.flex}>
-                <AppText variant="micro" color={colors.inkSoft}>
-                  Carta del giorno
-                </AppText>
-                <AppText variant="serifCard" numberOfLines={2}>
-                  {card.label}
-                </AppText>
-                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-                  Fino a fine {day.label.toLowerCase()} vale +{card.points * 2} invece di +{card.points}
-                </AppText>
-              </View>
-              <View style={styles.double}>
-                <AppText variant="headline">×2</AppText>
-              </View>
-            </PressableScale>
-          )}
-
-          {myTeam && (
-            <View style={styles.section}>
-              <SectionHeader title="Il tuo capitano" caption="I suoi punti di oggi contano doppio per la squadra." />
-              <View style={styles.card}>
-                <View style={styles.teamRow}>
-                  <View style={[styles.teamDot, { backgroundColor: teamColor(game, myTeam.id) }]} />
-                  <AppText variant="name">{myTeam.name}</AppText>
-                </View>
-                <View style={styles.members} accessibilityRole="radiogroup">
-                  {members.map((p) => {
-                    const isCaptain = p.id === captainId;
-                    return (
-                      <PressableScale
-                        key={p.id}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected: isCaptain }}
-                        accessibilityLabel={`Capitano: ${p.name}`}
-                        onPress={() => {
-                          if (isCaptain) return;
-                          haptics.press();
-                          setCaptain(myTeam.id, p.id);
-                          showToast({ text: `${p.id === ME.id ? 'Sei tu' : p.name} il capitano di oggi` });
-                        }}
-                        style={[styles.member, isCaptain && styles.memberActive]}>
-                        <View>
-                          <Avatar player={p} size={48} sticker={false} />
-                          {isCaptain && (
-                            <View style={styles.badge}>
-                              <AppText variant="micro">C</AppText>
-                            </View>
-                          )}
-                        </View>
-                        <AppText variant="caption" color={isCaptain ? colors.ink : colors.inkSoft}>
-                          {p.id === ME.id ? 'Tu' : p.name}
-                        </AppText>
-                      </PressableScale>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-          )}
-
-          <PowersPanel game={game} now={now} />
-        </>
-      )}
       {game.status !== 'waiting' && (
         <View style={styles.section}>
-          <SectionHeader title="Ultimi punti" action={{ label: 'Vedi tutto', onPress: () => goTo('feed') }} />
+          <SectionHeader title="Ultimi punti" />
           {latest.length ? (
             <View style={styles.list}>
               {latest.map((e) => (
@@ -242,6 +126,61 @@ export function DashboardScreen() {
               Ancora nessun punto ufficiale. Qualcuno dovrà pur fare la prima figuraccia.
             </AppText>
           )}
+          <Button label="Guarda tutti i punti" variant="tertiary" onPress={() => goTo('feed')} />
+        </View>
+      )}
+
+      {game.status === 'live' && (
+        <View style={styles.section}>
+          <SectionHeader title="Carte speciali attive" />
+          {card && (
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
+              onPress={() => {
+                haptics.press();
+                openQuickAction();
+              }}
+              style={styles.dayCard}>
+              <RuleSticker rule={card} size={72} />
+              <View style={styles.flex}>
+                <AppText variant="micro" color={colors.inkSoft}>
+                  Carta del giorno
+                </AppText>
+                <AppText variant="serifCard" numberOfLines={2}>
+                  {card.label}
+                </AppText>
+                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                  Fino a fine {day.label.toLowerCase()} vale +{card.points * 2} invece di +{card.points}
+                </AppText>
+              </View>
+              <View style={styles.double}>
+                <AppText variant="headline">×2</AppText>
+              </View>
+            </PressableScale>
+          )}
+          <PowersPanel game={game} now={now} />
+        </View>
+      )}
+
+      {game.status === 'live' && top.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader title={game.teams?.length ? 'Squadre in testa' : 'In testa'} />
+          <View style={styles.card}>
+            {top.map((r, i) => (
+              <View key={r.id} style={[styles.topRow, i > 0 && styles.divider]}>
+                <AppText variant="headline" style={styles.place}>
+                  {i + 1}
+                </AppText>
+                <View style={[styles.teamDot, { backgroundColor: r.color }]} />
+                <AppText variant="name" style={styles.flex} numberOfLines={1}>
+                  {r.name}
+                </AppText>
+                <AppText variant="headline">{r.points} pt</AppText>
+              </View>
+            ))}
+          </View>
+          <Button label="Vedi la classifica" variant="tertiary" onPress={() => goTo('leaderboard')} />
         </View>
       )}
     </ScrollView>
@@ -262,7 +201,12 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   flex: { flex: 1, gap: 2 },
   regular: { fontWeight: '400', marginTop: 2 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: layout.card, gap: space.md },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingHorizontal: layout.card,
+    paddingVertical: space.xs,
+  },
   dayCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,4 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: space.xxs,
   },
   list: { gap: space.xs },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
+  place: { width: 18 },
 });

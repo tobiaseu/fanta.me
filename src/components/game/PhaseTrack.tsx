@@ -33,7 +33,15 @@ export function PhaseTrack({
         const now = i === current;
         return (
           <View key={p.id} style={styles.step}>
-            <View style={[styles.bar, thick && styles.thick, (done || now) && styles.barOn, now && styles.barNow]} />
+            <View
+              style={[
+                styles.bar,
+                bare && styles.hair,
+                thick && styles.thick,
+                (done || now) && styles.barOn,
+                now && styles.barNow,
+              ]}
+            />
             {!bare && (
               <AppText variant="micro" color={now ? colors.ink : done ? colors.inkSoft : colors.inkFaint}>
                 {p.label}
@@ -51,6 +59,7 @@ const styles = StyleSheet.create({
   step: { flex: 1, gap: space.xxs },
   bar: { height: 4, borderRadius: 2, backgroundColor: colors.surfaceMuted },
   thick: { height: 6, borderRadius: 3 },
+  hair: { height: 2, borderRadius: 1 },
   barOn: { backgroundColor: colors.inkFaint },
   barNow: { backgroundColor: colors.ink },
 });
