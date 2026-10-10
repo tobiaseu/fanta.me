@@ -5,6 +5,7 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { Avatar } from '@/components/ui/Avatar';
 import { ruleById } from '@/data/rules';
 import { timeAgo } from '@/lib/time';
+import { nameIn, useGame } from '@/store/useGameStore';
 import { colors, radius, space } from '@/theme/tokens';
 import type { FeedEvent, Player } from '@/types/game';
 
@@ -19,6 +20,7 @@ interface Props {
 /** "Feed card" chiusa del Figma: avatar, nome, carta, punti. Sotto, chi l'ha chiamata e quando. */
 export function FeedItem({ event, player, author, now, onOpenPlayer }: Props) {
   const rule = ruleById(event.ruleId);
+  const game = useGame(event.gameId);
   const isBonus = event.points > 0;
   if (!player) return null;
 
@@ -33,7 +35,7 @@ export function FeedItem({ event, player, author, now, onOpenPlayer }: Props) {
       </PressableScale>
       <View style={styles.body}>
         <AppText variant="name" onPress={() => onOpenPlayer(player.id)}>
-          {player.name}
+          {nameIn(game, player)}
         </AppText>
         <AppText variant="body" color={colors.inkMuted} numberOfLines={1}>
           {rule ? `${rule.emoji} ${rule.label}` : 'Azione'}
@@ -50,7 +52,7 @@ export function FeedItem({ event, player, author, now, onOpenPlayer }: Props) {
           ) : null}
         </AppText>
         <AppText variant="micro" color={colors.inkFaint} style={styles.meta}>
-          {author ? `da ${author.name}, ` : ''}
+          {author ? `da ${nameIn(game, author)}, ` : ''}
           {timeAgo(event.createdAt, now)}
         </AppText>
       </View>

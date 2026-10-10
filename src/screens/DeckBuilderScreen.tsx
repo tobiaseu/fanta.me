@@ -39,7 +39,7 @@ export function DeckBuilderScreen() {
   const proposeCard = useGameStore((s) => s.proposeCard);
   const withdrawCard = useGameStore((s) => s.withdrawCard);
   const showToast = useUiStore((s) => s.showToast);
-  const [tab, setTab] = useState<Tab>('mine');
+  const [tab, setTab] = useState<Tab>('base');
   const [preview, setPreview] = useState<Rule>();
   const slotRects = useRef<(Rect | undefined)[]>([]);
   const slotViews = useRef<(View | null)[]>([]);
@@ -152,11 +152,7 @@ export function DeckBuilderScreen() {
               </Animated.View>
             ))}
           </View>
-          <AppText variant="title">{deck.length} carte nel mazzo</AppText>
-          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-            Proposte da {new Set(proposals.filter((p) => p.gameId === game.id).map((p) => p.authorId)).size} giocatori
-            su {game.playerIds.length}. Si chiude quando parte la partita.
-          </AppText>
+          <AppText variant="headline">{deck.length} carte nel mazzo</AppText>
         </View>
 
         <View style={styles.section}>
@@ -177,6 +173,7 @@ export function DeckBuilderScreen() {
                   {r ? (
                     <DeckCard
                       rule={r}
+                      bare
                       style={styles.fill}
                       onPress={() => {
                         haptics.tap();
@@ -196,12 +193,13 @@ export function DeckBuilderScreen() {
             })}
           </View>
           <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-            Tocca una carta qui sotto per metterla. Tienila premuta e trascinala su una casella per scambiarla. Tocca
-            una casella piena per svuotarla.
+            Scorri le carte qui sotto e toccane una per metterla. Tieni premuto e trascina per scambiare.
           </AppText>
         </View>
       </View>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.xxl }]}>
+      <ScrollView
+        style={styles.flex1}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.xxl }]}>
         <View style={styles.section}>
           <View style={styles.segment} accessibilityRole="tablist">
             {(
@@ -331,6 +329,7 @@ function Draggable({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  flex1: { flex: 1 },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -353,12 +352,12 @@ const styles = StyleSheet.create({
   },
   regular: { fontWeight: '400', textAlign: 'center' },
   table: { alignItems: 'center', gap: space.xxs },
-  pile: { height: 120, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
-  pileCard: { position: 'absolute', width: 70, ...shadow.card },
+  pile: { height: 84, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
+  pileCard: { position: 'absolute', width: 54, ...shadow.card },
   pileInner: { width: '100%' },
   section: { gap: space.sm },
-  slots: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.sm },
-  slot: { width: '30%' },
+  slots: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '4%', rowGap: space.sm },
+  slot: { width: '22%' },
   fill: { width: '100%' },
   emptySlot: {
     width: '100%',
@@ -376,6 +375,6 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
   cell: { width: '30%' },
   liftedCell: { opacity: 0.25 },
-  fixed: { paddingBottom: space.sm, gap: space.md },
+  fixed: { paddingBottom: space.sm, paddingTop: space.md, gap: space.sm },
   ghost: { position: 'absolute', left: 0, top: 0, width: 80, zIndex: 100, ...shadow.floating },
 });

@@ -7,7 +7,7 @@ import { Avatar } from './Avatar';
 import { Button } from './Button';
 
 import { haptics } from '@/lib/haptics';
-import { useGameStore } from '@/store/useGameStore';
+import { nameIn, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, radius, space } from '@/theme/tokens';
 
@@ -20,6 +20,7 @@ export function PlayerMenu() {
   const close = useUiStore((s) => s.closePlayerMenu);
   const showToast = useUiStore((s) => s.showToast);
   const players = useGameStore((s) => s.players);
+  const games = useGameStore((s) => s.games);
   const friendships = useGameStore((s) => s.friendships);
   const setFriendship = useGameStore((s) => s.setFriendship);
   const router = useRouter();
@@ -44,7 +45,12 @@ export function PlayerMenu() {
         <View style={styles.head}>
           <Avatar player={player} size={56} sticker={false} />
           <View style={styles.flex}>
-            <AppText variant="title">{player.name}</AppText>
+            <AppText variant="title">
+              {nameIn(
+                games.find((g) => g.id === menu.gameId),
+                player,
+              )}
+            </AppText>
             <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
               @{player.handle}
               {status === 'friends' ? ' · amici' : ''}

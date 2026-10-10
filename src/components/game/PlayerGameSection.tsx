@@ -34,7 +34,7 @@ const timeLabel = (iso: string) => {
  * La partita vista dal profilo di un giocatore: la sua formazione (carte messe nel mazzo
  * e fantapoteri, con l'ombreggiatura se sono in corso) e il diario dei suoi punti.
  */
-export function PlayerGameSection({ game, player }: { game: Game; player: Player }) {
+export function PlayerGameSection({ game, player, hideCards }: { game: Game; player: Player; hideCards?: boolean }) {
   const now = useNow(30_000);
   const proposals = useGameStore((s) => s.proposals);
   const events = useGameStore((s) => s.events);
@@ -69,8 +69,8 @@ export function PlayerGameSection({ game, player }: { game: Game; player: Player
   return (
     <>
       <View style={styles.section}>
-        <AppText variant="headline">Formazione · {game.name}</AppText>
-        {cards.length ? (
+        <AppText variant="headline">{hideCards ? 'Fantapoteri' : `Formazione · ${game.name}`}</AppText>
+        {hideCards ? null : cards.length ? (
           <View style={styles.grid}>
             {cards.map(({ rule, shade }) => (
               <View key={rule.id} style={styles.cell}>

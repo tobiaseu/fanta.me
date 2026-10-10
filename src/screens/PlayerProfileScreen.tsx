@@ -117,6 +117,11 @@ export function PlayerProfileScreen() {
           <AppText variant="body" color={ON_NAVY_MUTED}>
             @{player.handle}
           </AppText>
+          {game?.nicknames?.[player.id] ? (
+            <AppText variant="caption" color={colors.inkSoft}>
+              In {game.name} si fa chiamare «{game.nicknames[player.id]}»
+            </AppText>
+          ) : null}
         </View>
         {career && (
           <View style={styles.stats}>

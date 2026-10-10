@@ -70,8 +70,13 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
                 <AppText variant="serifTitle" style={[styles.centerText, styles.title]} numberOfLines={2}>
                   {rule.label}
                 </AppText>
-                <AppText variant="body" color={colors.inkSoft} style={styles.centerText} numberOfLines={4}>
+                <AppText variant="body" color={colors.inkSoft} style={styles.centerText} numberOfLines={3}>
                   {rule.description}
+                </AppText>
+                <AppText variant="micro" color={rule.trophy ? '#9A7200' : colors.inkSoft} style={styles.centerText}>
+                  {rule.trophy
+                    ? '🏆 Trofeo: lo prende solo il primo, una volta per partita'
+                    : 'Cumulabile: vale ogni volta che succede'}
                 </AppText>
               </View>
             </View>

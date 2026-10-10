@@ -11,7 +11,7 @@ import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { computeStandings, computeTeamStandings, gameDay, useGameStore } from '@/store/useGameStore';
+import { nameIn, computeStandings, computeTeamStandings, gameDay, useGameStore } from '@/store/useGameStore';
 import { teamColor } from '@/lib/teams';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
@@ -52,7 +52,7 @@ export function LeaderboardScreen() {
       if (mode === 'players') {
         return standings.map((r) => ({
           id: r.player.id,
-          name: r.player.name,
+          name: nameIn(game, r.player),
           points: r.points,
           lead: r.player,
           isTeam: false,
@@ -213,6 +213,11 @@ export function LeaderboardScreen() {
                   {isMe ? ' (tu)' : ''}
                 </AppText>
                 {row.members.length > 0 && <AvatarStack players={row.members} size={20} />}
+                {!row.isTeam && 'handle' in row.lead && row.lead.handle ? (
+                  <AppText variant="micro" color={colors.inkFaint}>
+                    @{row.lead.handle}
+                  </AppText>
+                ) : null}
               </View>
               {row.trend !== 0 && <TrendArrow up={row.trend > 0} />}
               <View style={styles.coinRow}>

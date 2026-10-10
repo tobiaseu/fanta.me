@@ -55,6 +55,7 @@ export const RULES: Rule[] = [
   },
   {
     id: 'r-new',
+    trophy: true,
     categoryId: 'social',
     label: "L'Ambasciatore",
     description: 'Fa amicizia con uno sconosciuto e lo porta al tavolo.',
@@ -95,6 +96,7 @@ export const RULES: Rule[] = [
   },
   {
     id: 'r-swim',
+    trophy: true,
     categoryId: 'sport',
     label: 'Il Pioniere',
     description: 'Primo bagno della giornata, acqua gelida compresa.',
@@ -103,6 +105,7 @@ export const RULES: Rule[] = [
   },
   {
     id: 'r-sunrise',
+    trophy: true,
     categoryId: 'sport',
     label: "L'Alba",
     description: "Si sveglia per vedere l'alba. Volontariamente.",

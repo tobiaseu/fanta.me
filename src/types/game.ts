@@ -56,6 +56,11 @@ export interface Rule {
   emoji: string;
   /** Carta personale: creata da un giocatore con le sue regole */
   authorId?: string;
+  /**
+   * Carta trofeo: si prende una sola volta in tutta la partita e solo dal primo che ci arriva.
+   * Le altre sono cumulabili: valgono ogni volta che succede.
+   */
+  trophy?: boolean;
 }
 
 /**
@@ -130,6 +135,11 @@ export interface Game {
   /** Squadre (fantasquadre) della lega, se previste */
   teams?: Team[];
   ruleIds: string[];
+  /**
+   * Nickname di stanza: come ognuno si fa chiamare qui (dipende dalla confidenza del gruppo).
+   * L'account resta quello con la @, usato per amicizie e inviti.
+   */
+  nicknames?: Record<string, string>;
   /** Stanza Premium: più carte personali per tutti e fantapoteri speciali */
   premium?: boolean;
   /** Host: chi ha creato la stanza, promesso di gestirla bene e può avviarla */

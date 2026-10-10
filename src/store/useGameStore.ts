@@ -73,6 +73,7 @@ interface GameState {
   /** Capitano di oggi per squadra (stile FantaSanremo): i suoi punti di oggi valgono doppio */
   captains: Record<string, string>;
   setCaptain: (teamId: string, playerId: string) => void;
+  setNickname: (gameId: string, nickname: string) => void;
 
   friendships: Record<string, FriendStatus>;
   setFriendship: (playerId: string, status: FriendStatus) => void;
@@ -85,6 +86,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   friendships: FRIENDSHIPS,
   captains: { t1: 'u-ale', t2: 'u-giulia', t3: 'u-sara' },
   setCaptain: (teamId, playerId) => set((s) => ({ captains: { ...s.captains, [teamId]: playerId } })),
+  setNickname: (gameId, nickname) =>
+    set((s) => ({
+      games: s.games.map((g) =>
+        g.id === gameId
+          ? { ...g, nicknames: { ...g.nicknames, [ME.id]: nickname.trim() || undefined } as Record<string, string> }
+          : g,
+      ),
+    })),
 
   assignPoints: ({ gameId, playerId, ruleId }) => {
     const rule = ruleById(ruleId);
@@ -295,6 +304,14 @@ export const activeActivations = (activations: PowerActivation[], gameId: string
   activations.filter((a) => a.gameId === gameId && new Date(a.until).getTime() > now);
 
 /* ---------- Selettori derivati ---------- */
+
+/** Nome da mostrare dentro una stanza: il nickname scelto lì, altrimenti il nome dell'account. */
+export const nameIn = (game: Game | undefined, player: { id: string; name: string }) =>
+  game?.nicknames?.[player.id] || player.name;
+
+/** Chi ha già preso una carta trofeo in questa partita (solo il primo, una volta sola). */
+export const trophyHolder = (events: FeedEvent[], gameId: string, ruleId: string) =>
+  events.find((e) => e.gameId === gameId && e.ruleId === ruleId && e.status === 'confirmed')?.playerId;
 
 const DAY_MS = 86_400_000;
 

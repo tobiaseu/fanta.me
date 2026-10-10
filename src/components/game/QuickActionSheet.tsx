@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
-import { useGameStore } from '@/store/useGameStore';
+import { trophyHolder, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Rule, Game, RuleKind } from '@/types/game';
@@ -39,6 +39,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const players = useMemo(() => allPlayers.filter((p) => game.playerIds.includes(p.id)), [allPlayers, game.playerIds]);
   const assignPoints = useGameStore((s) => s.assignPoints);
   const restoreEvent = useGameStore((s) => s.restoreEvent);
+  const events = useGameStore((s) => s.events);
   const showToast = useUiStore((s) => s.showToast);
 
   const [playerId, setPlayerId] = useState<string>();
@@ -134,17 +135,21 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
           {rules.map((r) => {
             const selected = r.id === ruleId;
             const isBonus = r.points > 0;
+            // Carta trofeo già presa: una volta sola, dal primo che ci arriva
+            const holder = r.trophy ? players.find((p) => p.id === trophyHolder(events, game.id, r.id)) : undefined;
             return (
               <Pressable
                 key={r.id}
                 accessibilityRole="button"
-                accessibilityState={{ selected }}
+                accessibilityState={{ selected, disabled: !!holder }}
+                disabled={!!holder}
                 onPress={() => {
                   haptics.tap();
                   setRuleId(r.id);
                 }}
                 style={[
                   styles.rule,
+                  holder && styles.taken,
                   selected && {
                     borderColor: isBonus ? colors.bonusBorder : colors.malusBorder,
                     backgroundColor: isBonus ? colors.bonusSoft : colors.malusSoft,
@@ -152,9 +157,16 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                 ]}>
                 <RuleSticker rule={r} size={44} />
                 <View style={styles.flex}>
-                  <AppText variant="serifCard">{r.label}</AppText>
+                  <AppText variant="serifCard">
+                    {r.label}
+                    {r.trophy ? ' 🏆' : ''}
+                  </AppText>
                   <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
-                    {r.description}
+                    {holder
+                      ? `Trofeo già preso da ${holder.name}`
+                      : r.trophy
+                        ? 'Trofeo: vale solo per il primo'
+                        : r.description}
                   </AppText>
                 </View>
                 <AppText variant="name" color={isBonus ? colors.bonus : colors.malus}>
@@ -183,6 +195,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  taken: { opacity: 0.4 },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.3)' },
   anchor: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
   sheet: {

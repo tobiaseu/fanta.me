@@ -17,6 +17,16 @@ const CHAPTERS = [
         'Ogni carta è un’azione della vita vera con i suoi punti: bonus se è bella, malus se è una figuraccia.',
       ],
       [
+        '🏆',
+        'Cumulabili e trofei',
+        'Quasi tutte le carte sono cumulabili: valgono ogni volta che succede. Le carte trofeo, con il bordo oro, si prendono una volta sola in tutta la partita: le vince il primo che ci arriva.',
+      ],
+      [
+        '👥',
+        'Le squadre',
+        'Si gioca in squadre da 2 a 4. Conta prima di tutto la classifica a squadre, poi quella individuale.',
+      ],
+      [
         '📣',
         'Le chiamate',
         'Quando succede, chiunque chiama la carta su chi l’ha fatta. Diventa punto solo se la maggioranza conferma.',

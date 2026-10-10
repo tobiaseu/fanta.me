@@ -11,6 +11,9 @@ const EMOJI_FONT = Platform.select({
   default: undefined,
 });
 
+/** Bordo oro delle carte trofeo: una sola volta per partita, al primo che ci arriva. */
+export const TROPHY_GOLD = '#D4A017';
+
 /** Toni della carta: goccia verde bonus, rossa malus, viola per le carte personali. */
 export function cardTone(rule: Rule) {
   // Carte pulite: fondo bianco, bordo sottile grigio scuro; il colore sta solo nella goccia dei punti
@@ -42,15 +45,30 @@ export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, st
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={`${rule.label}, ${rule.points > 0 ? '+' : ''}${rule.points} punti${rule.authorId ? ', carta personale' : ''}${note ? `, ${note}` : ''}`}
+      accessibilityLabel={`${rule.label}${rule.trophy ? ', carta trofeo' : ''}, ${rule.points > 0 ? '+' : ''}${rule.points} punti${rule.authorId ? ', carta personale' : ''}${note ? `, ${note}` : ''}`}
       onPress={onPress}
       onLongPress={onLongPress}
       pressedScale={0.94}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
-      <View style={[styles.card, { borderColor: tone.edge, backgroundColor: colors.surface }]}>
-        <Text style={styles.emoji} allowFontScaling={false}>
+      <View
+        style={[
+          styles.card,
+          { borderColor: rule.trophy ? TROPHY_GOLD : tone.edge, backgroundColor: colors.surface },
+          rule.trophy && styles.trophyCard,
+        ]}>
+        <Text style={[styles.emoji, !bare && styles.emojiWithName]} allowFontScaling={false}>
           {rule.emoji}
         </Text>
+        {!bare && (
+          <AppText variant="serifCard" numberOfLines={2} style={styles.inName}>
+            {rule.label}
+          </AppText>
+        )}
+        {rule.trophy && (
+          <View style={styles.trophyBadge} accessibilityLabel="Carta trofeo">
+            <Text style={styles.trophyEmoji}>🏆</Text>
+          </View>
+        )}
         <View style={[styles.gem, { backgroundColor: tone.gem }]}>
           <AppText variant="micro" color={colors.inkInverse} style={styles.gemText}>
             {rule.points > 0 ? `+${rule.points}` : rule.points}
@@ -62,11 +80,6 @@ export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, st
           </View>
         )}
       </View>
-      {!bare && (
-        <AppText variant="micro" numberOfLines={2} style={styles.name}>
-          {rule.label}
-        </AppText>
-      )}
       {note ? (
         <AppText variant="micro" color={colors.inkSoft} style={styles.note} numberOfLines={1}>
           {note}
@@ -110,6 +123,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emoji: { fontSize: 44, lineHeight: 54, fontFamily: EMOJI_FONT },
+  emojiWithName: { marginTop: space.sm },
+  inName: { fontSize: 13, lineHeight: 15, textAlign: 'center', paddingHorizontal: 6, marginTop: 2 },
+  trophyCard: { borderWidth: 1.5, backgroundColor: '#FFFBEA' },
+  trophyBadge: { position: 'absolute', top: 3, right: 4 },
+  trophyEmoji: { fontSize: 14, lineHeight: 18, fontFamily: EMOJI_FONT },
   gem: {
     position: 'absolute',
     top: 3,

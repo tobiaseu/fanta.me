@@ -103,6 +103,7 @@ export const GAMES: Game[] = [
       { id: 't2', name: 'Avantisavoia', memberIds: ['u-giulia', 'u-marco'] },
       { id: 't3', name: 'Lepori Industris', memberIds: ['u-sara', 'u-luca'] },
     ],
+    nicknames: { 'u-sara': 'La Sirena', 'u-ale': 'Il Conte', 'u-marco': 'Marchino', 'u-me': 'Toby' },
     ruleIds: [
       'r-smurratona',
       'r-cook',
@@ -201,8 +202,8 @@ export const FEED: FeedEvent[] = [
     myVote: 'confirm',
     gameId: 'fantapasquetta',
     playerId: 'u-giulia',
-    ruleId: 'r-sunrise',
-    points: 25,
+    ruleId: 'r-cook',
+    points: 10,
     authorId: 'u-ale',
     createdAt: minutesAgo(20),
     votes: { confirm: 2, reject: 1 },
