@@ -8,7 +8,6 @@ import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { PhaseTrack } from '@/components/game/PhaseTrack';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useNow } from '@/hooks/useNow';
 import { formatHoursLeft } from '@/lib/time';
 import { gameDay } from '@/store/useGameStore';
@@ -23,16 +22,37 @@ function countdownOf(game: Game, now: number) {
   const day = gameDay(game, now);
   if (game.status === 'waiting') {
     const start = new Date(game.startsAt ?? now).getTime();
-    return { target: start, eyebrow: 'Si parte tra', short: `parte tra ${formatLong(start - now)}` };
+    return { target: start, short: `· parte tra ${formatLong(start - now)}` };
   }
   if (game.status === 'ended') return undefined;
   const end = new Date(game.endsAt ?? day.end).getTime();
   return {
     target: day.end,
-    eyebrow: `${day.label} ${day.index} di ${day.total}, finisce tra`,
-    short: `${day.label.toLowerCase()} ${day.index} di ${day.total}, ${game.endsAt ? `fine tra ${formatLong(end - now)}` : `chiude tra ${formatLong(day.end - now)}`}`,
+    short: `· ${day.label.toLowerCase()} ${day.index} di ${day.total}, ${game.endsAt ? `fine tra ${formatLong(end - now)}` : `chiude tra ${formatLong(day.end - now)}`}`,
   };
 }
+
+/** Cosa dice il pannello in ogni fase: nome, cosa fare adesso, cosa conta il countdown. */
+const PHASE_GUIDE: Record<Game['status'], { title: string; todo: string; clock: string; dot: string }> = {
+  waiting: {
+    title: 'Pre-partita',
+    todo: 'Invita i tuoi amici e scegli le carte del mazzo prima che si parta.',
+    clock: 'Parte tra',
+    dot: colors.cta,
+  },
+  live: {
+    title: 'In partita',
+    todo: 'Quando succede qualcosa, chiama il punto con il tasto al centro. Il gruppo conferma.',
+    clock: 'La giornata chiude tra',
+    dot: colors.live,
+  },
+  ended: {
+    title: 'Risultati',
+    todo: 'La partita è finita: guarda classifica e trofei, poi lancia la rivincita.',
+    clock: '',
+    dot: colors.inkFaint,
+  },
+};
 
 function formatLong(ms: number) {
   return ms > DAY_MS * 2 ? `${Math.ceil(ms / DAY_MS)}g` : formatHoursLeft(ms);
@@ -49,12 +69,20 @@ export function GameHeader({ game }: { game: Game }) {
   const now = useNow();
   const cd = countdownOf(game, now);
   const left = cd ? Math.max(0, Math.floor((cd.target - now) / 1000)) : 0;
-  const tiles = [
-    { value: Math.floor(left / 86_400), label: 'giorni' },
-    { value: Math.floor((left % 86_400) / 3600), label: 'ore' },
-    { value: Math.floor((left % 3600) / 60), label: 'min' },
-    { value: left % 60, label: 'sec' },
-  ].filter((t, i) => i > 0 || t.value > 0);
+  const phase = PHASE_GUIDE[game.status];
+  // Oltre i due giorni si contano giorni, ore e minuti; sotto, ore, minuti e secondi
+  const tiles =
+    left >= 172_800
+      ? [
+          { value: Math.floor(left / 86_400), label: 'giorni' },
+          { value: Math.floor((left % 86_400) / 3600), label: 'ore' },
+          { value: Math.floor((left % 3600) / 60), label: 'minuti' },
+        ]
+      : [
+          { value: Math.floor(left / 3600), label: 'ore' },
+          { value: Math.floor((left % 3600) / 60), label: 'minuti' },
+          { value: left % 60, label: 'secondi' },
+        ];
 
   return (
     <Animated.View layout={LinearTransition.duration(260)} style={[styles.bar, { paddingTop: insets.top + space.sm }]}>
@@ -84,27 +112,33 @@ export function GameHeader({ game }: { game: Game }) {
         <PressableScale
           accessibilityRole="button"
           accessibilityState={{ expanded }}
-          accessibilityLabel={expanded ? 'Chiudi i dettagli della partita' : 'Apri fasi e countdown'}
+          accessibilityLabel={expanded ? 'Chiudi i dettagli della fase' : `${phase.title}: apri cosa fare adesso`}
           pressedScale={0.98}
-          onPress={() => setExpanded((v) => !v)}>
+          onPress={() => setExpanded((v) => !v)}
+          style={[styles.panel, expanded && styles.panelOpen]}>
+          <PhaseTrack status={game.status} thick={expanded} bare={!expanded} />
           {expanded ? (
             <Animated.View
               key="open"
               entering={FadeIn.duration(220)}
               exiting={FadeOut.duration(120)}
               style={styles.open}>
-              <PhaseTrack status={game.status} thick />
-              {cd && (
-                <>
-                  <View style={styles.eyebrow}>
-                    <StatusBadge status={game.status} />
-                    <AppText variant="caption" color={colors.inkSoft}>
-                      {cd!.eyebrow}
-                    </AppText>
-                  </View>
-                  <View
-                    style={styles.tiles}
-                    accessibilityLabel={`${cd!.eyebrow} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
+              <View style={styles.guide}>
+                <AppText variant="serifTitle" style={styles.phaseTitle}>
+                  {phase.title}
+                </AppText>
+                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                  {phase.todo}
+                </AppText>
+              </View>
+              {cd ? (
+                <View
+                  style={styles.clock}
+                  accessibilityLabel={`${phase.clock} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
+                  <AppText variant="micro" color={colors.inkSoft}>
+                    {phase.clock}
+                  </AppText>
+                  <View style={styles.tiles}>
                     {tiles.map((t) => (
                       <View key={t.label} style={styles.tile}>
                         <AppText variant="display" style={styles.digits}>
@@ -116,7 +150,9 @@ export function GameHeader({ game }: { game: Game }) {
                       </View>
                     ))}
                   </View>
-                </>
+                </View>
+              ) : (
+                <AppText style={styles.trophy}>🏆</AppText>
               )}
             </Animated.View>
           ) : (
@@ -125,12 +161,11 @@ export function GameHeader({ game }: { game: Game }) {
               entering={FadeIn.duration(220)}
               exiting={FadeOut.duration(120)}
               style={styles.strip}>
-              <StatusBadge status={game.status} />
-              {cd && (
-                <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.flex}>
-                  {cd.short}
-                </AppText>
-              )}
+              <View style={[styles.dot, { backgroundColor: phase.dot }]} />
+              <AppText variant="caption" numberOfLines={1} style={styles.flex}>
+                {phase.title}
+                {cd ? <AppText variant="caption" color={colors.inkSoft}>{`  ${cd.short}`}</AppText> : null}
+              </AppText>
               <Icon name="chevron-right" size={14} color={colors.inkFaint} />
             </Animated.View>
           )}
@@ -155,27 +190,32 @@ const styles = StyleSheet.create({
   right: { alignItems: 'flex-end' },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },
-  open: { gap: space.sm, paddingTop: space.xxs },
-  eyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  tiles: { flexDirection: 'row', gap: space.xs },
+  panel: {
+    backgroundColor: colors.background,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.md,
+    paddingTop: space.sm,
+    paddingBottom: space.sm,
+    gap: space.xs,
+  },
+  panelOpen: { paddingTop: space.md, paddingBottom: space.md, gap: space.md },
+  open: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
+  guide: { flex: 1, gap: space.xxs },
+  phaseTitle: { fontSize: 26, lineHeight: 30 },
+  regular: { fontWeight: '400' },
+  clock: { gap: space.xxs },
+  tiles: { flexDirection: 'row', gap: space.xxs },
   tile: {
-    flex: 1,
+    width: 52,
     alignItems: 'center',
     paddingVertical: space.xs,
     borderRadius: radius.sm,
-    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
   },
   digits: { fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
-  strip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.xs,
-    alignSelf: 'center',
-    paddingHorizontal: space.sm,
-    paddingVertical: space.xxs + 2,
-    borderRadius: radius.pill,
-    backgroundColor: colors.background,
-    maxWidth: '100%',
-  },
+  trophy: { fontSize: 40, lineHeight: 48 },
+  strip: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  dot: { width: 8, height: 8, borderRadius: 4 },
 });

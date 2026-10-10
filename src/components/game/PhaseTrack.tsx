@@ -12,7 +12,16 @@ export const PHASES = [
 ] as const;
 
 /** Le quattro fasi di una stanza, con quella attuale in evidenza. */
-export function PhaseTrack({ status, thick }: { status: GameStatus | 'setup'; thick?: boolean }) {
+export function PhaseTrack({
+  status,
+  thick,
+  bare,
+}: {
+  status: GameStatus | 'setup';
+  thick?: boolean;
+  /** Solo i segmenti, senza etichette (barra compatta) */
+  bare?: boolean;
+}) {
   const current = PHASES.findIndex((p) => p.id === status);
   return (
     <View
@@ -25,9 +34,11 @@ export function PhaseTrack({ status, thick }: { status: GameStatus | 'setup'; th
         return (
           <View key={p.id} style={styles.step}>
             <View style={[styles.bar, thick && styles.thick, (done || now) && styles.barOn, now && styles.barNow]} />
-            <AppText variant="micro" color={now ? colors.ink : done ? colors.inkSoft : colors.inkFaint}>
-              {p.label}
-            </AppText>
+            {!bare && (
+              <AppText variant="micro" color={now ? colors.ink : done ? colors.inkSoft : colors.inkFaint}>
+                {p.label}
+              </AppText>
+            )}
           </View>
         );
       })}
