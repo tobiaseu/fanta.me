@@ -112,9 +112,11 @@ export interface GameSettings {
   pointsCap: number;
   /** Fantapoteri attivi in questa stanza */
   powers: boolean;
+  /** Conferme che servono perché una chiamata diventi ufficiale (chi chiama conta già) */
+  votesToConfirm: number;
 }
 
-export const DEFAULT_SETTINGS: GameSettings = { cardsPerPlayer: 4, pointsCap: 25, powers: true };
+export const DEFAULT_SETTINGS: GameSettings = { cardsPerPlayer: 4, pointsCap: 25, powers: true, votesToConfirm: 3 };
 
 export interface Game {
   id: string;
@@ -174,6 +176,10 @@ export interface FeedEvent {
   double?: boolean;
   /** Il commento di chi ha chiamato il punto: la "recensione" del momento */
   review?: string;
+  /** Reazioni al punto confermato: emoji → quante */
+  reactions?: Record<string, number>;
+  /** La mia reazione */
+  myReaction?: string;
   /** Foto scattata da chi chiama: sfondo della storia e del punto confermato */
   photo?: string;
 }

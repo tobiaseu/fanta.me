@@ -15,6 +15,7 @@ import type {
   Rule,
   Vote,
 } from '@/types/game';
+import { DEFAULT_SETTINGS } from '@/types/game';
 
 const HOUR_MS = 3_600_000;
 
@@ -51,7 +52,7 @@ interface GameState {
   toggleSaved: (ruleId: string) => boolean;
   createCustomRule: (input: Omit<Rule, 'id' | 'authorId'>) => Rule;
   proposals: CardProposal[];
-  proposeCard: (gameId: string, ruleId: string) => void;
+  proposeCard: (gameId: string, ruleId: string, authorId?: string) => void;
   /** Toglie una mia carta dal mazzo (pre-partita); `replaceWith` la scambia con un'altra */
   withdrawCard: (gameId: string, ruleId: string, replaceWith?: string) => void;
   toggleLike: (proposalId: string) => void;
@@ -74,6 +75,10 @@ interface GameState {
   captains: Record<string, string>;
   setCaptain: (teamId: string, playerId: string) => void;
   setNickname: (gameId: string, nickname: string) => void;
+  /** L'host cambia le impostazioni della stanza */
+  updateSettings: (gameId: string, patch: Partial<GameSettings>) => void;
+  /** Reazione con emoji a un punto confermato (un tocco di nuovo la toglie) */
+  react: (eventId: string, emoji: string) => void;
 
   friendships: Record<string, FriendStatus>;
   setFriendship: (playerId: string, status: FriendStatus) => void;
@@ -86,6 +91,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   friendships: FRIENDSHIPS,
   captains: { t1: 'u-ale', t2: 'u-giulia', t3: 'u-sara' },
   setCaptain: (teamId, playerId) => set((s) => ({ captains: { ...s.captains, [teamId]: playerId } })),
+  updateSettings: (gameId, patch) =>
+    set((s) => ({
+      games: s.games.map((g) =>
+        g.id === gameId ? { ...g, settings: { ...DEFAULT_SETTINGS, ...g.settings, ...patch } } : g,
+      ),
+    })),
+  react: (eventId, emoji) =>
+    set((s) => ({
+      events: s.events.map((e) => {
+        if (e.id !== eventId) return e;
+        const reactions = { ...e.reactions };
+        if (e.myReaction) reactions[e.myReaction] = Math.max(0, (reactions[e.myReaction] ?? 1) - 1);
+        const same = e.myReaction === emoji;
+        if (!same) reactions[emoji] = (reactions[emoji] ?? 0) + 1;
+        return { ...e, reactions, myReaction: same ? undefined : emoji };
+      }),
+    })),
   setNickname: (gameId, nickname) =>
     set((s) => ({
       games: s.games.map((g) =>
@@ -210,15 +232,15 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   proposals: PROPOSALS,
   // Nel pre-partita ogni carta proposta entra subito nel mazzo: il mazzo cresce davanti a tutti
-  proposeCard: (gameId, ruleId) =>
+  proposeCard: (gameId, ruleId, authorId = ME.id) =>
     set((s) => {
       if (s.proposals.some((p) => p.gameId === gameId && p.ruleId === ruleId)) return s;
       const proposal: CardProposal = {
         id: `pr-${Date.now()}`,
         gameId,
         ruleId,
-        authorId: ME.id,
-        likes: [ME.id],
+        authorId,
+        likes: [authorId],
         status: 'accepted',
       };
       return {
@@ -360,7 +382,9 @@ export function computeDayStandings(game: Game, events: FeedEvent[], players: Pl
 }
 
 /** Maggioranza di chi può votare (tutti tranne il giocatore chiamato). */
-export const votesNeeded = (game: Game) => Math.floor((game.playerIds.length - 1) / 2) + 1;
+/** Conferme necessarie: le decide l'host (3 di base), mai più dei giocatori che possono votare. */
+export const votesNeeded = (game: Game) =>
+  Math.max(1, Math.min((game.settings ?? DEFAULT_SETTINGS).votesToConfirm ?? 3, game.playerIds.length - 1));
 
 /** Codice invito casuale: 6 caratteri, senza quelli che si confondono (0/O, 1/I). */
 export function randomCode() {
@@ -416,3 +440,7 @@ export function computeTeamStandings(
     })
     .sort((a, b) => b.points - a.points);
 }
+
+/** Chi ha messo una carta nel mazzo (undefined = carta base della stanza) */
+export const deckAuthor = (proposals: CardProposal[], gameId: string, ruleId: string) =>
+  proposals.find((p) => p.gameId === gameId && p.ruleId === ruleId && p.status === 'accepted')?.authorId;

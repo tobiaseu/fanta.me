@@ -242,6 +242,7 @@ export const FEED: FeedEvent[] = [
   // Punteggi ufficiali
   {
     id: 'e1',
+    reactions: { '😂': 3, '🔥': 1 },
     photo: testPhoto('e1'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
@@ -254,6 +255,7 @@ export const FEED: FeedEvent[] = [
   },
   {
     id: 'e2',
+    reactions: { '💀': 2 },
     photo: testPhoto('e2'),
     status: 'confirmed',
     gameId: 'fantapasquetta',
@@ -459,6 +461,14 @@ export const ACTIVATIONS: PowerActivation[] = [
     slot: 'main',
     at: minutesAgo(40),
     until: hoursFromNow(1.4),
+  },
+  {
+    gameId: 'fantapasquetta',
+    playerId: 'u-marco',
+    powerId: 'slowdown',
+    slot: 'main',
+    at: minutesAgo(25),
+    until: hoursFromNow(0.6),
   },
 ];
 

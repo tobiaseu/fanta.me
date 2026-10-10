@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
@@ -15,6 +16,7 @@ import { colors, layout, MAX_APP_WIDTH, space } from '@/theme/tokens';
 
 /** Cronologia completa: ogni punto con foto, ora, chi l'ha chiamato e i voti. Si apre da "Guarda tutti i punti". */
 export function FeedScreen() {
+  const router = useRouter();
   const game = useCurrentGame();
   const now = useNow(30_000);
   const allEvents = useGameStore((s) => s.events);
@@ -63,6 +65,7 @@ export function FeedScreen() {
             author={players.find((p) => p.id === item.authorId)}
             onOpenPlayer={openPlayer}
             detailed
+            onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: item.id } })}
           />
         </Animated.View>
       )}

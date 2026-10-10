@@ -1,3 +1,6 @@
+import { DeckExplorer } from '@/components/cards/DeckExplorer';
+import { DeckPile } from '@/components/cards/DeckPile';
+import { useLiveDeck } from '@/hooks/useLiveDeck';
 import { Segmented } from '@/components/ui/Segmented';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
@@ -14,7 +17,7 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { ME } from '@/data/mock';
 import { RULES, ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
-import { customSlots, useGame, useGameStore } from '@/store/useGameStore';
+import { customSlots, deckAuthor, nameIn, useGame, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 import { DEFAULT_SETTINGS, type Rule } from '@/types/game';
@@ -42,6 +45,7 @@ export function DeckBuilderScreen() {
   const showToast = useUiStore((s) => s.showToast);
   const [tab, setTab] = useState<Tab>('base');
   const [preview, setPreview] = useState<Rule>();
+  const [explore, setExplore] = useState(false);
   const slotRects = useRef<(Rect | undefined)[]>([]);
   const slotViews = useRef<(View | null)[]>([]);
   // Carta "fantasma" che segue il dito sopra tutto lo schermo durante il trascinamento
@@ -56,6 +60,7 @@ export function DeckBuilderScreen() {
   }));
 
   const savedIds = useGameStore((s) => s.savedRuleIds);
+  useLiveDeck(game);
   const mineOwn = useMemo(() => customRules.filter((r) => r.authorId === ME.id), [customRules]);
   if (!game) return <Redirect href="/" />;
 
@@ -72,9 +77,19 @@ export function DeckBuilderScreen() {
   const pool = tab === 'mine' ? mineAll : RULES;
   const freeCustom = customSlots(extraSlots, game) - mineOwn.length;
 
+  // Una carta sta nel mazzo una volta sola: se l'ha già messa qualcuno, si spiega chi
+  const alreadyIn = (rule: Rule) => {
+    const authorId = deckAuthor(proposals, game.id, rule.id);
+    if (authorId === ME.id) return `${rule.label} è già tra le tue carte`;
+    const who = players.find((p) => p.id === authorId);
+    return who
+      ? `Non puoi metterla: ${rule.label} l'ha già inserita ${nameIn(game, who)}`
+      : `Non puoi metterla: ${rule.label} è già una carta base del mazzo`;
+  };
+
   const place = (rule: Rule, slot?: number) => {
     if (!open) return showToast({ text: 'Il mazzo è chiuso: la partita è già iniziata' });
-    if (game.ruleIds.includes(rule.id)) return showToast({ text: `${rule.label} è già nel mazzo` });
+    if (game.ruleIds.includes(rule.id)) return showToast({ text: alreadyIn(rule) });
     const target = slot ?? (myIds.length < perPlayer ? myIds.length : undefined);
     if (target === undefined)
       return showToast({ text: 'Caselle piene: trascina la carta su una casella per scambiarla' });
@@ -132,29 +147,7 @@ export function DeckBuilderScreen() {
       </View>
 
       <View style={[styles.content, styles.fixed]}>
-        <View style={styles.table} accessibilityLabel={`Il mazzo ha ${deck.length} carte`}>
-          <View style={styles.pile}>
-            {pile.map((r, i) => (
-              <Animated.View
-                key={r.id}
-                entering={FadeInUp.springify().damping(14)}
-                layout={LinearTransition.springify()}
-                style={[
-                  styles.pileCard,
-                  {
-                    transform: [
-                      { translateX: (i - (pile.length - 1) / 2) * 22 },
-                      { rotate: `${(i - (pile.length - 1) / 2) * 6}deg` },
-                    ],
-                    zIndex: i,
-                  },
-                ]}>
-                <DeckCard rule={r} bare style={styles.pileInner} />
-              </Animated.View>
-            ))}
-          </View>
-          <AppText variant="headline">{deck.length} carte nel mazzo</AppText>
-        </View>
+        <DeckPile deck={deck} height={84} onOpen={() => setExplore(true)} />
 
         <View style={styles.section}>
           <AppText variant="name">
@@ -238,15 +231,15 @@ export function DeckBuilderScreen() {
                       myIds.includes(r.id)
                         ? 'nel mazzo'
                         : byOther
-                          ? players.find(
-                              (p) =>
-                                p.id === proposals.find((q) => q.ruleId === r.id && q.gameId === game.id)?.authorId,
-                            )?.name
+                          ? `messa da ${
+                              players.find((p) => p.id === deckAuthor(proposals, game.id, r.id))?.name ?? 'base'
+                            }`
                           : undefined
                     }
                     onPress={() => {
                       if (Date.now() - justDragged.current < 400) return;
-                      if (inDeck) setPreview(r);
+                      if (byOther) showToast({ text: alreadyIn(r) });
+                      else if (inDeck) setPreview(r);
                       else place(r);
                     }}
                   />
@@ -266,6 +259,7 @@ export function DeckBuilderScreen() {
         author={players.find((p) => p.id === preview?.authorId)}
         onClose={() => setPreview(undefined)}
       />
+      <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />
     </View>
   );
 }

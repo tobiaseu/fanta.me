@@ -126,6 +126,13 @@ export function OnboardingRoomScreen() {
                   onChange={(v) => setSettings({ ...settings, cardsPerPlayer: v })}
                 />
               </Setting>
+              <Setting label="Conferme per un punto" hint="Quanti devono dire sì perché una chiamata valga">
+                <Chips
+                  values={[2, 3, 4, 5]}
+                  value={settings.votesToConfirm}
+                  onChange={(v) => setSettings({ ...settings, votesToConfirm: v })}
+                />
+              </Setting>
               <Setting label="Punti massimi per carta" hint="Più alto, più si ribalta la classifica">
                 <Chips
                   values={[10, 25, 50]}

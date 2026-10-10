@@ -60,23 +60,24 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
                 </AppText>
               </View>
 
-              <Text style={styles.emoji} allowFontScaling={false}>
-                {rule.emoji}
-              </Text>
+              {/* Icona al centro, testo attaccato in basso */}
+              <View style={styles.middle}>
+                <Text style={styles.emoji} allowFontScaling={false}>
+                  {rule.emoji}
+                </Text>
+              </View>
               <View style={styles.text}>
-                <AppText variant="micro" color={colors.inkSoft} style={styles.centerText}>
-                  {rule.authorId ? `Carta di ${author?.name ?? 'un amico'}` : `${cat?.emoji} ${cat?.label}`}
-                </AppText>
-                <AppText variant="serifTitle" style={[styles.centerText, styles.title]} numberOfLines={2}>
+                <View style={styles.tags}>
+                  <Tag
+                    label={rule.authorId ? `Carta di ${author?.name ?? 'un amico'}` : `${cat?.emoji} ${cat?.label}`}
+                  />
+                  <Tag label={rule.trophy ? '🏆 Trofeo, solo il primo' : 'Cumulabile'} gold={rule.trophy} />
+                </View>
+                <AppText variant="serifTitle" style={styles.title} numberOfLines={2}>
                   {rule.label}
                 </AppText>
-                <AppText variant="body" color={colors.inkSoft} style={styles.centerText} numberOfLines={3}>
+                <AppText variant="body" color={colors.inkSoft} numberOfLines={3}>
                   {rule.description}
-                </AppText>
-                <AppText variant="micro" color={rule.trophy ? '#9A7200' : colors.inkSoft} style={styles.centerText}>
-                  {rule.trophy
-                    ? '🏆 Trofeo: lo prende solo il primo, una volta per partita'
-                    : 'Cumulabile: vale ogni volta che succede'}
                 </AppText>
               </View>
             </View>
@@ -117,7 +118,27 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
   );
 }
 
+function Tag({ label, gold }: { label: string; gold?: boolean }) {
+  return (
+    <View style={[styles.tag, gold && styles.tagGold]}>
+      <AppText variant="micro" color={gold ? '#9A7200' : colors.inkSoft}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  middle: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  tagGold: { borderColor: '#D4A017' },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.55)' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.lg },
   stack: { width: '100%', maxWidth: 300, gap: space.sm },
@@ -127,9 +148,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     padding: space.md,
+    paddingTop: space.xxl,
     gap: space.sm,
   },
   close: {
@@ -157,7 +177,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emoji: { fontSize: 88, lineHeight: 104, fontFamily: EMOJI_FONT },
-  text: { gap: 4, alignItems: 'center' },
+  text: { gap: 6, alignSelf: 'stretch' },
   title: { fontSize: 26, lineHeight: 30 },
   centerText: { textAlign: 'center' },
   save: {

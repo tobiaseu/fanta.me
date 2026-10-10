@@ -17,6 +17,8 @@ interface Props {
   onOpenPlayer: (playerId: string) => void;
   /** Cronologia: foto grande, ora esatta, chi ha chiamato e i voti */
   detailed?: boolean;
+  /** Tocco sul punto: si apre a schermo come una storia */
+  onPress?: () => void;
 }
 
 const at = (iso: string) => {
@@ -27,7 +29,7 @@ const at = (iso: string) => {
 };
 
 /** "Feed card" chiusa del Figma: avatar, nome, carta, punti. Sotto, chi l'ha chiamata e quando. */
-export function FeedItem({ event, player, author, now, onOpenPlayer, detailed }: Props) {
+export function FeedItem({ event, player, author, now, onOpenPlayer, detailed, onPress }: Props) {
   const rule = ruleById(event.ruleId);
   const game = useGame(event.gameId);
   const isBonus = event.points > 0;
@@ -37,7 +39,12 @@ export function FeedItem({ event, player, author, now, onOpenPlayer, detailed }:
     const status =
       event.status === 'confirmed' ? 'Confermata' : event.status === 'rejected' ? 'Scartata' : 'In votazione';
     return (
-      <View style={[styles.detail, event.status === 'rejected' && styles.rejected]}>
+      <PressableScale
+        accessibilityRole="button"
+        disabled={!onPress}
+        pressedScale={0.98}
+        onPress={onPress}
+        style={[styles.detail, event.status === 'rejected' && styles.rejected]}>
         {event.photo ? <Image source={{ uri: event.photo }} style={styles.photo} resizeMode="cover" /> : null}
         <View style={styles.detailBody}>
           <View style={styles.row}>
@@ -66,12 +73,19 @@ export function FeedItem({ event, player, author, now, onOpenPlayer, detailed }:
             </AppText>
           ) : null}
         </View>
-      </View>
+      </PressableScale>
     );
   }
 
+  const reactions = Object.entries(event.reactions ?? {}).filter(([, n]) => n > 0);
   return (
-    <View style={styles.card}>
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${nameIn(game, player)}, ${rule?.label}, ${event.points} punti. Apri`}
+      disabled={!onPress}
+      pressedScale={0.98}
+      onPress={onPress}
+      style={styles.card}>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={`Profilo di ${player.name}`}
@@ -83,11 +97,15 @@ export function FeedItem({ event, player, author, now, onOpenPlayer, detailed }:
         <AppText variant="name" onPress={() => onOpenPlayer(player.id)}>
           {nameIn(game, player)}
         </AppText>
-        <AppText variant="body" color={colors.inkMuted} numberOfLines={1}>
+        <AppText variant="body" color={colors.inkMuted}>
           {rule ? `${rule.emoji} ${rule.label}` : 'Azione'}
         </AppText>
+        {reactions.length > 0 && (
+          <AppText variant="micro" color={colors.inkSoft}>
+            {reactions.map(([e, n]) => `${e} ${n}`).join('  ')}
+          </AppText>
+        )}
       </View>
-      {event.photo ? <Image source={{ uri: event.photo }} style={styles.thumb} resizeMode="cover" /> : null}
       <View style={styles.right}>
         <AppText variant="name" color={isBonus ? colors.bonus : colors.malus}>
           {isBonus ? `+${event.points}` : event.points}
@@ -103,7 +121,7 @@ export function FeedItem({ event, player, author, now, onOpenPlayer, detailed }:
           {timeAgo(event.createdAt, now)}
         </AppText>
       </View>
-    </View>
+    </PressableScale>
   );
 }
 

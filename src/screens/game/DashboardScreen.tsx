@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { ActivePowers } from '@/components/game/ActivePowers';
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { PowersPanel } from '@/components/game/PowersPanel';
@@ -105,9 +106,16 @@ export function DashboardScreen() {
         </View>
       )}
 
+      {game.status === 'live' && (
+        <View style={styles.section}>
+          <SectionHeader title="Fantapoteri in gioco" />
+          <ActivePowers game={game} now={now} />
+        </View>
+      )}
+
       {game.status !== 'waiting' && (
         <View style={styles.section}>
-          <SectionHeader title="Ultimi punti" />
+          <SectionHeader title="Ultimi punti confermati" />
           {latest.length ? (
             <View style={styles.list}>
               {latest.map((e) => (
@@ -118,6 +126,7 @@ export function DashboardScreen() {
                   player={players.find((p) => p.id === e.playerId)}
                   author={players.find((p) => p.id === e.authorId)}
                   onOpenPlayer={openPlayer}
+                  onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: e.id } })}
                 />
               ))}
             </View>

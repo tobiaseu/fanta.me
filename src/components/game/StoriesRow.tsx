@@ -1,4 +1,4 @@
-import { nameIn, useGameStore } from '@/store/useGameStore';
+import { nameIn, useGameStore, votesNeeded } from '@/store/useGameStore';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
@@ -21,6 +21,10 @@ interface Props {
  */
 export function StoriesRow({ calls, players, onOpen }: Props) {
   const games = useGameStore((s) => s.games);
+  const need = (call: FeedEvent) => {
+    const g = games.find((x) => x.id === call.gameId);
+    return g ? votesNeeded(g) : 1;
+  };
   return (
     <ScrollView
       horizontal
@@ -51,11 +55,6 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
                 <Avatar player={player} size={SIZE - 14} sticker={false} shape="circle" />
               )}
             </View>
-            {call.photo ? (
-              <View style={styles.mini}>
-                <Avatar player={player} size={22} sticker={false} />
-              </View>
-            ) : null}
             {voted && (
               <View style={styles.badge}>
                 <Icon
@@ -66,6 +65,11 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
                 />
               </View>
             )}
+            <View style={styles.count} accessibilityLabel={`${call.votes.confirm} conferme su ${need(call)}`}>
+              <AppText style={styles.countText}>
+                {call.votes.confirm}/{need(call)}
+              </AppText>
+            </View>
             <AppText variant="micro" style={styles.label} numberOfLines={1}>
               {nameIn(
                 games.find((g) => g.id === call.gameId),
@@ -80,6 +84,17 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
 }
 
 const styles = StyleSheet.create({
+  count: {
+    position: 'absolute',
+    top: SIZE - 14,
+    alignSelf: 'center',
+    paddingHorizontal: 6,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.ink,
+    justifyContent: 'center',
+  },
+  countText: { color: '#fff', fontSize: 11, lineHeight: 13, fontWeight: '600' },
   photoWrap: { width: SIZE - 14, height: SIZE - 14, borderRadius: SIZE, overflow: 'hidden' },
   photo: { position: 'absolute', width: SIZE - 14, height: SIZE - 14 },
   mini: {
@@ -101,7 +116,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   add: { backgroundColor: colors.surface },
-  ring: { borderWidth: 2, borderColor: colors.cta, backgroundColor: colors.surface },
+  ring: { borderWidth: 4, borderColor: colors.cta, backgroundColor: colors.surface },
   ringVoted: { borderColor: colors.placeholder },
   badge: {
     position: 'absolute',

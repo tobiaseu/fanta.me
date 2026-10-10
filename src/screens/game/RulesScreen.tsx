@@ -1,3 +1,6 @@
+import { DeckExplorer } from '@/components/cards/DeckExplorer';
+import { DeckPile } from '@/components/cards/DeckPile';
+import { useLiveDeck } from '@/hooks/useLiveDeck';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,7 +16,7 @@ import { ME } from '@/data/mock';
 import { powerById, RULES, ruleById } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { haptics } from '@/lib/haptics';
-import { customSlots, nameIn, proposalsNeeded, useGameStore } from '@/store/useGameStore';
+import { customSlots, nameIn, proposalsNeeded, useGameStore, votesNeeded } from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Rule } from '@/types/game';
 
@@ -43,6 +46,9 @@ export function RulesScreen() {
   const toggleLike = useGameStore((s) => s.toggleLike);
   const [tab, setTab] = useState<Tab>('base');
   const [selected, setSelected] = useState<Rule>();
+  const [explore, setExplore] = useState(false);
+  const updateSettings = useGameStore((s) => s.updateSettings);
+  useLiveDeck(game);
 
   const proposals = useMemo(() => allProposals.filter((p) => p.gameId === game?.id), [allProposals, game?.id]);
   const mine = useMemo(() => customRules.filter((r) => r.authorId === ME.id), [customRules]);
@@ -111,12 +117,42 @@ export function RulesScreen() {
           title="Mazzo della partita"
           caption={`${deck.length} carte, valore medio ${avg > 0 ? '+' : ''}${avg}${game.premium ? ', stanza Premium' : ''}`}
         />
+        <DeckPile deck={deck} onOpen={() => setExplore(true)} />
         <View style={styles.grid}>
           {deck.map((r) => (
             <DeckCard key={r.id} rule={r} onPress={() => setSelected(r)} />
           ))}
         </View>
       </View>
+
+      {game.playerIds[0] === ME.id && game.status !== 'ended' && (
+        <View style={styles.section}>
+          <SectionHeader
+            title="Conferme per un punto"
+            caption="Lo decidi tu da host: quanti sì servono perché una chiamata valga."
+          />
+          <View style={styles.voteChips}>
+            {[2, 3, 4, 5].map((v) => {
+              const on = votesNeeded(game) === v;
+              return (
+                <PressableScale
+                  key={v}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  onPress={() => {
+                    haptics.tap();
+                    updateSettings(game.id, { votesToConfirm: v });
+                  }}
+                  style={[styles.voteChip, on && styles.voteChipOn]}>
+                  <AppText variant="headline" color={on ? colors.inkInverse : colors.ink}>
+                    {v}
+                  </AppText>
+                </PressableScale>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       {pregame && (
         <View style={styles.section}>
@@ -261,11 +297,23 @@ export function RulesScreen() {
         action={sheet.action}
         onClose={() => setSelected(undefined)}
       />
+      <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  voteChips: { flexDirection: 'row', gap: space.xs },
+  voteChip: {
+    width: 52,
+    height: 40,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voteChipOn: { backgroundColor: colors.ink, borderColor: colors.ink },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: layout.gutter,
