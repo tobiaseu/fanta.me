@@ -35,6 +35,8 @@ interface Props {
   onPress?: () => void;
   onLongPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  /** Si può aggiungere al mazzo: "+" giallo in alto a destra */
+  addable?: boolean;
   /** Senza nome sotto (pila del mazzo) */
   bare?: boolean;
 }
@@ -43,7 +45,7 @@ interface Props {
  * Carta del mazzo in stile Clash Royale: verticale, bordo sottile grigio scuro,
  * goccia con i punti in alto a sinistra (come l'elisir), emoji 3D al centro e nome sotto.
  */
-export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, style, bare }: Props) {
+export function DeckCard({ rule, dimmed, checked, addable, note, onPress, onLongPress, style, bare }: Props) {
   const tone = cardTone(rule);
   return (
     <PressableScale
@@ -85,6 +87,11 @@ export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, st
             <Icon name="check" size={11} strokeWidth={3.2} />
           </View>
         )}
+        {addable && (
+          <View style={styles.add}>
+            <Icon name="plus" size={13} strokeWidth={2.4} />
+          </View>
+        )}
       </View>
       {note ? (
         <AppText variant="micro" color={colors.inkSoft} style={styles.note} numberOfLines={1}>
@@ -96,14 +103,24 @@ export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, st
 }
 
 /** Slot vuoto: "+ Crea carta" (tratteggiato) oppure lucchetto Premium. */
-export function EmptySlot({ locked, onPress, label }: { locked?: boolean; onPress: () => void; label?: string }) {
+export function EmptySlot({
+  locked,
+  onPress,
+  label,
+  style,
+}: {
+  locked?: boolean;
+  onPress: () => void;
+  label?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={locked ? 'Sblocca altre carte personali' : 'Crea una nuova carta'}
       onPress={onPress}
       pressedScale={0.94}
-      style={styles.wrap}>
+      style={[styles.wrap, style]}>
       <View style={[styles.card, locked ? styles.locked : styles.empty]}>
         <View style={[styles.plus, locked && styles.plusLocked]}>
           <Icon name={locked ? 'lock' : 'plus'} size={18} strokeWidth={2.4} color={locked ? colors.cta : colors.ink} />
@@ -166,6 +183,17 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
+    backgroundColor: colors.cta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  add: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: colors.cta,
     alignItems: 'center',
     justifyContent: 'center',

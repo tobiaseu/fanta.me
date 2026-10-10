@@ -23,7 +23,7 @@ interface Props {
   author?: Player;
   /** Riga di stato sotto la carta (es. "Nel mazzo", "2 su 3 mi piace") */
   status?: string;
-  action?: { label: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'tertiary' };
+  action?: { label: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'tertiary'; disabled?: boolean };
   onClose: () => void;
 }
 
@@ -60,37 +60,40 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
                 </AppText>
               </View>
 
-              {/* Icona al centro, testo attaccato in basso */}
-              <View style={styles.middle}>
+              {/* Illustrazione in un riquadro tenue, poi nome, regola e tag in fondo */}
+              <View
+                style={[styles.art, { backgroundColor: rule.points > 0 ? colors.liveSoft : 'rgba(255, 59, 48, 0.1)' }]}>
                 <Text style={styles.emoji} allowFontScaling={false}>
                   {rule.emoji}
                 </Text>
               </View>
               <View style={styles.text}>
-                <View style={styles.tags}>
-                  <Tag
-                    label={rule.authorId ? `Carta di ${author?.name ?? 'un amico'}` : `${cat?.emoji} ${cat?.label}`}
-                  />
-                  <Tag label={rule.trophy ? '🏆 Trofeo, solo il primo' : 'Cumulabile'} gold={rule.trophy} />
-                </View>
                 <AppText variant="serifTitle" style={styles.title} numberOfLines={2}>
                   {rule.label}
                 </AppText>
-                <AppText variant="body" color={colors.inkSoft} numberOfLines={3}>
+                <AppText variant="body" color={colors.inkSoft} style={styles.regular} numberOfLines={3}>
                   {rule.description}
                 </AppText>
+              </View>
+              <View style={styles.tags}>
+                <Tag label={rule.authorId ? `Carta di ${author?.name ?? 'un amico'}` : `${cat?.emoji} ${cat?.label}`} />
+                <Tag label={rule.trophy ? '🏆 Solo il primo' : 'Cumulabile'} gold={rule.trophy} />
               </View>
             </View>
 
             {status ? (
-              <AppText variant="caption" color={colors.inkInverse} style={styles.centerText}>
-                {status}
-              </AppText>
+              <View style={styles.status}>
+                <AppText variant="caption" color={colors.inkInverse} style={styles.centerText}>
+                  {status}
+                </AppText>
+              </View>
             ) : null}
             {action && (
               <Button
                 label={action.label}
                 variant={action.variant ?? 'primary'}
+                disabled={action.disabled}
+                onDark
                 onPress={() => {
                   action.onPress();
                   onClose();
@@ -106,8 +109,8 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
                 showToast({ text: now ? `${rule.label} salvata nelle tue carte` : 'Tolta dalle tue carte' });
               }}
               style={styles.save}>
-              <Icon name={saved ? 'check' : 'plus'} size={18} color={colors.inkInverse} />
-              <AppText variant="headline" color={colors.inkInverse}>
+              <Icon name={saved ? 'check' : 'plus'} size={16} color={colors.inkInverse} />
+              <AppText variant="caption" color={colors.inkInverse}>
                 {saved ? 'Salvata nelle tue carte' : 'Salva nelle mie carte'}
               </AppText>
             </PressableScale>
@@ -129,7 +132,15 @@ function Tag({ label, gold }: { label: string; gold?: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  middle: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  art: { flex: 1, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', marginTop: space.xs },
+  regular: { fontWeight: '400' },
+  status: {
+    alignSelf: 'center',
+    paddingHorizontal: space.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     borderWidth: 1,
@@ -141,15 +152,15 @@ const styles = StyleSheet.create({
   tagGold: { borderColor: '#D4A017' },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.55)' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.lg },
-  stack: { width: '100%', maxWidth: 300, gap: space.sm },
+  stack: { width: '100%', maxWidth: 320, gap: space.sm },
   card: {
     width: '100%',
     aspectRatio: 0.78,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    padding: space.md,
-    paddingTop: space.xxl,
+    padding: space.sm,
+    paddingTop: space.xxl + space.xs,
     gap: space.sm,
   },
   close: {
@@ -176,15 +187,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: { fontSize: 88, lineHeight: 104, fontFamily: EMOJI_FONT },
-  text: { gap: 6, alignSelf: 'stretch' },
-  title: { fontSize: 26, lineHeight: 30 },
+  emoji: { fontSize: 76, lineHeight: 90, fontFamily: EMOJI_FONT },
+  text: { gap: 4, alignSelf: 'stretch', paddingHorizontal: space.xxs },
+  title: { fontSize: 24, lineHeight: 28 },
   centerText: { textAlign: 'center' },
   save: {
-    height: 52,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
+    height: 40,
     flexDirection: 'row',
     gap: space.xs,
     alignItems: 'center',

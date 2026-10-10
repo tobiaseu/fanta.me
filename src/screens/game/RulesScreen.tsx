@@ -1,5 +1,6 @@
 import { DeckExplorer } from '@/components/cards/DeckExplorer';
 import { DeckPile } from '@/components/cards/DeckPile';
+import Animated, { FadeIn, FadeOut, LinearTransition, ZoomIn } from 'react-native-reanimated';
 import { useLiveDeck } from '@/hooks/useLiveDeck';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -49,6 +50,7 @@ export function RulesScreen() {
   const powers = useGameStore((s) => s.powers);
   const toggleLike = useGameStore((s) => s.toggleLike);
   const [tab, setTab] = useState<Tab>('base');
+  const [showAll, setShowAll] = useState(false);
   const [division, setDivision] = useState<'cards' | 'players'>('cards');
   const proposeCard = useGameStore((s) => s.proposeCard);
   const withdrawCard = useGameStore((s) => s.withdrawCard);
@@ -77,44 +79,13 @@ export function RulesScreen() {
     else router.push({ pathname: '/card/new', params: { gameId: game.id } });
   };
 
-  // Cosa dice e cosa permette la carta aperta, in base alla fase
-  const sheet = (() => {
-    if (!selected) return {};
-    const inDeck = game.ruleIds.includes(selected.id);
-    const proposal = proposals.find((p) => p.ruleId === selected.id);
-    if (inDeck) return { status: proposal ? 'Entrata nel mazzo con i voti della stanza' : 'Nel mazzo della partita' };
-    if (!pregame)
-      return { status: game.status === 'live' ? 'Il mazzo è chiuso: la partita è già iniziata.' : 'Partita conclusa.' };
-    if (proposal) {
-      const liked = proposal.likes.includes(ME.id);
-      return {
-        status: `${proposal.likes.length} su ${needed} la vogliono nel mazzo`,
-        action: {
-          label: liked ? 'Togli il mi piace' : 'La voglio nel mazzo',
-          variant: liked ? ('secondary' as const) : ('primary' as const),
-          onPress: () => {
-            haptics.tap();
-            toggleLike(proposal.id);
-          },
-        },
-      };
-    }
-    return {
-      status: 'Non è nel mazzo. Mettila in una delle tue caselle.',
-      action: {
-        label: 'Apri il mazzo',
-        onPress: () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } }),
-      },
-    };
-  })();
-
   const myCards = proposals
     .filter((p) => p.authorId === ME.id)
     .map((p) => ruleById(p.ruleId))
     .filter((r): r is Rule => !!r);
   const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
   const pick = (r: Rule) => {
-    if (!pregame || game.ruleIds.includes(r.id)) return setSelected(r);
+    if (!pregame || game.ruleIds.includes(r.id)) return;
     if (myCards.length >= perPlayer) {
       haptics.malus();
       return showToast({ text: `Hai già ${perPlayer} carte nel mazzo: togline una per scambiarla` });
@@ -135,6 +106,43 @@ export function RulesScreen() {
     });
   };
 
+  // Cosa dice e cosa permette la carta aperta, in base alla fase
+  const sheet = (() => {
+    if (!selected) return {};
+    const inDeck = game.ruleIds.includes(selected.id);
+    const proposal = proposals.find((p) => p.ruleId === selected.id);
+    const myCard = pregame && proposal?.authorId === ME.id;
+    if (myCard)
+      return {
+        status: 'È una delle tue carte nel mazzo',
+        action: { label: 'Togli dal mazzo', variant: 'secondary' as const, onPress: () => drop(selected) },
+      };
+    if (inDeck) return { status: proposal ? 'Nel mazzo, portata da un amico' : 'Nel mazzo della partita' };
+    if (!pregame)
+      return { status: game.status === 'live' ? 'Il mazzo è chiuso: la partita è già iniziata.' : 'Partita conclusa.' };
+    if (proposal) {
+      const liked = proposal.likes.includes(ME.id);
+      return {
+        status: `${proposal.likes.length} su ${needed} la vogliono nel mazzo`,
+        action: {
+          label: liked ? 'Togli il mi piace' : 'La voglio nel mazzo',
+          variant: liked ? ('secondary' as const) : ('primary' as const),
+          onPress: () => {
+            haptics.tap();
+            toggleLike(proposal.id);
+          },
+        },
+      };
+    }
+    const full = myCards.length >= perPlayer;
+    return {
+      status: full
+        ? `Hai già ${perPlayer} carte nel mazzo: togline una per fare posto`
+        : `Ti restano ${perPlayer - myCards.length} caselle su ${perPlayer}`,
+      action: { label: full ? 'Caselle piene' : 'Metti nel mazzo', disabled: full, onPress: () => pick(selected) },
+    };
+  })();
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Segmented
@@ -153,35 +161,57 @@ export function RulesScreen() {
           <View style={styles.section}>
             <SectionHeader
               title="Mazzo della partita"
+              action={{ label: showAll ? 'Anteprima' : 'Vedi tutte', onPress: () => setShowAll((v) => !v) }}
               caption={
                 pregame
                   ? `${deck.length} carte finora. Si chiude ${DATE.format(new Date(game.startsAt ?? Date.now()))}.`
                   : `${deck.length} carte, valore medio ${avg > 0 ? '+' : ''}${avg}. ${game.status === 'live' ? 'Il mazzo è chiuso.' : 'Partita conclusa.'}`
               }
             />
-            <DeckPile deck={deck} onOpen={() => setExplore(true)} />
-            <View style={styles.grid}>
-              {deck.map((r) => (
-                <DeckCard key={r.id} rule={r} onPress={() => setSelected(r)} />
-              ))}
-            </View>
+            {showAll ? (
+              <Animated.View
+                key="all"
+                entering={FadeIn.duration(200)}
+                layout={LinearTransition.springify()}
+                style={styles.grid}>
+                {deck.map((r, i) => (
+                  <Animated.View
+                    key={r.id}
+                    entering={ZoomIn.delay(Math.min(i, 12) * 30)
+                      .springify()
+                      .damping(16)}
+                    style={styles.cell}>
+                    <DeckCard rule={r} style={styles.full} onPress={() => setSelected(r)} />
+                  </Animated.View>
+                ))}
+              </Animated.View>
+            ) : (
+              <Animated.View key="pile" entering={ZoomIn.springify().damping(18)} exiting={FadeOut.duration(120)}>
+                <DeckPile deck={deck} height={96} onOpen={() => setShowAll(true)} />
+              </Animated.View>
+            )}
           </View>
 
           {pregame && (
             <View style={styles.section}>
               <SectionHeader
                 title="Le tue carte nel mazzo"
-                caption={`${myCards.length} di ${perPlayer}. Tocca una carta per toglierla.`}
+                caption={
+                  myCards.length < perPlayer
+                    ? `${myCards.length} di ${perPlayer}. Scegline ${perPlayer - myCards.length} dalla collezione qui sotto.`
+                    : `${perPlayer} di ${perPlayer}: sei a posto. Tocca una carta per cambiarla.`
+                }
               />
               <View style={styles.slots}>
                 {myCards.map((r) => (
-                  <DeckCard key={r.id} rule={r} onPress={() => drop(r)} note="Togli" />
+                  <DeckCard key={r.id} rule={r} style={styles.slot} onPress={() => setSelected(r)} />
                 ))}
                 {Array.from({ length: Math.max(0, perPlayer - myCards.length) }, (_, i) => (
                   <EmptySlot
+                    style={styles.slot}
                     key={`slot-${i}`}
-                    label="Scegli sotto"
-                    onPress={() => showToast({ text: 'Scegli una carta dalla tua collezione qui sotto' })}
+                    label={`Casella ${myCards.length + i + 1}`}
+                    onPress={() => showToast({ text: 'Tocca una carta della collezione qui sotto per metterla qui' })}
                   />
                 ))}
               </View>
@@ -216,7 +246,7 @@ export function RulesScreen() {
               title="La tua collezione"
               caption={
                 pregame
-                  ? 'Tocca una carta spenta per metterla nel mazzo.'
+                  ? 'Le carte che puoi ancora portare. Toccane una per leggerla e metterla nel mazzo.'
                   : tab === 'base'
                     ? 'Le 20 carte del gioco. Quelle accese sono nel mazzo.'
                     : `${mine.length} di ${slots} carte personali.`
@@ -232,18 +262,25 @@ export function RulesScreen() {
             />
             <View style={styles.grid}>
               {tab === 'base'
-                ? RULES.map((r) => (
+                ? RULES.filter((r) => !pregame || !game.ruleIds.includes(r.id)).map((r) => (
                     <DeckCard
                       key={r.id}
                       rule={r}
-                      checked={game.ruleIds.includes(r.id)}
-                      dimmed={!game.ruleIds.includes(r.id)}
-                      onPress={() => pick(r)}
+                      addable={pregame}
+                      checked={!pregame && game.ruleIds.includes(r.id)}
+                      dimmed={!pregame && !game.ruleIds.includes(r.id)}
+                      onPress={() => setSelected(r)}
                     />
                   ))
                 : [
                     ...mine.map((r) => (
-                      <DeckCard key={r.id} rule={r} checked={game.ruleIds.includes(r.id)} onPress={() => pick(r)} />
+                      <DeckCard
+                        key={r.id}
+                        rule={r}
+                        checked={game.ruleIds.includes(r.id)}
+                        addable={pregame && !game.ruleIds.includes(r.id)}
+                        onPress={() => setSelected(r)}
+                      />
                     )),
                     ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (
                       <EmptySlot key={`empty-${i}`} onPress={createCard} />
@@ -324,10 +361,13 @@ export function RulesScreen() {
 }
 
 const styles = StyleSheet.create({
+  cell: { width: '30%' },
+  slot: { width: '22%' },
+  full: { width: '100%' },
   slots: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    columnGap: '5%',
+    columnGap: '4%',
     rowGap: space.md,
     padding: space.sm,
     borderRadius: radius.lg,
