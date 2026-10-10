@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { RulebookCard } from '@/components/game/RulebookCard';
-import { EmptyLobby } from '@/components/lobby/EmptyLobby';
-import { LOBBY_ACTIONS_HEIGHT, LobbyActions } from '@/components/lobby/LobbyActions';
+import { CommunityStrip } from '@/components/lobby/CommunityStrip';
+import { QuickRoom } from '@/components/lobby/QuickRoom';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
@@ -66,6 +66,15 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
     <View style={styles.screen}>
       <TopBar
         title={<Wordmark />}
+        right={
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Esplora mazzi e carte della community"
+            hitSlop={8}
+            onPress={() => router.push('/explore')}>
+            <Icon name="grid" size={22} />
+          </PressableScale>
+        }
         left={
           <PressableScale
             accessibilityRole="button"
@@ -77,14 +86,14 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           </PressableScale>
         }
       />
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: LOBBY_ACTIONS_HEIGHT + space.xxl }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: space.xxl * 2 }]}>
         <AppText variant="serifTitle">Ciao {ME.name}</AppText>
 
-        {last && resume ? (
-          <RoomCard game={last} info={resume} primary onPress={() => openGame(last)} />
-        ) : (
-          <EmptyLobby />
-        )}
+        {last && resume ? <RoomCard game={last} info={resume} primary onPress={() => openGame(last)} /> : null}
+
+        <QuickRoom primary={!resume} />
+
+        <CommunityStrip />
 
         {others.length > 0 && (
           <View style={styles.list}>
@@ -97,11 +106,6 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
 
         <RulebookCard />
       </ScrollView>
-      <LobbyActions
-        primary={!resume}
-        onCreate={() => router.push('/room/new')}
-        onJoin={() => router.push('/room/join')}
-      />
     </View>
   );
 }

@@ -43,7 +43,18 @@ interface GameState {
     friendIds?: string[];
     startsInHours?: number;
     settings?: GameSettings;
+    /** Stanza rapida: emoji, durata in ore e mazzo di partenza (es. un mazzo della community) */
+    emoji?: string;
+    hours?: number;
+    ruleIds?: string[];
   }) => Game;
+  /* ---- Community ---- */
+  /** Carte e mazzi della community a cui ho messo mi piace */
+  likedCommunity: string[];
+  toggleCommunityLike: (id: string) => void;
+  /** Le mie carte personali pubblicate nella community */
+  publishedRuleIds: string[];
+  togglePublish: (ruleId: string) => boolean;
   /** Chi ha creato la stanza la fa partire prima del previsto */
   startGame: (gameId: string) => void;
 
@@ -230,12 +241,27 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setFriendship: (playerId, status) => set((s) => ({ friendships: { ...s.friendships, [playerId]: status } })),
 
-  createGame: ({ name, mode, friendIds = [], startsInHours = 0, settings }) => {
+  likedCommunity: [],
+  toggleCommunityLike: (id) =>
+    set((s) => ({
+      likedCommunity: s.likedCommunity.includes(id)
+        ? s.likedCommunity.filter((x) => x !== id)
+        : [...s.likedCommunity, id],
+    })),
+  publishedRuleIds: [],
+  togglePublish: (ruleId) => {
+    const on = !get().publishedRuleIds.includes(ruleId);
+    set((s) => ({
+      publishedRuleIds: on ? [...s.publishedRuleIds, ruleId] : s.publishedRuleIds.filter((x) => x !== ruleId),
+    }));
+    return on;
+  },
+  createGame: ({ name, mode, friendIds = [], startsInHours = 0, settings, emoji, hours, ruleIds }) => {
     const start = Date.now() + startsInHours * HOUR_MS;
     const game: Game = {
       id: `g-${Date.now()}`,
       name,
-      emoji: mode === 'sprint' ? '⚡️' : '🏃',
+      emoji: emoji ?? (mode === 'sprint' ? '⚡️' : '🏃'),
       setting: 'party',
       mode,
       status: startsInHours > 0 ? 'waiting' : 'live',
@@ -243,10 +269,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       code: randomCode(),
       settings,
       startsAt: new Date(start).toISOString(),
-      endsAt: mode === 'sprint' ? new Date(start + 48 * HOUR_MS).toISOString() : undefined,
+      endsAt: mode === 'sprint' ? new Date(start + (hours ?? 48) * HOUR_MS).toISOString() : undefined,
       week: mode === 'marathon' ? { current: 1, total: 4 } : undefined,
       playerIds: [ME.id, ...friendIds],
-      ruleIds: RULES.map((r) => r.id), // le 20 carte base; le personali si propongono nel pre-partita
+      ruleIds: ruleIds ?? RULES.map((r) => r.id), // le 20 carte base; le personali si propongono nel pre-partita
       accent: '#0B8200',
     };
     set((s) => ({ games: [game, ...s.games] }));
