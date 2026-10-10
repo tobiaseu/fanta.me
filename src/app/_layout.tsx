@@ -1,3 +1,5 @@
+import '@/lib/freshStart';
+
 import { Fraunces_600SemiBold, Fraunces_700Bold, useFonts } from '@expo-google-fonts/fraunces';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
