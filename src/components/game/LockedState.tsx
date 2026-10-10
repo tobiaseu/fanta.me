@@ -20,7 +20,8 @@ export function LockedState({ game, title, points }: { game: Game; title: string
         {title}
       </AppText>
       <AppText variant="body" color={colors.inkSoft} style={[styles.center, styles.regular]}>
-        Si apre quando parte la partita, tra {left > 172_800_000 ? `${Math.ceil(left / 86_400_000)} giorni` : formatHoursLeft(left)}.
+        Si apre quando parte la partita, tra{' '}
+        {left > 172_800_000 ? `${Math.ceil(left / 86_400_000)} giorni` : formatHoursLeft(left)}.
       </AppText>
       <View style={styles.list}>
         {points.map((p) => (

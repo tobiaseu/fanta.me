@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { EmptyNote } from '@/components/ui/EmptyNote';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { POWER_UPS } from '@/data/rules';
@@ -16,9 +17,11 @@ export function ActivePowers({ game, now }: { game: Game; now: number }) {
 
   if (!live.length)
     return (
-      <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-        Nessun fantapotere attivo adesso.
-      </AppText>
+      <EmptyNote
+        emoji="🪄"
+        title="Nessun fantapotere in gioco"
+        body="Quando qualcuno ne attiva uno, lo vedi qui con il tempo che resta."
+      />
     );
   return (
     <ScrollView

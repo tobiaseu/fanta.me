@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { ActivePowers } from '@/components/game/ActivePowers';
@@ -11,7 +11,10 @@ import { StoriesRow } from '@/components/game/StoriesRow';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { EmptyNote } from '@/components/ui/EmptyNote';
+import { Scrim } from '@/components/ui/Scrim';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { ruleById } from '@/data/rules';
 import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useNow } from '@/hooks/useNow';
@@ -19,7 +22,8 @@ import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
-import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
+import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
+import type { FeedEvent, Player } from '@/types/game';
 
 /**
  * LIVE: il centro del gioco. Prima dell'inizio è bloccato e spiega cosa ci sarà;
@@ -34,6 +38,7 @@ export function LiveScreen() {
   const players = useGameStore((s) => s.players);
   const openQuickAction = useUiStore((s) => s.openQuickAction);
   const openPlayer = useOpenPlayer();
+  const [view, setView] = useState<'list' | 'grid'>('list');
 
   const { calls, feed } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id);
@@ -75,17 +80,26 @@ export function LiveScreen() {
                   ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
                   : calls.length
                     ? 'Hai votato tutto. Aspettiamo gli altri.'
-                    : 'Nessuna chiamata aperta. Usa il + quando succede qualcosa.'
+                    : undefined
               }
             />
-            {calls.length > 0 && (
-              <StoriesRow
-                calls={calls}
-                players={players}
-                onOpen={(call) => {
-                  haptics.tap();
-                  open(call.id);
-                }}
+            <StoriesRow
+              calls={calls}
+              players={players}
+              onAdd={() => {
+                haptics.press();
+                openQuickAction();
+              }}
+              onOpen={(call) => {
+                haptics.tap();
+                open(call.id);
+              }}
+            />
+            {calls.length === 0 && (
+              <EmptyNote
+                emoji="📭"
+                title="Niente da votare al momento"
+                body="Quando qualcuno chiama un punto compare qui come storia. Tocca il + per chiamarne uno."
               />
             )}
           </View>
@@ -97,11 +111,42 @@ export function LiveScreen() {
           </View>
         )}
         <View style={styles.section}>
-          <SectionHeader
-            title={live ? 'Tutti i punti' : 'Com’è andata'}
-            caption={`${feed.filter((e) => e.status === 'confirmed').length} confermati, dal più recente. Tocca un punto per aprirlo e reagire.`}
-          />
-          {feed.length ? (
+          <View style={styles.headRow}>
+            <View style={styles.flex}>
+              <SectionHeader
+                title={live ? 'Tutti i punti' : 'Com’è andata'}
+                caption={`${feed.filter((e) => e.status === 'confirmed').length} confermati, dal più recente.`}
+              />
+            </View>
+            <View style={styles.toggle} accessibilityRole="tablist">
+              {(['list', 'grid'] as const).map((v) => (
+                <PressableScale
+                  key={v}
+                  accessibilityRole="tab"
+                  accessibilityLabel={v === 'list' ? 'Vista a lista' : 'Vista a griglia'}
+                  accessibilityState={{ selected: view === v }}
+                  onPress={() => {
+                    haptics.tap();
+                    setView(v);
+                  }}
+                  style={[styles.toggleBtn, view === v && styles.toggleOn]}>
+                  <Icon name={v} size={18} color={view === v ? colors.ink : colors.inkSoft} />
+                </PressableScale>
+              ))}
+            </View>
+          </View>
+          {feed.length && view === 'grid' ? (
+            <View style={styles.grid}>
+              {feed.map((e) => (
+                <Tile
+                  key={e.id}
+                  event={e}
+                  player={players.find((p) => p.id === e.playerId)}
+                  onPress={() => open(e.id)}
+                />
+              ))}
+            </View>
+          ) : feed.length ? (
             <View style={styles.list}>
               {feed.map((e) => (
                 <Animated.View key={e.id} layout={LinearTransition.springify()}>
@@ -118,26 +163,10 @@ export function LiveScreen() {
               ))}
             </View>
           ) : (
-            <AppText variant="body" color={colors.inkSoft}>
-              Ancora nessun punto. Qualcuno dovrà pur fare la prima figuraccia.
-            </AppText>
+            <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
           )}
         </View>
       </ScrollView>
-      {live && (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Chiama un punto"
-          onPress={() => {
-            haptics.press();
-            openQuickAction();
-          }}
-          pressedScale={0.9}
-          style={styles.fab}>
-          <Icon name="plus" size={22} />
-          <AppText variant="headline">Chiama un punto</AppText>
-        </PressableScale>
-      )}
     </View>
   );
 }
@@ -148,7 +177,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: layout.gutter,
     paddingTop: layout.section,
-    paddingBottom: TAB_BAR_SPACE + 72,
+    paddingBottom: TAB_BAR_SPACE + space.md,
     gap: layout.section,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
@@ -156,17 +185,56 @@ const styles = StyleSheet.create({
   },
   section: { gap: space.sm },
   list: { gap: space.sm },
-  fab: {
-    position: 'absolute',
-    right: layout.gutter,
-    bottom: TAB_BAR_SPACE - space.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.xs,
-    height: 52,
-    paddingHorizontal: space.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.cta,
-    ...shadow.floating,
+  headRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  toggle: { flexDirection: 'row', borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, padding: 2 },
+  toggleBtn: { width: 36, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  toggleOn: { backgroundColor: colors.surface },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tile: {
+    width: '48%',
+    flexGrow: 1,
+    aspectRatio: 3 / 4,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    justifyContent: 'flex-end',
   },
+  tileFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  tileEmoji: { position: 'absolute', top: space.md, alignSelf: 'center', fontSize: 56, lineHeight: 64 },
+  tileText: { padding: space.sm, gap: 2 },
+  rejected: { opacity: 0.5 },
 });
+
+/** Riquadro della vista a griglia: la foto del momento (o l'emoji della carta), chi e quanti punti. */
+function Tile({ event, player, onPress }: { event: FeedEvent; player?: Player; onPress: () => void }) {
+  const rule = ruleById(event.ruleId);
+  const photo = Boolean(event.photo);
+  const ink = photo ? '#fff' : colors.ink;
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${rule?.label ?? 'Punto'}, ${player?.name ?? ''}, ${event.points} punti`}
+      onPress={onPress}
+      style={[styles.tile, event.status === 'rejected' && styles.rejected]}>
+      {photo ? (
+        <>
+          <Image source={{ uri: event.photo }} style={styles.tileFill} />
+          <Scrim height="60%" strength={0.75} />
+        </>
+      ) : (
+        <AppText style={styles.tileEmoji}>{rule?.emoji ?? '✨'}</AppText>
+      )}
+      <View style={styles.tileText}>
+        <AppText variant="name" color={ink} numberOfLines={2}>
+          {rule?.label ?? 'Punto'}
+        </AppText>
+        <AppText variant="micro" color={photo ? 'rgba(255,255,255,0.85)' : colors.inkSoft} numberOfLines={1}>
+          {player?.name} · {event.points > 0 ? '+' : ''}
+          {event.points} pt{event.status === 'rejected' ? ' · respinto' : ''}
+        </AppText>
+      </View>
+    </PressableScale>
+  );
+}

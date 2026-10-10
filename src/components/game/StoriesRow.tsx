@@ -14,12 +14,14 @@ interface Props {
   calls: FeedEvent[];
   players: Player[];
   onOpen: (event: FeedEvent) => void;
+  /** Primo cerchio "+" per chiamare un punto, come la propria storia su Instagram. */
+  onAdd?: () => void;
 }
 
 /**
  * Riga "storie": le chiamate del gruppo da votare (anello giallo) o già votate (badge ✓ / ✕).
  */
-export function StoriesRow({ calls, players, onOpen }: Props) {
+export function StoriesRow({ calls, players, onOpen, onAdd }: Props) {
   const games = useGameStore((s) => s.games);
   const need = (call: FeedEvent) => {
     const g = games.find((x) => x.id === call.gameId);
@@ -31,6 +33,20 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
       showsHorizontalScrollIndicator={false}
       style={styles.scroll}
       contentContainerStyle={styles.row}>
+      {onAdd && (
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel="Chiama un punto"
+          onPress={onAdd}
+          style={styles.item}>
+          <View style={[styles.circle, styles.add]}>
+            <Icon name="plus" size={28} />
+          </View>
+          <AppText variant="micro" style={styles.label} numberOfLines={1}>
+            Chiama
+          </AppText>
+        </PressableScale>
+      )}
       {calls.map((call) => {
         const player = players.find((p) => p.id === call.playerId);
         if (!player) return null;
@@ -115,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  add: { backgroundColor: colors.surface },
+  add: { backgroundColor: colors.cta },
   ring: { borderWidth: 4, borderColor: colors.cta, backgroundColor: colors.surface },
   ringVoted: { borderColor: colors.placeholder },
   badge: {
