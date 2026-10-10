@@ -23,7 +23,7 @@ import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { nameIn, teamSize, useGameStore } from '@/store/useGameStore';
+import { nameIn, teamSize, useGameStore, votesNeeded } from '@/store/useGameStore';
 import { timeAgo } from '@/lib/time';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
@@ -149,7 +149,7 @@ export function LiveScreen() {
         )}
         {live && (
           <View style={styles.section}>
-            <SectionHeader title="Fantapoteri in gioco" />
+            <SectionHeader title="Fantapoteri in gioco" info="fantapoteri" />
             <ActivePowers game={game} now={now} />
           </View>
         )}
@@ -193,6 +193,7 @@ export function LiveScreen() {
                         event={e}
                         name={player ? nameIn(game, player) : ''}
                         ago={timeAgo(e.createdAt, now)}
+                        need={votesNeeded(game)}
                         onPress={() => open(e.id)}
                       />
                     ) : (
@@ -280,7 +281,19 @@ const styles = StyleSheet.create({
 });
 
 /** Vista a lista: card orizzontale snella, solo testo. Chi, quale carta, quanti punti. */
-function SlimRow({ event, name, ago, onPress }: { event: FeedEvent; name: string; ago: string; onPress: () => void }) {
+function SlimRow({
+  event,
+  name,
+  ago,
+  need,
+  onPress,
+}: {
+  event: FeedEvent;
+  name: string;
+  ago: string;
+  need: number;
+  onPress: () => void;
+}) {
   const rule = ruleById(event.ruleId);
   const pending = event.status === 'pending';
   return (
@@ -296,7 +309,7 @@ function SlimRow({ event, name, ago, onPress }: { event: FeedEvent; name: string
         </AppText>
         <AppText variant="caption" color={colors.inkSoft} numberOfLines={1}>
           {rule?.label ?? 'Punto'} · {ago}
-          {pending ? ' · da votare' : event.status === 'rejected' ? ' · respinto' : ''}
+          {pending ? ` · ${event.votes.confirm}/${need} voti` : event.status === 'rejected' ? ' · respinto' : ''}
         </AppText>
       </View>
       <AppText variant="headline" color={event.points > 0 ? colors.bonus : colors.malus}>

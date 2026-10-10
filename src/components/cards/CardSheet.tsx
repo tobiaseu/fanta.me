@@ -49,7 +49,7 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel="Chiudi"
-                hitSlop={10}
+                hitSlop={12}
                 onPress={onClose}
                 style={styles.close}>
                 <Icon name="close" size={16} />

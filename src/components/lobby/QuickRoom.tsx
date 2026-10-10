@@ -88,7 +88,6 @@ export function QuickRoom({ primary }: { primary?: boolean }) {
             })
           }
         />
-        <Button label="Ho un codice" variant="tertiary" onPress={() => router.push('/room/join')} />
       </View>
     </View>
   );
@@ -118,5 +117,5 @@ const styles = StyleSheet.create({
   occOn: { borderColor: colors.ink, backgroundColor: colors.background },
   emoji: { fontSize: 22, lineHeight: 28 },
   regular: { fontWeight: '400' },
-  links: { flexDirection: 'row', justifyContent: 'space-between' },
+  links: { flexDirection: 'row', justifyContent: 'center' },
 });

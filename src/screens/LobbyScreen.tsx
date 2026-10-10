@@ -87,7 +87,20 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
         }
       />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: space.xxl * 2 }]}>
-        <AppText variant="serifTitle">Ciao {ME.name}</AppText>
+        <View style={styles.hello}>
+          <AppText variant="serifTitle" style={styles.helloText}>
+            Ciao {ME.name}
+          </AppText>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Entra in una stanza con un codice"
+            hitSlop={8}
+            onPress={() => router.push('/room/join')}
+            style={styles.codeChip}>
+            <Icon name="ticket" size={16} />
+            <AppText variant="caption">Ho un codice</AppText>
+          </PressableScale>
+        </View>
 
         {last && resume ? <RoomCard game={last} info={resume} primary onPress={() => openGame(last)} /> : null}
 
@@ -161,6 +174,18 @@ function RoomCard({
 }
 
 const styles = StyleSheet.create({
+  hello: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  helloText: { flex: 1 },
+  codeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 36,
+    paddingHorizontal: space.sm,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   screen: { flex: 1, backgroundColor: colors.background },
   dot: {
     position: 'absolute',

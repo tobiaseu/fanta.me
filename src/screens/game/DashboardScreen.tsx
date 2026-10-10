@@ -227,7 +227,7 @@ export function DashboardScreen() {
               accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
               onPress={() => {
                 haptics.press();
-                openQuickAction();
+                openQuickAction(card.id);
               }}
               style={styles.dayCard}>
               <RuleSticker rule={card} size={72} />

@@ -93,7 +93,11 @@ export function TeamsBuilder({ game }: { game: Game }) {
                     {t.name}
                   </AppText>
                   <AppText variant="caption" color={colors.inkSoft}>
-                    {pregame ? `${t.memberIds.length}/${size}` : `${place}ª · ${stand?.points ?? 0} pt`}
+                    {pregame
+                      ? t.memberIds.length < size
+                        ? `${t.memberIds.length}/${size} · sta scegliendo`
+                        : `${size}/${size} · pronta`
+                      : `${place}ª · ${stand?.points ?? 0} pt`}
                   </AppText>
                 </View>
                 <View style={styles.teamCards}>

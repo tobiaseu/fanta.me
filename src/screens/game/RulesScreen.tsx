@@ -20,6 +20,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
 import { powerById, RULES, ruleById } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
+import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
 import { customSlots, nameIn, proposalsNeeded, useGameStore, votesNeeded } from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
@@ -298,11 +299,31 @@ export function RulesScreen() {
 
           {game.playerIds[0] === ME.id && game.status !== 'ended' && (
             <View style={styles.section}>
-              <SectionHeader title="Avanzate partita" caption="Le decidi tu da host. Valgono per tutta la stanza." />
+              <SectionHeader
+                title="Avanzate partita"
+                info="finale nascosto e sudden death"
+                caption={
+                  game.status === 'live'
+                    ? 'Partita in corso: ogni modifica chiede conferma e avvisa tutta la stanza.'
+                    : 'Le decidi tu da host. Valgono per tutta la stanza.'
+                }
+              />
               <FinaleSettings
                 votes
                 settings={{ ...DEFAULT_SETTINGS, ...game.settings, votesToConfirm: votesNeeded(game) }}
-                onChange={(patch) => updateSettings(game.id, patch)}
+                onChange={(patch) =>
+                  game.status === 'live'
+                    ? confirmAction(
+                        'Cambiare a partita in corso?',
+                        'Tutta la stanza riceverà un avviso con la modifica.',
+                        'Cambia e avvisa',
+                        () => {
+                          updateSettings(game.id, patch);
+                          showToast({ text: 'Fatto: la stanza è stata avvisata' });
+                        },
+                      )
+                    : updateSettings(game.id, patch)
+                }
               />
             </View>
           )}

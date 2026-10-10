@@ -1,7 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOutUp, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeOutUp,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  ZoomIn,
+  ZoomOut,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons/Icon';
@@ -48,7 +59,26 @@ export function CallScreen() {
   const openPlayer = useOpenPlayer();
   const [picker, setPicker] = useState(false);
   const [burst, setBurst] = useState<{ emoji: string; key: number }>();
+  // Trascina giù per chiudere, come le storie di Instagram
+  const dragY = useSharedValue(0);
+  const dragStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: dragY.value }, { scale: 1 - Math.min(0.08, dragY.value / 3000) }],
+    borderRadius: Math.min(24, dragY.value / 6),
+  }));
+  const dragDown = Gesture.Pan()
+    .activeOffsetY(15)
+    .failOffsetX([-20, 20])
+    .onUpdate((e) => {
+      dragY.value = Math.max(0, e.translationY);
+    })
+    .onEnd((e) => {
+      if (e.translationY > 120 || e.velocityY > 900) runOnJS(closeRef)();
+      else dragY.value = withSpring(0, { damping: 20, stiffness: 220 });
+    });
 
+  function closeRef() {
+    close();
+  }
   const close = () =>
     router.canGoBack()
       ? router.back()
@@ -120,174 +150,178 @@ export function CallScreen() {
   const reactions = Object.entries(event.reactions ?? {}).filter(([, n]) => n > 0);
 
   return (
-    <View style={styles.screen}>
-      {event.photo ? (
-        <Animated.View key={event.id} entering={FadeIn.duration(250)} style={StyleSheet.absoluteFill}>
-          <Image source={{ uri: event.photo }} style={styles.photo} resizeMode="cover" />
-        </Animated.View>
-      ) : (
-        <View style={styles.noPhoto}>
-          <RuleSticker rule={rule} size={220} />
-        </View>
-      )}
-      <Scrim />
-
-      {/* Zone di tocco come Instagram: sinistra indietro, destra avanti */}
-      <View style={styles.tapZones}>
-        <Pressable style={styles.tapLeft} onPress={() => go(-1)} accessibilityLabel="Storia precedente" />
-        <Pressable style={styles.tapRight} onPress={() => go(1)} accessibilityLabel="Storia successiva" />
-      </View>
-
-      <View style={[styles.top, { paddingTop: insets.top + space.xs }]} pointerEvents="box-none">
-        <View style={styles.progress}>
-          {siblings.map((e, i) => (
-            <View key={e.id} style={[styles.progressSeg, i <= index && styles.progressOn]} />
-          ))}
-        </View>
-        <View style={styles.topRow} pointerEvents="box-none">
-          <PressableScale
-            onPress={() => openPlayer(player.id)}
-            accessibilityRole="button"
-            accessibilityLabel={`Profilo di ${name}`}
-            style={styles.who}>
-            <Avatar player={player} size={36} sticker={false} />
-            <View style={styles.flex}>
-              <AppText variant="headline" color={WHITE}>
-                {name}
-              </AppText>
-              <View style={styles.byRow}>
-                <AppText variant="micro" color={WHITE_SOFT}>
-                  chiamata da {author ? nameIn(game, author) : '—'}, {timeAgo(event.createdAt)}
-                </AppText>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel="Segnala la chiamata all'host"
-                  hitSlop={10}
-                  onPress={report}
-                  style={styles.flag}>
-                  <AppText style={styles.flagText}>!</AppText>
-                </PressableScale>
-              </View>
-            </View>
-          </PressableScale>
-          <PressableScale onPress={close} accessibilityLabel="Esci dalla storia" hitSlop={12} style={styles.close}>
-            <Icon name="close" size={24} color={WHITE} />
-          </PressableScale>
-        </View>
-      </View>
-
-      <Animated.View
-        key={`b-${event.id}`}
-        entering={FadeInDown.duration(280)}
-        pointerEvents="box-none"
-        style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
-        <AppText style={[styles.points, { color: isBonus ? '#7CF29A' : '#FF8A80' }]}>
-          {isBonus ? `+${event.points}` : event.points} punti{confirmed ? ', confermati' : ''}
-        </AppText>
-        <AppText variant="serifTitle" color={WHITE}>
-          {rule.emoji} {rule.label}
-        </AppText>
-        <AppText variant="body" color={WHITE_SOFT} style={styles.regular}>
-          {rule.description}
-        </AppText>
-
-        {!confirmed && (
-          <View style={styles.tally} accessibilityLabel={`${event.votes.confirm} conferme su ${needed}`}>
-            <View style={styles.bar}>
-              {Array.from({ length: needed }, (_, i) => (
-                <View key={i} style={[styles.seg, i < event.votes.confirm && styles.segOn]} />
-              ))}
-            </View>
-            <AppText variant="micro" color={WHITE_SOFT}>
-              {event.votes.confirm} di {needed} conferme per renderla ufficiale
-            </AppText>
+    <GestureDetector gesture={dragDown}>
+      <Animated.View style={[styles.screen, dragStyle]}>
+        {event.photo ? (
+          <Animated.View key={event.id} entering={FadeIn.duration(250)} style={StyleSheet.absoluteFill}>
+            <Image source={{ uri: event.photo }} style={styles.photo} resizeMode="cover" />
+          </Animated.View>
+        ) : (
+          <View style={styles.noPhoto}>
+            <RuleSticker rule={rule} size={220} />
           </View>
         )}
+        <Scrim />
 
-        {confirmed && picker && (
-          <View style={styles.picker}>
-            {BASE_REACTIONS.map((emoji, i) => (
-              <Animated.View
-                key={emoji}
-                entering={ZoomIn.delay(i * 45)
-                  .springify()
-                  .damping(9)
-                  .stiffness(220)}
-                exiting={ZoomOut.duration(120)}>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={`Reagisci con ${emoji}`}
-                  pressedScale={0.85}
-                  onPress={() => pick(emoji)}
-                  style={[styles.bubble, event.myReaction === emoji && styles.bubbleOn]}>
-                  <AppText style={styles.bubbleEmoji}>{emoji}</AppText>
-                </PressableScale>
-              </Animated.View>
-            ))}
-            {Array.from({ length: LOCKED_REACTIONS }, (_, i) => (
-              <Animated.View
-                key={`l${i}`}
-                entering={ZoomIn.delay((5 + i) * 45)
-                  .springify()
-                  .damping(9)}>
-                <View style={[styles.bubble, styles.bubbleLocked]} accessibilityLabel="Reazione da sbloccare giocando">
-                  <Icon name="lock" size={16} color={WHITE_SOFT} />
-                </View>
-              </Animated.View>
+        {/* Zone di tocco come Instagram: sinistra indietro, destra avanti */}
+        <View style={styles.tapZones}>
+          <Pressable style={styles.tapLeft} onPress={() => go(-1)} accessibilityLabel="Storia precedente" />
+          <Pressable style={styles.tapRight} onPress={() => go(1)} accessibilityLabel="Storia successiva" />
+        </View>
+
+        <View style={[styles.top, { paddingTop: insets.top + space.xs }]} pointerEvents="box-none">
+          <View style={styles.progress}>
+            {siblings.map((e, i) => (
+              <View key={e.id} style={[styles.progressSeg, i <= index && styles.progressOn]} />
             ))}
           </View>
-        )}
-        {confirmed ? (
-          <View style={styles.reactRow}>
-            {reactions.map(([emoji, n]) => (
-              <View key={emoji} style={[styles.reactChip, event.myReaction === emoji && styles.reactChipOn]}>
-                <AppText style={styles.reactEmoji}>{emoji}</AppText>
-                <AppText variant="caption" color={WHITE}>
-                  {n}
-                </AppText>
-              </View>
-            ))}
+          <View style={styles.topRow} pointerEvents="box-none">
             <PressableScale
+              onPress={() => openPlayer(player.id)}
               accessibilityRole="button"
-              accessibilityLabel="Reagisci con un'emoji"
-              onPress={() => {
-                haptics.tap();
-                setPicker((v) => !v);
-              }}
-              style={styles.reactAdd}>
-              <AppText style={styles.reactEmoji}>{picker ? '✕' : '☺︎'}</AppText>
+              accessibilityLabel={`Profilo di ${name}`}
+              style={styles.who}>
+              <Avatar player={player} size={36} sticker={false} />
+              <View style={styles.flex}>
+                <AppText variant="headline" color={WHITE}>
+                  {name}
+                </AppText>
+                <View style={styles.byRow}>
+                  <AppText variant="micro" color={WHITE_SOFT}>
+                    chiamata da {author ? nameIn(game, author) : '—'}, {timeAgo(event.createdAt)}
+                  </AppText>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel="Segnala la chiamata all'host"
+                    hitSlop={10}
+                    onPress={report}
+                    style={styles.flag}>
+                    <AppText style={styles.flagText}>!</AppText>
+                  </PressableScale>
+                </View>
+              </View>
+            </PressableScale>
+            <PressableScale onPress={close} accessibilityLabel="Esci dalla storia" hitSlop={12} style={styles.close}>
+              <Icon name="close" size={24} color={WHITE} />
             </PressableScale>
           </View>
-        ) : lock ? (
-          <AppText variant="body" color={WHITE} style={styles.regular}>
-            {lock}
+        </View>
+
+        <Animated.View
+          key={`b-${event.id}`}
+          entering={FadeInDown.duration(280)}
+          pointerEvents="box-none"
+          style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
+          <AppText style={[styles.points, { color: isBonus ? '#7CF29A' : '#FF8A80' }]}>
+            {isBonus ? `+${event.points}` : event.points} punti{confirmed ? ', confermati' : ''}
           </AppText>
-        ) : (
-          <View style={styles.row}>
-            <Button
-              label="Decido dopo"
-              variant="secondary"
-              onDark
-              onPress={() => go(1)}
-              style={[styles.flex, styles.ghost]}
-            />
-            <Button label="Confermo" onPress={confirm} style={styles.flex} />
-          </View>
+          <AppText variant="serifTitle" color={WHITE}>
+            {rule.emoji} {rule.label}
+          </AppText>
+          <AppText variant="body" color={WHITE_SOFT} style={styles.regular}>
+            {rule.description}
+          </AppText>
+
+          {!confirmed && (
+            <View style={styles.tally} accessibilityLabel={`${event.votes.confirm} conferme su ${needed}`}>
+              <View style={styles.bar}>
+                {Array.from({ length: needed }, (_, i) => (
+                  <View key={i} style={[styles.seg, i < event.votes.confirm && styles.segOn]} />
+                ))}
+              </View>
+              <AppText variant="micro" color={WHITE_SOFT}>
+                {event.votes.confirm} di {needed} conferme per renderla ufficiale
+              </AppText>
+            </View>
+          )}
+
+          {confirmed && picker && (
+            <View style={styles.picker}>
+              {BASE_REACTIONS.map((emoji, i) => (
+                <Animated.View
+                  key={emoji}
+                  entering={ZoomIn.delay(i * 45)
+                    .springify()
+                    .damping(9)
+                    .stiffness(220)}
+                  exiting={ZoomOut.duration(120)}>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reagisci con ${emoji}`}
+                    pressedScale={0.85}
+                    onPress={() => pick(emoji)}
+                    style={[styles.bubble, event.myReaction === emoji && styles.bubbleOn]}>
+                    <AppText style={styles.bubbleEmoji}>{emoji}</AppText>
+                  </PressableScale>
+                </Animated.View>
+              ))}
+              {Array.from({ length: LOCKED_REACTIONS }, (_, i) => (
+                <Animated.View
+                  key={`l${i}`}
+                  entering={ZoomIn.delay((5 + i) * 45)
+                    .springify()
+                    .damping(9)}>
+                  <View
+                    style={[styles.bubble, styles.bubbleLocked]}
+                    accessibilityLabel="Reazione da sbloccare giocando">
+                    <Icon name="lock" size={16} color={WHITE_SOFT} />
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+          )}
+          {confirmed ? (
+            <View style={styles.reactRow}>
+              {reactions.map(([emoji, n]) => (
+                <View key={emoji} style={[styles.reactChip, event.myReaction === emoji && styles.reactChipOn]}>
+                  <AppText style={styles.reactEmoji}>{emoji}</AppText>
+                  <AppText variant="caption" color={WHITE}>
+                    {n}
+                  </AppText>
+                </View>
+              ))}
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel="Reagisci con un'emoji"
+                onPress={() => {
+                  haptics.tap();
+                  setPicker((v) => !v);
+                }}
+                style={styles.reactAdd}>
+                <AppText style={styles.reactEmoji}>{picker ? '✕' : '☺︎'}</AppText>
+              </PressableScale>
+            </View>
+          ) : lock ? (
+            <AppText variant="body" color={WHITE} style={styles.regular}>
+              {lock}
+            </AppText>
+          ) : (
+            <View style={styles.row}>
+              <Button
+                label="Decido dopo"
+                variant="secondary"
+                onDark
+                onPress={() => go(1)}
+                style={[styles.flex, styles.ghost]}
+              />
+              <Button label="Confermo" onPress={confirm} style={styles.flex} />
+            </View>
+          )}
+        </Animated.View>
+
+        {burst && (
+          <Animated.View
+            key={burst.key}
+            entering={ZoomIn.springify().damping(7)}
+            exiting={FadeOutUp.duration(500)}
+            style={styles.burst}
+            pointerEvents="none"
+            onLayout={() => setTimeout(() => setBurst(undefined), 600)}>
+            <AppText style={styles.burstEmoji}>{burst.emoji}</AppText>
+          </Animated.View>
         )}
       </Animated.View>
-
-      {burst && (
-        <Animated.View
-          key={burst.key}
-          entering={ZoomIn.springify().damping(7)}
-          exiting={FadeOutUp.duration(500)}
-          style={styles.burst}
-          pointerEvents="none"
-          onLayout={() => setTimeout(() => setBurst(undefined), 600)}>
-          <AppText style={styles.burstEmoji}>{burst.emoji}</AppText>
-        </Animated.View>
-      )}
-    </View>
+    </GestureDetector>
   );
 }
 

@@ -33,6 +33,7 @@ export function ExploreScreen() {
   const [occasion, setOccasion] = useState<(typeof OCCASIONS)[number]>('Tutte');
   const [selected, setSelected] = useState<Rule>();
   const liked = useGameStore((s) => s.likedCommunity);
+  const saved = useGameStore((s) => s.savedRuleIds);
   const toggleLike = useGameStore((s) => s.toggleCommunityLike);
   const customRules = useGameStore((s) => s.customRules);
   const published = useGameStore((s) => s.publishedRuleIds);
@@ -152,7 +153,12 @@ export function ExploreScreen() {
                   <DeckCard
                     key={c.rule.id}
                     rule={c.rule}
-                    note={`@${c.author.handle} · ♥ ${fmt(c.likes + (liked.includes(c.rule.id) ? 1 : 0))}`}
+                    checked={saved.includes(c.rule.id)}
+                    note={
+                      saved.includes(c.rule.id)
+                        ? 'Già tua'
+                        : `@${c.author.handle} · ♥ ${fmt(c.likes + (liked.includes(c.rule.id) ? 1 : 0))}`
+                    }
                     onPress={() => setSelected(c.rule)}
                   />
                 ))}
@@ -229,7 +235,7 @@ function Like({ on, count, onPress }: { on: boolean; count: number; onPress: () 
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={`${on ? 'Ti piace' : 'Mi piace'}, ${count}`}
-      hitSlop={8}
+      hitSlop={12}
       onPress={() => {
         haptics.tap();
         onPress();
