@@ -114,7 +114,13 @@ export interface GameSettings {
   powers: boolean;
   /** Conferme che servono perché una chiamata diventi ufficiale (chi chiama conta già) */
   votesToConfirm: number;
+  /** Finale a sorpresa: nelle ultime ore la classifica è nascosta a tutti fino ai risultati */
+  hideFinal?: boolean;
+  /** Sudden death stile Clash Royale: nelle ultime ore i punti valgono doppio */
+  suddenDeath?: SuddenDeath;
 }
+
+export type SuddenDeath = 'off' | 'both' | 'bonus' | 'malus';
 
 export const DEFAULT_SETTINGS: GameSettings = { cardsPerPlayer: 4, pointsCap: 25, powers: true, votesToConfirm: 3 };
 

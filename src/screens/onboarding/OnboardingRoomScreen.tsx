@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatStart, hoursUntil, StartPicker, startSuggestions } from '@/components/game/StartPicker';
 import { Icon } from '@/components/icons/Icon';
+import { FinaleSettings } from '@/components/game/FinaleSettings';
+import { Segmented } from '@/components/ui/Segmented';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -155,6 +157,8 @@ export function OnboardingRoomScreen() {
                 />
               </View>
 
+              <FinaleSettings settings={settings} onChange={(patch) => setSettings({ ...settings, ...patch })} />
+
               <Pressable
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: pledge }}
@@ -202,24 +206,15 @@ function Setting({ label, hint, children }: { label: string; hint: string; child
   );
 }
 
+/** Scelta numerica: stesso controllo segmentato usato in tutta l'app. */
 function Chips({ values, value, onChange }: { values: number[]; value: number; onChange: (v: number) => void }) {
   return (
     <View style={styles.chips}>
-      {values.map((v) => (
-        <Pressable
-          key={v}
-          accessibilityRole="radio"
-          accessibilityState={{ selected: v === value }}
-          onPress={() => {
-            haptics.tap();
-            onChange(v);
-          }}
-          style={[styles.chip, v === value && styles.chipOn]}>
-          <AppText variant="caption" color={v === value ? colors.inkInverse : colors.ink}>
-            {v}
-          </AppText>
-        </Pressable>
-      ))}
+      <Segmented
+        value={String(value)}
+        options={values.map((v) => ({ id: String(v), label: String(v) }))}
+        onChange={(v) => onChange(Number(v))}
+      />
     </View>
   );
 }

@@ -32,6 +32,8 @@ interface GameState {
   assignPoints: (input: { gameId: string; playerId: string; ruleId: string; photo?: string }) => FeedEvent | undefined;
   /** Voto su una chiamata: diventa ufficiale (o scartata) quando una parte raggiunge la maggioranza. */
   vote: (eventId: string, vote: Vote) => void;
+  /** Demo dell'aggiornamento: un amico ha appena chiamato un punto (Fase 2: Supabase Realtime) */
+  simulateCall: (gameId: string) => FeedEvent | undefined;
   /** Annulla: rimette l'evento com'era (o lo toglie, se era appena nato) */
   restoreEvent: (previous: FeedEvent | undefined, eventId: string) => void;
   /** `startsInHours` 0 = si gioca subito; altrimenti la stanza resta in pre-partita fino all'inizio */
@@ -129,6 +131,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (active.some((a) => a.powerId === 'boost' && a.playerId === playerId)) points *= 2;
       if (active.some((a) => a.powerId === 'slowdown' && a.playerId !== playerId)) points = Math.round(points / 2);
     }
+    // Sudden death: nel finale bonus e/o malus valgono doppio (lo sceglie l'host)
+    const boosted = game ? suddenDeathActive(game, Date.now()) : 'off';
+    if (boosted === 'both' || (boosted === 'bonus' && points > 0) || (boosted === 'malus' && points < 0)) points *= 2;
     const event: FeedEvent = {
       id: `e-${Date.now()}`,
       status: 'pending',
@@ -142,6 +147,31 @@ export const useGameStore = create<GameState>((set, get) => ({
       createdAt: new Date().toISOString(),
       votes: { confirm: 1, reject: 0 },
       photo,
+    };
+    set((s) => ({ events: [event, ...s.events] }));
+    return event;
+  },
+
+  simulateCall: (gameId) => {
+    const game = useGameStore.getState().games.find((g) => g.id === gameId);
+    if (!game || game.status !== 'live') return undefined;
+    const others = game.playerIds.filter((p) => p !== ME.id);
+    const rules = game.ruleIds.map(ruleById).filter((r): r is Rule => !!r);
+    if (others.length < 2 || !rules.length) return undefined;
+    const pick = <T>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
+    const authorId = pick(others);
+    const playerId = pick(others.filter((p) => p !== authorId));
+    const rule = pick(rules);
+    const event: FeedEvent = {
+      id: `e-${Date.now()}`,
+      status: 'pending',
+      gameId,
+      playerId,
+      ruleId: rule.id,
+      points: rule.points,
+      authorId,
+      createdAt: new Date().toISOString(),
+      votes: { confirm: 1, reject: 0 },
     };
     set((s) => ({ events: [event, ...s.events] }));
     return event;
@@ -385,6 +415,19 @@ export function computeDayStandings(game: Game, events: FeedEvent[], players: Pl
 /** Conferme necessarie: le decide l'host (3 di base), mai più dei giocatori che possono votare. */
 export const votesNeeded = (game: Game) =>
   Math.max(1, Math.min((game.settings ?? DEFAULT_SETTINGS).votesToConfirm ?? 3, game.playerIds.length - 1));
+
+/** Il finale: le ultime 6 ore di una partita in corso (o l'ultima giornata se più corta). */
+export const FINALE_MS = 6 * 3_600_000;
+export function inFinale(game: Game, now: number) {
+  if (game.status !== 'live' || !game.endsAt) return false;
+  const left = new Date(game.endsAt).getTime() - now;
+  return left > 0 && left <= FINALE_MS;
+}
+/** Classifica nascosta: l'host l'ha chiesto e siamo nel finale. A partita finita si svela. */
+export const standingsHidden = (game: Game, now: number) => Boolean(game.settings?.hideFinal) && inFinale(game, now);
+/** Quale sudden death vale adesso ('off' fuori dal finale). */
+export const suddenDeathActive = (game: Game, now: number) =>
+  inFinale(game, now) ? (game.settings?.suddenDeath ?? 'off') : 'off';
 
 /** Codice invito casuale: 6 caratteri, senza quelli che si confondono (0/O, 1/I). */
 export function randomCode() {

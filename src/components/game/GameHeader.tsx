@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { PhaseTrack } from '@/components/game/PhaseTrack';
 import { useNow } from '@/hooks/useNow';
 import { formatHoursLeft } from '@/lib/time';
 import { gameDay } from '@/store/useGameStore';
@@ -33,6 +32,13 @@ function countdownOf(game: Game, now: number) {
       : `· la giornata chiude tra ${formatLong(day.end - now)}`,
   };
 }
+
+/** Colore della fase: verde in trasparenza in partita, giallo nel pre-partita, oro a fine partita. */
+const TINT: Record<Game['status'], { bg: string; line: string; dot: string }> = {
+  waiting: { bg: colors.ctaSoft, line: 'rgba(230, 190, 60, 0.45)', dot: '#E6BE3C' },
+  live: { bg: colors.liveSoft, line: 'rgba(11, 130, 0, 0.3)', dot: colors.live },
+  ended: { bg: 'rgba(212, 160, 23, 0.18)', line: 'rgba(212, 160, 23, 0.45)', dot: '#D4A017' },
+};
 
 /** Cosa dice il pannello in ogni fase: nome, cosa fare adesso, cosa conta il countdown. */
 const PHASE_GUIDE: Record<Game['status'], { title: string; todo: string; clock: string; dot: string }> = {
@@ -111,66 +117,66 @@ export function GameHeader({ game }: { game: Game }) {
           </PressableScale>
         </View>
 
+        {/* Barra di stato: una pillola snella col colore della fase. Al tocco si allarga (smart animate) nel countdown. */}
         <PressableScale
           accessibilityRole="button"
           accessibilityState={{ expanded }}
-          accessibilityLabel={expanded ? 'Chiudi i dettagli della fase' : `${phase.title}: apri cosa fare adesso`}
+          accessibilityLabel={expanded ? 'Chiudi il countdown' : `${phase.title}: apri il countdown`}
           pressedScale={0.98}
-          onPress={() => setExpanded((v) => !v)}
-          style={[styles.panel, expanded && styles.panelOpen]}>
-          <PhaseTrack status={game.status} thick={expanded} bare={!expanded} />
-          {expanded ? (
-            <Animated.View
-              key="open"
-              entering={FadeIn.duration(220)}
-              exiting={FadeOut.duration(120)}
-              style={styles.open}>
-              <View style={styles.guide}>
-                <AppText variant="serifTitle" style={styles.phaseTitle}>
-                  {phase.title}
-                </AppText>
-                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-                  {phase.todo}
-                </AppText>
-              </View>
-              {cd ? (
-                <View
-                  style={styles.clock}
-                  accessibilityLabel={`${phase.clock} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
-                  <AppText variant="micro" color={colors.inkSoft}>
-                    {phase.clock}
-                  </AppText>
-                  <View style={styles.tiles}>
-                    {tiles.map((t) => (
-                      <View key={t.label} style={styles.tile}>
-                        <AppText variant="display" style={styles.digits}>
-                          {pad(t.value)}
-                        </AppText>
-                        <AppText variant="micro" color={colors.inkSoft}>
-                          {t.label}
-                        </AppText>
+          onPress={() => setExpanded((v) => !v)}>
+          <Animated.View
+            layout={LinearTransition.springify().damping(18).stiffness(170)}
+            style={[
+              styles.pill,
+              { backgroundColor: TINT[game.status].bg, borderColor: TINT[game.status].line },
+              expanded && styles.pillOpen,
+            ]}>
+            <Animated.View layout={LinearTransition.springify().damping(18).stiffness(170)} style={styles.strip}>
+              <View style={[styles.dot, { backgroundColor: TINT[game.status].dot }]} />
+              <AppText variant="micro" numberOfLines={1} style={styles.flex}>
+                {phase.title}
+                {cd && !expanded ? <AppText variant="micro" color={colors.inkSoft}>{` ${cd.short}`}</AppText> : null}
+              </AppText>
+              <Animated.View style={{ transform: [{ rotate: expanded ? '90deg' : '0deg' }] }}>
+                <Icon name="chevron-right" size={12} color={colors.inkSoft} />
+              </Animated.View>
+            </Animated.View>
+            {expanded && (
+              <Animated.View
+                entering={FadeIn.duration(260).delay(80)}
+                exiting={FadeOut.duration(100)}
+                style={styles.open}>
+                {cd ? (
+                  <View
+                    style={styles.tiles}
+                    accessibilityLabel={`${phase.clock} ${tiles.map((t) => `${t.value} ${t.label}`).join(', ')}`}>
+                    <AppText variant="micro" color={colors.inkSoft} style={styles.flex}>
+                      {phase.clock}
+                    </AppText>
+                    {tiles.map((t, i) => (
+                      <View key={t.label} style={styles.tileWrap}>
+                        {i > 0 && (
+                          <AppText variant="headline" color={colors.inkFaint}>
+                            :
+                          </AppText>
+                        )}
+                        <View style={styles.tile}>
+                          <AppText variant="headline" style={styles.digits}>
+                            {pad(t.value)}
+                          </AppText>
+                          <AppText style={styles.unit}>{t.label.slice(0, 1)}</AppText>
+                        </View>
                       </View>
                     ))}
                   </View>
-                </View>
-              ) : (
-                <AppText style={styles.trophy}>🏆</AppText>
-              )}
-            </Animated.View>
-          ) : (
-            <Animated.View
-              key="strip"
-              entering={FadeIn.duration(220)}
-              exiting={FadeOut.duration(120)}
-              style={styles.strip}>
-              <View style={[styles.dot, { backgroundColor: phase.dot }]} />
-              <AppText variant="micro" numberOfLines={1} style={styles.flex}>
-                {phase.title}
-                {cd ? <AppText variant="micro" color={colors.inkSoft}>{` ${cd.short}`}</AppText> : null}
-              </AppText>
-              <Icon name="chevron-right" size={12} color={colors.inkFaint} />
-            </Animated.View>
-          )}
+                ) : (
+                  <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                    🏆 {phase.todo}
+                  </AppText>
+                )}
+              </Animated.View>
+            )}
+          </Animated.View>
         </PressableScale>
       </View>
     </Animated.View>
@@ -192,26 +198,30 @@ const styles = StyleSheet.create({
   right: { alignItems: 'flex-end' },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },
-  // Chiusa: solo una linea sottile e una riga di testo, senza riquadro. Aperta: il pannello guida.
-  panel: { paddingHorizontal: space.xxs, paddingVertical: space.xxs, gap: 6, borderRadius: radius.lg },
-  panelOpen: { backgroundColor: colors.background, padding: space.md, gap: space.md },
-  open: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
-  guide: { flex: 1, gap: space.xxs },
-  phaseTitle: { fontSize: 26, lineHeight: 30 },
-  regular: { fontWeight: '400' },
-  clock: { gap: space.xxs },
-  tiles: { flexDirection: 'row', gap: space.xxs },
-  tile: {
-    width: 52,
-    alignItems: 'center',
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
+  pill: {
+    alignSelf: 'center',
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.line,
+    paddingHorizontal: space.sm,
+    paddingVertical: 6,
+    overflow: 'hidden',
+  },
+  pillOpen: { alignSelf: 'stretch', borderRadius: radius.md, paddingVertical: space.xs, gap: space.xs },
+  open: { gap: space.xs },
+  regular: { fontWeight: '400' },
+  tiles: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tileWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tile: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 1,
+    paddingHorizontal: space.xs,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
     backgroundColor: colors.surface,
   },
-  digits: { fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
-  trophy: { fontSize: 40, lineHeight: 48 },
+  digits: { fontVariant: ['tabular-nums'] },
+  unit: { fontSize: 11, lineHeight: 14, color: colors.inkSoft },
   strip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3 },
 });

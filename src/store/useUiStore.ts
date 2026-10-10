@@ -19,6 +19,9 @@ interface UiState {
   playerMenu?: { playerId: string; gameId?: string };
   openPlayerMenu: (playerId: string, gameId?: string) => void;
   closePlayerMenu: () => void;
+  /** Cresce a ogni nuova chiamata inviata: le pagine mostrano la rotellina di aggiornamento */
+  refreshTick: number;
+  pulseRefresh: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -31,4 +34,6 @@ export const useUiStore = create<UiState>((set) => ({
   playerMenu: undefined,
   openPlayerMenu: (playerId, gameId) => set({ playerMenu: { playerId, gameId } }),
   closePlayerMenu: () => set({ playerMenu: undefined }),
+  refreshTick: 0,
+  pulseRefresh: () => set((s) => ({ refreshTick: s.refreshTick + 1 })),
 }));

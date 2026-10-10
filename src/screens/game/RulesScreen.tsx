@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
+import { FinaleSettings } from '@/components/game/FinaleSettings';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
@@ -18,7 +19,7 @@ import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { haptics } from '@/lib/haptics';
 import { customSlots, nameIn, proposalsNeeded, useGameStore, votesNeeded } from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
-import type { Rule } from '@/types/game';
+import { DEFAULT_SETTINGS, type Rule } from '@/types/game';
 
 type Tab = 'base' | 'mine';
 
@@ -127,30 +128,12 @@ export function RulesScreen() {
 
       {game.playerIds[0] === ME.id && game.status !== 'ended' && (
         <View style={styles.section}>
-          <SectionHeader
-            title="Conferme per un punto"
-            caption="Lo decidi tu da host: quanti sì servono perché una chiamata valga."
+          <SectionHeader title="Avanzate partita" caption="Le decidi tu da host. Valgono per tutta la stanza." />
+          <FinaleSettings
+            votes
+            settings={{ ...DEFAULT_SETTINGS, ...game.settings, votesToConfirm: votesNeeded(game) }}
+            onChange={(patch) => updateSettings(game.id, patch)}
           />
-          <View style={styles.voteChips}>
-            {[2, 3, 4, 5].map((v) => {
-              const on = votesNeeded(game) === v;
-              return (
-                <PressableScale
-                  key={v}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  onPress={() => {
-                    haptics.tap();
-                    updateSettings(game.id, { votesToConfirm: v });
-                  }}
-                  style={[styles.voteChip, on && styles.voteChipOn]}>
-                  <AppText variant="headline" color={on ? colors.inkInverse : colors.ink}>
-                    {v}
-                  </AppText>
-                </PressableScale>
-              );
-            })}
-          </View>
         </View>
       )}
 

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { pickPhoto } from '@/lib/pickPhoto';
 import { timeAgo } from '@/lib/time';
 import { Segmented } from '@/components/ui/Segmented';
@@ -41,6 +42,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const allPlayers = useGameStore((s) => s.players);
   const players = useMemo(() => allPlayers.filter((p) => game.playerIds.includes(p.id)), [allPlayers, game.playerIds]);
   const assignPoints = useGameStore((s) => s.assignPoints);
+  const router = useRouter();
   const restoreEvent = useGameStore((s) => s.restoreEvent);
   const events = useGameStore((s) => s.events);
   const showToast = useUiStore((s) => s.showToast);
@@ -72,6 +74,9 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
     if (rule.points > 0) haptics.bonus();
     else haptics.malus();
     onDone();
+    // Si torna al Live, che si ricarica e mostra la nuova chiamata come prima storia
+    router.navigate({ pathname: '/game/[gameId]/live', params: { gameId: game.id } });
+    useUiStore.getState().pulseRefresh();
     if (event) {
       showToast({
         text: `Chiamata inviata: ${rule.label} su ${nameIn(game, player)}`,
@@ -87,7 +92,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
         style={[styles.sheet, { paddingBottom: insets.bottom + space.md }]}>
         <View style={styles.grabber} />
         <View style={styles.head}>
-          <AppText variant="title">Aggiungi punti</AppText>
+          <AppText variant="title">Chiama un punto</AppText>
           <PressableScale onPress={onDone} style={styles.close} accessibilityLabel="Chiudi">
             <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
           </PressableScale>

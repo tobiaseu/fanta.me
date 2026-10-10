@@ -1,4 +1,5 @@
 import { LockedState } from '@/components/game/LockedState';
+import { EmptyNote } from '@/components/ui/EmptyNote';
 import { Segmented } from '@/components/ui/Segmented';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,7 +14,14 @@ import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { nameIn, computeStandings, computeTeamStandings, gameDay, useGameStore } from '@/store/useGameStore';
+import {
+  nameIn,
+  computeStandings,
+  computeTeamStandings,
+  gameDay,
+  standingsHidden,
+  useGameStore,
+} from '@/store/useGameStore';
 import { teamColor } from '@/lib/teams';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
@@ -123,6 +131,18 @@ export function LeaderboardScreen() {
             </AppText>
           </View>
         ))}
+      </ScrollView>
+    );
+
+  // Finale a sorpresa: l'host ha nascosto la classifica nelle ultime ore
+  if (standingsHidden(game, Date.now()))
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <EmptyNote
+          emoji="🤫"
+          title="Classifica nascosta"
+          body="L'host ha scelto il finale a sorpresa: la classifica si svela a tutti con i risultati, a fine partita."
+        />
       </ScrollView>
     );
 

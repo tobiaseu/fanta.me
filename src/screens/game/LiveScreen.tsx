@@ -12,6 +12,7 @@ import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { EmptyNote } from '@/components/ui/EmptyNote';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { Scrim } from '@/components/ui/Scrim';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ruleById } from '@/data/rules';
@@ -20,7 +21,8 @@ import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { useGameStore } from '@/store/useGameStore';
+import { nameIn, useGameStore } from '@/store/useGameStore';
+import { timeAgo } from '@/lib/time';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { FeedEvent, Player } from '@/types/game';
@@ -38,7 +40,9 @@ export function LiveScreen() {
   const players = useGameStore((s) => s.players);
   const openQuickAction = useUiStore((s) => s.openQuickAction);
   const openPlayer = useOpenPlayer();
-  const [view, setView] = useState<'list' | 'grid'>('list');
+  const simulateCall = useGameStore((s) => s.simulateCall);
+  const refreshTick = useUiStore((s) => s.refreshTick);
+  const [view, setView] = useState<'list' | 'photo'>('list');
 
   const { calls, feed } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id);
@@ -70,7 +74,11 @@ export function LiveScreen() {
 
   return (
     <View style={styles.flex}>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <PullToRefresh
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        onRefresh={() => simulateCall(game.id)}
+        pulse={refreshTick}>
         {live && (
           <View style={styles.section}>
             <SectionHeader
@@ -119,54 +127,61 @@ export function LiveScreen() {
               />
             </View>
             <View style={styles.toggle} accessibilityRole="tablist">
-              {(['list', 'grid'] as const).map((v) => (
+              {(['list', 'photo'] as const).map((v) => (
                 <PressableScale
                   key={v}
                   accessibilityRole="tab"
-                  accessibilityLabel={v === 'list' ? 'Vista a lista' : 'Vista a griglia'}
+                  accessibilityLabel={v === 'list' ? 'Vista a lista' : 'Vista con le foto'}
                   accessibilityState={{ selected: view === v }}
                   onPress={() => {
                     haptics.tap();
                     setView(v);
                   }}
                   style={[styles.toggleBtn, view === v && styles.toggleOn]}>
-                  <Icon name={v} size={18} color={view === v ? colors.ink : colors.inkSoft} />
+                  <Icon
+                    name={v === 'list' ? 'list' : 'camera'}
+                    size={18}
+                    color={view === v ? colors.ink : colors.inkSoft}
+                  />
                 </PressableScale>
               ))}
             </View>
           </View>
-          {feed.length && view === 'grid' ? (
-            <View style={styles.grid}>
-              {feed.map((e) => (
-                <Tile
-                  key={e.id}
-                  event={e}
-                  player={players.find((p) => p.id === e.playerId)}
-                  onPress={() => open(e.id)}
-                />
-              ))}
-            </View>
-          ) : feed.length ? (
-            <View style={styles.list}>
-              {feed.map((e) => (
-                <Animated.View key={e.id} layout={LinearTransition.springify()}>
-                  <FeedItem
-                    event={e}
-                    now={now}
-                    detailed
-                    player={players.find((p) => p.id === e.playerId)}
-                    author={players.find((p) => p.id === e.authorId)}
-                    onOpenPlayer={openPlayer}
-                    onPress={() => open(e.id)}
-                  />
-                </Animated.View>
-              ))}
+          {feed.length ? (
+            <View style={view === 'list' ? styles.slimList : styles.list}>
+              {feed.map((e) => {
+                const player = players.find((p) => p.id === e.playerId);
+                return (
+                  <Animated.View key={e.id} layout={LinearTransition.springify()}>
+                    {view === 'list' ? (
+                      <SlimRow
+                        event={e}
+                        name={player ? nameIn(game, player) : ''}
+                        ago={timeAgo(e.createdAt, now)}
+                        onPress={() => open(e.id)}
+                      />
+                    ) : e.photo ? (
+                      <Tile event={e} player={player} onPress={() => open(e.id)} />
+                    ) : (
+                      <FeedItem
+                        event={e}
+                        now={now}
+                        detailed
+                        player={player}
+                        author={players.find((p) => p.id === e.authorId)}
+                        onOpenPlayer={openPlayer}
+                        onPress={() => open(e.id)}
+                      />
+                    )}
+                  </Animated.View>
+                );
+              })}
             </View>
           ) : (
             <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
           )}
         </View>
-      </ScrollView>
+      </PullToRefresh>
     </View>
   );
 }
@@ -191,9 +206,8 @@ const styles = StyleSheet.create({
   toggleOn: { backgroundColor: colors.surface },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: {
-    width: '48%',
-    flexGrow: 1,
-    aspectRatio: 3 / 4,
+    width: '100%',
+    aspectRatio: 4 / 3,
     borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: colors.surface,
@@ -205,6 +219,19 @@ const styles = StyleSheet.create({
   tileEmoji: { position: 'absolute', top: space.md, alignSelf: 'center', fontSize: 56, lineHeight: 64 },
   tileText: { padding: space.sm, gap: 2 },
   rejected: { opacity: 0.5 },
+  slimList: { gap: space.xs },
+  slim: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  slimText: { flex: 1, gap: 2 },
 });
 
 /** Riquadro della vista a griglia: la foto del momento (o l'emoji della carta), chi e quanti punti. */
@@ -235,6 +262,34 @@ function Tile({ event, player, onPress }: { event: FeedEvent; player?: Player; o
           {event.points} pt{event.status === 'rejected' ? ' · respinto' : ''}
         </AppText>
       </View>
+    </PressableScale>
+  );
+}
+
+/** Vista a lista: card orizzontale snella, solo testo. Chi, quale carta, quanti punti. */
+function SlimRow({ event, name, ago, onPress }: { event: FeedEvent; name: string; ago: string; onPress: () => void }) {
+  const rule = ruleById(event.ruleId);
+  const pending = event.status === 'pending';
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${name}, ${rule?.label ?? 'Punto'}, ${event.points} punti`}
+      onPress={onPress}
+      pressedScale={0.98}
+      style={[styles.slim, event.status === 'rejected' && styles.rejected]}>
+      <View style={styles.slimText}>
+        <AppText variant="name" numberOfLines={1}>
+          {name}
+        </AppText>
+        <AppText variant="caption" color={colors.inkSoft} numberOfLines={1}>
+          {rule?.label ?? 'Punto'} · {ago}
+          {pending ? ' · da votare' : event.status === 'rejected' ? ' · respinto' : ''}
+        </AppText>
+      </View>
+      <AppText variant="headline" color={event.points > 0 ? colors.bonus : colors.malus}>
+        {event.points > 0 ? '+' : ''}
+        {event.points}
+      </AppText>
     </PressableScale>
   );
 }

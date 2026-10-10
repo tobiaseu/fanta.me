@@ -5,6 +5,7 @@ import { View } from 'react-native';
 
 import { LiveIntro } from '@/components/game/LiveIntro';
 import { GameHeader } from '@/components/game/GameHeader';
+import { SwipePager } from '@/components/game/SwipePager';
 import { GameTabBar } from '@/components/game/GameTabBar';
 import { QuickActionSheet } from '@/components/game/QuickActionSheet';
 import { CurrentGameProvider } from '@/hooks/useCurrentGame';
@@ -33,6 +34,7 @@ export default function GameLayout() {
         <GameHeader game={game} />
         <Tabs
           tabBar={(props) => <GameTabBar {...props} />}
+          screenLayout={({ children }) => <SwipePager gameId={game.id}>{children}</SwipePager>}
           screenOptions={{
             headerShown: false,
             animation: 'shift',

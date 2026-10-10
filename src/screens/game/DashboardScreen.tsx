@@ -10,6 +10,8 @@ import { PregamePanel } from '@/components/game/PregamePanel';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { EmptyNote } from '@/components/ui/EmptyNote';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
@@ -21,7 +23,17 @@ import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
 import { teamColor } from '@/lib/teams';
-import { cardOfDay, computeStandings, computeTeamStandings, gameDay, nameIn, useGameStore } from '@/store/useGameStore';
+import {
+  cardOfDay,
+  computeStandings,
+  computeTeamStandings,
+  gameDay,
+  nameIn,
+  standingsHidden,
+  suddenDeathActive,
+  useGameStore,
+  votesNeeded,
+} from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
@@ -68,6 +80,8 @@ export function DashboardScreen() {
   const openQuickAction = useUiStore((s) => s.openQuickAction);
   const showToast = useUiStore((s) => s.showToast);
   const openPlayer = useOpenPlayer();
+  const simulateCall = useGameStore((s) => s.simulateCall);
+  const refreshTick = useUiStore((s) => s.refreshTick);
 
   const { calls, latest } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id);
@@ -99,8 +113,16 @@ export function DashboardScreen() {
     router.navigate({ pathname: `/game/[gameId]/${tab}`, params: { gameId: game.id } });
   };
 
+  const hidden = standingsHidden(game, now);
+  const sudden = suddenDeathActive(game, now);
+  const refresh = () => {
+    const e = simulateCall(game.id);
+    const who = e && players.find((p) => p.id === e.authorId);
+    showToast({ text: who ? `${who.name} ha appena chiamato un punto` : 'Tutto aggiornato' });
+  };
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <PullToRefresh style={styles.screen} contentContainerStyle={styles.content} onRefresh={refresh} pulse={refreshTick}>
       {game.status === 'waiting' && (
         <>
           <PregamePanel
@@ -110,57 +132,70 @@ export function DashboardScreen() {
           <PowersPanel game={game} now={now} />
         </>
       )}
-      {game.status === 'live' && (
-        <NextStep
-          emoji={toVote > 0 ? '👀' : '📣'}
-          title={
-            toVote > 0
-              ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-              : 'Succede qualcosa?'
-          }
-          body={
-            toVote > 0
-              ? 'Votale nel Live: tre sì e il punto è ufficiale.'
-              : 'Chiama un punto dal Live, il gruppo conferma.'
-          }
-          cta="Vai al Live"
-          onPress={() => goTo('live')}
-        />
+
+      {sudden !== 'off' && (
+        <View style={styles.sudden}>
+          <AppText style={styles.nextEmoji}>⚡</AppText>
+          <View style={styles.flex}>
+            <AppText variant="name">Sudden death</AppText>
+            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+              Fino alla fine{' '}
+              {sudden === 'both' ? 'tutti i punti valgono' : sudden === 'bonus' ? 'i bonus valgono' : 'i malus valgono'}{' '}
+              doppio.
+            </AppText>
+          </View>
+        </View>
       )}
-      {game.status === 'ended' && (
-        <NextStep
-          emoji="🔁"
-          title="Rivincita?"
-          body="Stessa gente, stanza nuova. Il mazzo di questa partita resta nella tua collezione."
-          cta="Crea la rivincita"
-          onPress={() => router.push('/room/new')}
-        />
-      )}
+
       {game.status === 'ended' && <ResultsPanel game={game} />}
+
+      {game.status !== 'waiting' && (
+        <View style={styles.section}>
+          <SectionHeader title={game.teams?.length ? 'Squadre in testa' : 'In testa'} />
+          {hidden ? (
+            <EmptyNote
+              emoji="🤫"
+              title="Classifica nascosta"
+              body="Finale a sorpresa: si svela tutto con i risultati."
+            />
+          ) : (
+            <View style={styles.card}>
+              {top.map((r, i) => (
+                <View key={r.id} style={[styles.topRow, i > 0 && styles.divider]}>
+                  <AppText variant="headline" style={styles.place}>
+                    {i + 1}
+                  </AppText>
+                  <View style={[styles.teamDot, { backgroundColor: r.color }]} />
+                  <AppText variant="name" style={styles.flex} numberOfLines={1}>
+                    {r.name}
+                  </AppText>
+                  <AppText variant="headline">{r.points} pt</AppText>
+                </View>
+              ))}
+            </View>
+          )}
+          {!hidden && <Button label="Vedi la classifica" variant="tertiary" onPress={() => goTo('leaderboard')} />}
+        </View>
+      )}
 
       {game.status !== 'waiting' && (
         <View style={styles.section}>
           <SectionHeader title="Ultimo punto" />
           {latest.length ? (
-            <View style={styles.list}>
-              {latest.map((e) => (
-                <FeedItem
-                  key={e.id}
-                  event={e}
-                  now={now}
-                  player={players.find((p) => p.id === e.playerId)}
-                  author={players.find((p) => p.id === e.authorId)}
-                  onOpenPlayer={openPlayer}
-                  onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: e.id } })}
-                />
-              ))}
-            </View>
+            latest.map((e) => (
+              <FeedItem
+                key={e.id}
+                event={e}
+                now={now}
+                player={players.find((p) => p.id === e.playerId)}
+                author={players.find((p) => p.id === e.authorId)}
+                onOpenPlayer={openPlayer}
+                onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: e.id } })}
+              />
+            ))
           ) : (
-            <AppText variant="body" color={colors.inkSoft}>
-              Ancora nessun punto ufficiale. Qualcuno dovrà pur fare la prima figuraccia.
-            </AppText>
+            <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
           )}
-          <Button label="Tutti i punti nel Live" variant="tertiary" onPress={() => goTo('live')} />
         </View>
       )}
 
@@ -197,31 +232,48 @@ export function DashboardScreen() {
         </View>
       )}
 
-      {game.status === 'live' && top.length > 0 && (
-        <View style={styles.section}>
-          <SectionHeader title={game.teams?.length ? 'Squadre in testa' : 'In testa'} />
-          <View style={styles.card}>
-            {top.map((r, i) => (
-              <View key={r.id} style={[styles.topRow, i > 0 && styles.divider]}>
-                <AppText variant="headline" style={styles.place}>
-                  {i + 1}
-                </AppText>
-                <View style={[styles.teamDot, { backgroundColor: r.color }]} />
-                <AppText variant="name" style={styles.flex} numberOfLines={1}>
-                  {r.name}
-                </AppText>
-                <AppText variant="headline">{r.points} pt</AppText>
-              </View>
-            ))}
-          </View>
-          <Button label="Vedi la classifica" variant="tertiary" onPress={() => goTo('leaderboard')} />
-        </View>
+      {game.status === 'live' &&
+        (toVote > 0 ? (
+          <NextStep
+            emoji="👀"
+            title={`${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`}
+            body={`Votale nel Live: ${votesNeeded(game)} sì e il punto è ufficiale.`}
+            cta="Vota nel Live"
+            onPress={() => goTo('live')}
+          />
+        ) : (
+          <NextStep
+            emoji="📺"
+            title="Hai fatto tutto"
+            body="Nessuna mossa in sospeso. Guarda cosa succede e chiama un punto quando serve."
+            cta="Guarda il Live"
+            onPress={() => goTo('live')}
+          />
+        ))}
+      {game.status === 'ended' && (
+        <NextStep
+          emoji="🔁"
+          title="Rivincita?"
+          body="Stessa gente, stanza nuova. Il mazzo di questa partita resta nella tua collezione."
+          cta="Crea la rivincita"
+          onPress={() => router.push('/room/new')}
+        />
       )}
-    </ScrollView>
+    </PullToRefresh>
   );
 }
 
 const styles = StyleSheet.create({
+  sudden: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    padding: layout.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.cta,
+    backgroundColor: colors.ctaSoft,
+  },
   next: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: layout.card, gap: space.xs },
   nextEmoji: { fontSize: 32, lineHeight: 40 },
   screen: { flex: 1, backgroundColor: colors.background },
