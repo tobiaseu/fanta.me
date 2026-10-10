@@ -19,7 +19,8 @@ export type IconName =
   | 'trophy'
   | 'grid'
   | 'send'
-  | 'settings';
+  | 'settings'
+  | 'ticket';
 
 interface Props {
   name: IconName;
@@ -122,6 +123,12 @@ export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 1.4 }:
         [6, 12, 18].flatMap((y) =>
           [6, 12, 18].map((x) => <Circle key={`${x}-${y}`} cx={x} cy={y} r={1.9} fill={color} />),
         )}
+      {name === 'ticket' && (
+        <Path
+          {...p}
+          d="M19.5 12.5c0-1.38 1.12-2.5 2.5-2.5V9c0-4-1-5-5-5H7C3 4 2 5 2 9v.5c1.38 0 2.5 1.12 2.5 2.5S3.38 14.5 2 14.5v.5c0 4 1 5 5 5h10c4 0 5-1 5-5-1.38 0-2.5-1.12-2.5-2.5ZM10 4v16"
+        />
+      )}
     </Svg>
   );
 }

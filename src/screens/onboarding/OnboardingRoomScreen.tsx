@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'reac
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { StartPicker, startOptions } from '@/components/game/StartPicker';
+import { formatStart, hoursUntil, StartPicker, startSuggestions } from '@/components/game/StartPicker';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
@@ -29,7 +29,7 @@ export function OnboardingRoomScreen() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [mode, setMode] = useState<GameMode>('sprint');
-  const [start, setStart] = useState({ id: 'tonight', hours: startOptions()[1].hours });
+  const [start, setStart] = useState<number | null>(startSuggestions()[1].at);
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
   const [pledge, setPledge] = useState(false);
 
@@ -39,10 +39,18 @@ export function OnboardingRoomScreen() {
     haptics.tap();
     if (step < 4) return setStep(step + 1);
     haptics.bonus();
-    const game = createGame({ name: name.trim(), mode, startsInHours: start.hours, settings });
+    const game = createGame({ name: name.trim(), mode, startsInHours: hoursUntil(start), settings });
     router.replace({ pathname: '/onboarding/invite', params: { gameId: game.id } });
   };
 
+  // La stanza si compone mentre la compili: nome, poi tipo, poi partenza
+  const modeTitle = MODES.find((m) => m.id === mode)?.title;
+  const summary = [
+    'Nome',
+    name.trim(),
+    `${name.trim()} · ${modeTitle}`,
+    `${name.trim()} · ${modeTitle} · ${formatStart(start)}`,
+  ][step - 1];
   const title = ['Come si chiama la stanza?', 'Che partita è?', 'Quando si parte?', 'Avanzate'][step - 1];
 
   return (
@@ -60,7 +68,7 @@ export function OnboardingRoomScreen() {
             </PressableScale>
           )}
           <View style={styles.flex}>
-            <StepHeader step={step} total={TOTAL} />
+            <StepHeader step={step} total={TOTAL} label={summary} />
           </View>
         </View>
         <Animated.View key={step} entering={FadeInRight.duration(260)} style={styles.body}>
@@ -104,7 +112,7 @@ export function OnboardingRoomScreen() {
               );
             })}
 
-          {step === 3 && <StartPicker value={start.id} onChange={(id, hours) => setStart({ id, hours })} />}
+          {step === 3 && <StartPicker value={start} onChange={setStart} />}
 
           {step === 4 && (
             <>

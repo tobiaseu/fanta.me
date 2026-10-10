@@ -3,12 +3,12 @@ import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 
 import { colors } from '@/theme/tokens';
 
-/** Wordmark FANTAME® : "FANTA" leggero + "ME" pieno. */
+/** Wordmark FANTAME® : "FANTA" leggero + "ME" medium. */
 export function Wordmark({ size = 17 }: { size?: number }) {
   return (
     <Text style={{ fontSize: size, letterSpacing: 0.5, color: colors.ink }} accessibilityRole="header">
       <Text style={{ fontWeight: '300' }}>FANTA</Text>
-      <Text style={{ fontWeight: '800' }}>ME</Text>
+      <Text style={{ fontWeight: '500' }}>ME</Text>
       <Text style={{ fontSize: size * 0.55, fontWeight: '600' }}>®</Text>
     </Text>
   );

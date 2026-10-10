@@ -1,8 +1,19 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useEffect } from 'react';
+import Animated, {
+  Easing,
+  FadeInDown,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Wordmark } from '@/components/ui/Brand';
@@ -55,10 +66,12 @@ export function WelcomeScreen() {
                 .springify()
                 .damping(14)}
               style={[styles.bubble, { left: `${c.x}%`, top: `${c.y}%`, transform: [{ rotate: `${c.rotate}deg` }] }]}>
-              <Avatar player={PLAYERS[c.i]} size={c.size} sticker />
-              <View style={styles.emoji}>
-                <AppText style={{ fontSize: c.size * 0.32, lineHeight: c.size * 0.4 }}>{c.emoji}</AppText>
-              </View>
+              <Float index={n}>
+                <Avatar player={PLAYERS[c.i]} size={c.size} sticker />
+                <View style={styles.emoji}>
+                  <AppText style={{ fontSize: c.size * 0.32, lineHeight: c.size * 0.4 }}>{c.emoji}</AppText>
+                </View>
+              </Float>
             </Animated.View>
           ))}
         </View>
@@ -79,10 +92,13 @@ export function WelcomeScreen() {
         <PressableScale accessibilityRole="button" onPress={() => go('email')} hitSlop={8} style={styles.link}>
           <AppText variant="headline">Usa la tua email</AppText>
         </PressableScale>
+      </View>
+
+      <View style={styles.codeWrap}>
         <PressableScale
           accessibilityRole="button"
           hitSlop={8}
-          style={styles.link}
+          style={styles.code}
           onPress={() => {
             haptics.tap();
             signIn('email');
@@ -90,9 +106,8 @@ export function WelcomeScreen() {
             router.replace('/');
             router.push('/room/join');
           }}>
-          <AppText variant="caption" color={colors.live}>
-            Ho già un codice invito
-          </AppText>
+          <Icon name="ticket" size={20} />
+          <AppText variant="headline">Ho già un codice invito</AppText>
         </PressableScale>
         <AppText variant="micro" color={colors.inkFaint} style={styles.center}>
           Demo: nessun account vero, i dati restano su questo dispositivo.
@@ -100,6 +115,19 @@ export function WelcomeScreen() {
       </View>
     </View>
   );
+}
+
+/** Galleggiamento lento e sfasato delle facce del collage. */
+function Float({ index, children }: { index: number; children: React.ReactNode }) {
+  const y = useSharedValue(0);
+  useEffect(() => {
+    y.value = withDelay(
+      index * 260,
+      withRepeat(withTiming(1, { duration: 2400 + index * 300, easing: Easing.inOut(Easing.sin) }), -1, true),
+    );
+  }, [index, y]);
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: -6 + y.value * 12 }] }));
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create({
@@ -121,4 +149,18 @@ const styles = StyleSheet.create({
   actions: { gap: space.sm },
   google: { borderColor: colors.surfaceMuted },
   link: { alignItems: 'center', paddingVertical: space.xs },
+  codeWrap: {
+    marginTop: space.md,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.hairline,
+    gap: space.sm,
+  },
+  code: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.xs,
+    paddingVertical: space.xs,
+  },
 });

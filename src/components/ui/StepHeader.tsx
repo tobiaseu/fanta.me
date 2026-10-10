@@ -4,8 +4,11 @@ import { AppText } from './AppText';
 
 import { colors, space } from '@/theme/tokens';
 
-/** Avanzamento dell'onboarding: segmenti + "Passo 1 di 2". */
-export function StepHeader({ step, total }: { step: number; total: number }) {
+/**
+ * Avanzamento dell'onboarding: segmenti + etichetta.
+ * L'etichetta è ciò che si è già deciso (es. "Weekend al mare · Sprint"), così la stanza si compone passo dopo passo.
+ */
+export function StepHeader({ step, total, label }: { step: number; total: number; label?: string }) {
   return (
     <View style={styles.wrap} accessibilityLabel={`Passo ${step} di ${total}`}>
       <View style={styles.bars}>
@@ -13,8 +16,8 @@ export function StepHeader({ step, total }: { step: number; total: number }) {
           <View key={i} style={[styles.bar, i < step && styles.done]} />
         ))}
       </View>
-      <AppText variant="micro" color={colors.inkSoft}>
-        Passo {step} di {total}
+      <AppText variant="caption" color={colors.inkSoft} numberOfLines={1}>
+        {label ?? `Passo ${step} di ${total}`}
       </AppText>
     </View>
   );
