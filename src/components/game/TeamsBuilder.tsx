@@ -62,6 +62,10 @@ export function TeamsBuilder({ game }: { game: Game }) {
     }
     haptics.tap();
     toggleTeammate(game.id, p.id);
+    showToast({
+      text: inMine ? `${nameIn(game, p)} lascia ${mine.name}` : `${nameIn(game, p)} entra in ${mine.name}`,
+      action: { label: 'Annulla', onPress: () => toggleTeammate(game.id, p.id) },
+    });
   };
 
   return (

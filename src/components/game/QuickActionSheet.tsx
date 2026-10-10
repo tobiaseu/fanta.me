@@ -48,8 +48,9 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const showToast = useUiStore((s) => s.showToast);
 
   const [playerId, setPlayerId] = useState<string>();
-  const [kind, setKind] = useState<RuleKind>('bonus');
-  const [ruleId, setRuleId] = useState<string>();
+  const preset = useUiStore.getState().quickRuleId;
+  const [kind, setKind] = useState<RuleKind>(preset && (ruleById(preset)?.points ?? 1) < 0 ? 'malus' : 'bonus');
+  const [ruleId, setRuleId] = useState<string | undefined>(preset);
   const [photo, setPhoto] = useState<string>();
 
   // In cima le carte chiamate di recente in questa stanza: di solito si richiamano quelle

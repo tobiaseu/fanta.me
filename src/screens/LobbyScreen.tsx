@@ -72,7 +72,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
             accessibilityLabel="Esplora mazzi e carte della community"
             hitSlop={8}
             onPress={() => router.push('/explore')}>
-            <Icon name="grid" size={22} />
+            <Icon name="compass" size={24} />
           </PressableScale>
         }
         left={

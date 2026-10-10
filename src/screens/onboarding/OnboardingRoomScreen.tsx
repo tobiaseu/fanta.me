@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
@@ -28,8 +28,10 @@ export function OnboardingRoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const createGame = useGameStore((s) => s.createGame);
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState('');
+  // Da "Più opzioni" in home arrivano nome e occasione già scelti: si riparte da lì
+  const preset = useLocalSearchParams<{ name?: string; emoji?: string; hours?: string }>();
+  const [step, setStep] = useState(preset.name ? 2 : 1);
+  const [name, setName] = useState(preset.name ?? '');
   const [mode, setMode] = useState<GameMode>('sprint');
   const [start, setStart] = useState<number | null>(startSuggestions()[1].at);
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
@@ -41,7 +43,14 @@ export function OnboardingRoomScreen() {
     haptics.tap();
     if (step < 4) return setStep(step + 1);
     haptics.bonus();
-    const game = createGame({ name: name.trim(), mode, startsInHours: hoursUntil(start), settings });
+    const game = createGame({
+      name: name.trim(),
+      mode,
+      startsInHours: hoursUntil(start),
+      settings,
+      emoji: preset.emoji,
+      hours: preset.hours ? Number(preset.hours) : undefined,
+    });
     router.replace({ pathname: '/onboarding/invite', params: { gameId: game.id } });
   };
 

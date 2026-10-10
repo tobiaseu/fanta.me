@@ -55,6 +55,7 @@ export function RulesScreen() {
   const proposeCard = useGameStore((s) => s.proposeCard);
   const withdrawCard = useGameStore((s) => s.withdrawCard);
   const showToast = useUiStore((s) => s.showToast);
+  const openQuickAction = useUiStore((s) => s.openQuickAction);
   const [selected, setSelected] = useState<Rule>();
   const [explore, setExplore] = useState(false);
   const updateSettings = useGameStore((s) => s.updateSettings);
@@ -116,6 +117,11 @@ export function RulesScreen() {
       return {
         status: 'È una delle tue carte nel mazzo',
         action: { label: 'Togli dal mazzo', variant: 'secondary' as const, onPress: () => drop(selected) },
+      };
+    if (inDeck && game.status === 'live')
+      return {
+        status: 'Nel mazzo della partita',
+        action: { label: 'Chiama questa carta', onPress: () => openQuickAction(selected.id) },
       };
     if (inDeck) return { status: proposal ? 'Nel mazzo, portata da un amico' : 'Nel mazzo della partita' };
     if (!pregame)

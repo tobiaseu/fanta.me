@@ -10,7 +10,9 @@ export interface Toast {
 /** Stato UI effimero (non persistito). */
 interface UiState {
   quickActionOpen: boolean;
-  openQuickAction: () => void;
+  /** Apre "Chiama un punto", con una carta già scelta se arriva da una carta */
+  openQuickAction: (ruleId?: string) => void;
+  quickRuleId?: string;
   closeQuickAction: () => void;
   toast?: Toast;
   showToast: (toast: Omit<Toast, 'id'>) => void;
@@ -26,8 +28,8 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set) => ({
   quickActionOpen: false,
-  openQuickAction: () => set({ quickActionOpen: true }),
-  closeQuickAction: () => set({ quickActionOpen: false }),
+  openQuickAction: (ruleId) => set({ quickActionOpen: true, quickRuleId: ruleId }),
+  closeQuickAction: () => set({ quickActionOpen: false, quickRuleId: undefined }),
   toast: undefined,
   showToast: (toast) => set({ toast: { ...toast, id: Date.now() } }),
   hideToast: () => set({ toast: undefined }),

@@ -23,7 +23,8 @@ export type IconName =
   | 'ticket'
   | 'edit'
   | 'camera'
-  | 'list';
+  | 'list'
+  | 'compass';
 
 interface Props {
   name: IconName;
@@ -126,6 +127,12 @@ export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 1.4 }:
         [6, 12, 18].flatMap((y) =>
           [6, 12, 18].map((x) => <Circle key={`${x}-${y}`} cx={x} cy={y} r={1.9} fill={color} />),
         )}
+      {name === 'compass' && (
+        <>
+          <Circle {...p} cx={12} cy={12} r={9.5} />
+          <Path {...p} d="M15.5 8.5l-2 5-5 2 2-5 5-2Z" />
+        </>
+      )}
       {name === 'list' && <Path {...p} d="M4 6h16M4 12h16M4 18h16" />}
       {name === 'ticket' && (
         <Path

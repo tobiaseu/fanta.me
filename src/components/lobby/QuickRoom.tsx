@@ -78,7 +78,16 @@ export function QuickRoom({ primary }: { primary?: boolean }) {
       </AppText>
       <Button label="Crea e invita" variant={primary ? 'primary' : 'secondary'} onPress={create} />
       <View style={styles.links}>
-        <Button label="Più opzioni" variant="tertiary" onPress={() => router.push('/room/new')} />
+        <Button
+          label="Più opzioni"
+          variant="tertiary"
+          onPress={() =>
+            router.push({
+              pathname: '/room/new',
+              params: { name: name.trim() || `${occ.label} con gli amici`, emoji: occ.emoji, hours: String(occ.hours) },
+            })
+          }
+        />
         <Button label="Ho un codice" variant="tertiary" onPress={() => router.push('/room/join')} />
       </View>
     </View>
