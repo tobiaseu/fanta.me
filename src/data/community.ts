@@ -25,8 +25,10 @@ export interface CommunityDeck {
   ruleIds: string[];
   plays: number;
   likes: number;
-  /** Mazzo ufficiale Fanta.me */
+  /** Mazzo ufficiale Fanta.me (finisce tra i "Suggeriti") */
   official?: boolean;
+  /** Mazzo di stagione: compare tra "Di stagione" */
+  season?: boolean;
 }
 
 const card = (r: Omit<Rule, 'authorId'> & { authorId?: string }): Rule => ({
@@ -176,5 +178,64 @@ export const COMMUNITY_DECKS: CommunityDeck[] = [
     likes: 215,
   },
 ];
+
+// Altri mazzi ufficiali e di stagione, solo con carte base: compaiono in "Crea una stanza"
+COMMUNITY_DECKS.push(
+  {
+    id: 'd-classico',
+    name: 'Il Classico',
+    emoji: '🃏',
+    occasion: 'Per iniziare',
+    author: AUTHORS.fanta,
+    official: true,
+    ruleIds: ['r-smurratona', 'r-cook', 'r-dishes', 'r-toast', 'r-late', 'r-phone', 'r-fall', 'r-new'],
+    plays: 5200,
+    likes: 1300,
+  },
+  {
+    id: 'd-gita',
+    name: 'Gita fuori porta',
+    emoji: '🚌',
+    occasion: 'Gita',
+    author: AUTHORS.fanta,
+    official: true,
+    ruleIds: ['p-sveglia', 'r-lost', 'r-photo', 'r-peak', 'r-nap', 'r-late'],
+    plays: 980,
+    likes: 410,
+  },
+  {
+    id: 'd-halloween',
+    name: 'Notte di Halloween',
+    emoji: '🎃',
+    occasion: 'Festa',
+    author: AUTHORS.fanta,
+    season: true,
+    ruleIds: ['r-smurratona', 'r-dj', 'r-encore', 'r-spill', 'r-photo', 'r-round'],
+    plays: 640,
+    likes: 300,
+  },
+  {
+    id: 'd-natale',
+    name: 'Natale in famiglia',
+    emoji: '🎄',
+    occasion: 'Feste',
+    author: AUTHORS.fanta,
+    season: true,
+    ruleIds: ['p-zio', 'r-cook', 'r-dishes', 'r-toast', 'r-nap', 'r-phone'],
+    plays: 2100,
+    likes: 880,
+  },
+  {
+    id: 'd-capodanno',
+    name: 'Capodanno',
+    emoji: '🥂',
+    occasion: 'Feste',
+    author: AUTHORS.fanta,
+    season: true,
+    ruleIds: ['r-toast', 'r-smurratona', 'r-sunrise', 'r-dj', 'p-karaoke', 'r-new'],
+    plays: 1500,
+    likes: 700,
+  },
+);
 
 export const OCCASIONS = ['Tutte', 'Vacanza', 'Serata', 'Matrimonio', 'Sport', 'Gita'] as const;

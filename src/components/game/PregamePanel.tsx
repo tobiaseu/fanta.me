@@ -14,34 +14,15 @@ import { DEFAULT_SETTINGS, type Game } from '@/types/game';
 import { PressableScale } from '@/components/ui/PressableScale';
 
 /** Dashboard del pre-partita: il mazzo che si sta formando, chi c'è, e (per chi l'ha creata) "Avvia". */
-export function PregamePanel({ game, onOpenDeck }: { game: Game; onOpenDeck: () => void }) {
+export function PregamePanel({ game }: { game: Game }) {
   const players = useGameStore((s) => s.players);
-  const proposals = useGameStore((s) => s.proposals);
   const startGame = useGameStore((s) => s.startGame);
   const showToast = useUiStore((s) => s.showToast);
 
-  const mine = proposals.filter((p) => p.gameId === game.id && p.authorId === ME.id).length;
-  const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
   const people = players.filter((p) => game.playerIds.includes(p.id));
 
   return (
     <>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel="Apri il mazzo"
-        onPress={onOpenDeck}
-        style={styles.deckCard}>
-        <View style={styles.flex}>
-          <AppText variant="name">Il mazzo si decide adesso</AppText>
-          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-            {game.ruleIds.length} carte nel mazzo. Tu ne hai messe {mine} su {perPlayer}.
-          </AppText>
-        </View>
-        <View style={styles.cta}>
-          <AppText variant="caption">Apri il mazzo</AppText>
-        </View>
-      </PressableScale>
-
       <View style={styles.section}>
         <SectionHeader
           title="Chi c'è"

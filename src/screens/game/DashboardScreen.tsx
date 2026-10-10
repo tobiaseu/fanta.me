@@ -15,6 +15,7 @@ import { EmptyNote } from '@/components/ui/EmptyNote';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { HeroCard } from '@/components/ui/Cards';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -37,39 +38,13 @@ import {
 } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
-import type { Player } from '@/types/game';
+import { DEFAULT_SETTINGS, type Player } from '@/types/game';
 
 /**
  * DASHBOARD della partita, sulle dinamiche di FantaSanremo:
  * chiamate da votare, carta del giorno che vale doppio, capitano della squadra,
  * podio e MVP della giornata, ultimi punti.
  */
-/** La card "prossima mossa": una sola, sempre in cima, cambia con la fase. */
-function NextStep({
-  emoji,
-  title,
-  body,
-  cta,
-  onPress,
-}: {
-  emoji: string;
-  title: string;
-  body: string;
-  cta: string;
-  onPress: () => void;
-}) {
-  return (
-    <View style={styles.next}>
-      <AppText style={styles.nextEmoji}>{emoji}</AppText>
-      <AppText variant="serifHeading">{title}</AppText>
-      <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
-        {body}
-      </AppText>
-      <Button label={cta} onPress={onPress} />
-    </View>
-  );
-}
-
 export function DashboardScreen() {
   const game = useCurrentGame();
   const router = useRouter();
@@ -83,6 +58,7 @@ export function DashboardScreen() {
   const openPlayer = useOpenPlayer();
   const simulateCall = useGameStore((s) => s.simulateCall);
   const refreshTick = useUiStore((s) => s.refreshTick);
+  const proposals = useGameStore((s) => s.proposals);
 
   const { calls, latest } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id);
@@ -117,6 +93,7 @@ export function DashboardScreen() {
     router.navigate({ pathname: `/game/[gameId]/${tab}`, params: { gameId: game.id } });
   };
 
+  const invite = () => router.push({ pathname: '/onboarding/invite', params: { gameId: game.id } });
   const hidden = standingsHidden(game, now);
   const sudden = suddenDeathActive(game, now);
   const refresh = () => {
@@ -125,14 +102,63 @@ export function DashboardScreen() {
     showToast({ text: who ? `${who.name} ha appena chiamato un punto` : 'Tutto aggiornato' });
   };
 
+  // La card primaria: sempre in cima, sempre un solo passaggio da fare, cambia con la fase
+  const mineProposed = proposals.filter((p) => p.gameId === game.id && p.authorId === ME.id).length;
+  const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
+  const openDeck = () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } });
+  const next: Parameters<typeof HeroCard>[0] =
+    game.status === 'waiting'
+      ? mineProposed < perPlayer
+        ? {
+            emoji: '🃏',
+            eyebrow: 'Prima di iniziare',
+            title: 'Metti le tue carte nel mazzo',
+            body: `Ne hai messe ${mineProposed} su ${perPlayer}: scegli le tue prima del via.`,
+            primary: { label: 'Apri il mazzo', onPress: openDeck },
+            secondary: { label: 'Invita', onPress: invite },
+          }
+        : {
+            emoji: '💌',
+            eyebrow: 'Prima di iniziare',
+            title: 'Le tue carte ci sono',
+            body: 'Più amici, più punti da chiamare. Manda il codice a chi manca.',
+            primary: { label: 'Invita amici', onPress: invite },
+            secondary: { label: 'Il mazzo', onPress: openDeck },
+          }
+      : game.status === 'ended'
+        ? {
+            emoji: '🔁',
+            eyebrow: 'Partita conclusa',
+            title: 'Rivincita?',
+            body: 'Stessa gente, stanza nuova. Il mazzo resta nella tua collezione.',
+            primary: { label: 'Crea la rivincita', onPress: () => router.push('/room/start') },
+            secondary: { label: 'Classifica', onPress: () => goTo('leaderboard') },
+          }
+        : toVote > 0
+          ? {
+              emoji: '👀',
+              eyebrow: 'Tocca a te',
+              title: `${toVote} ${toVote === 1 ? 'chiamata da votare' : 'chiamate da votare'}`,
+              body: `Bastano ${votesNeeded(game)} sì e il punto è ufficiale.`,
+              primary: { label: 'Vota nel Live', onPress: () => goTo('live') },
+              secondary: { label: 'Chiama', onPress: () => openQuickAction() },
+            }
+          : {
+              emoji: '📺',
+              eyebrow: 'Sei in pari',
+              title: 'Hai visto qualcosa?',
+              body: 'Nessun voto in sospeso. Se succede qualcosa, chiamalo.',
+              primary: { label: 'Chiama un punto', onPress: () => openQuickAction() },
+              secondary: { label: 'Live', onPress: () => goTo('live') },
+            };
+
   return (
     <PullToRefresh style={styles.screen} contentContainerStyle={styles.content} onRefresh={refresh} pulse={refreshTick}>
+      <HeroCard {...next} />
+
       {game.status === 'waiting' && (
         <>
-          <PregamePanel
-            game={game}
-            onOpenDeck={() => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } })}
-          />
+          <PregamePanel game={game} />
           <PowersPanel game={game} now={now} />
         </>
       )}
@@ -249,34 +275,6 @@ export function DashboardScreen() {
           )}
           <PowersPanel game={game} now={now} />
         </View>
-      )}
-
-      {game.status === 'live' &&
-        (toVote > 0 ? (
-          <NextStep
-            emoji="👀"
-            title={`${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`}
-            body={`Votale nel Live: ${votesNeeded(game)} sì e il punto è ufficiale.`}
-            cta="Vota nel Live"
-            onPress={() => goTo('live')}
-          />
-        ) : (
-          <NextStep
-            emoji="📺"
-            title="Hai fatto tutto"
-            body="Nessuna mossa in sospeso. Guarda cosa succede e chiama un punto quando serve."
-            cta="Guarda il Live"
-            onPress={() => goTo('live')}
-          />
-        ))}
-      {game.status === 'ended' && (
-        <NextStep
-          emoji="🔁"
-          title="Rivincita?"
-          body="Stessa gente, stanza nuova. Il mazzo di questa partita resta nella tua collezione."
-          cta="Crea la rivincita"
-          onPress={() => router.push('/room/new')}
-        />
       )}
     </PullToRefresh>
   );

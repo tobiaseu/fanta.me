@@ -58,6 +58,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding/room" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="onboarding/invite" options={{ gestureEnabled: false }} />
             <Stack.Screen name="game/[gameId]" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="room/start" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="room/new" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="room/join" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen

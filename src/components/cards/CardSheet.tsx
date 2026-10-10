@@ -6,6 +6,7 @@ import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { Tag } from '@/components/ui/Tag';
 import { RULE_CATEGORIES } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
@@ -45,6 +46,13 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
       {rule && tone && (
         <View style={styles.center} pointerEvents="box-none">
           <Animated.View entering={ZoomIn.springify().damping(16)} style={styles.stack}>
+            {status ? (
+              <View style={styles.status}>
+                <AppText variant="caption" color={colors.inkInverse} style={styles.centerText}>
+                  {status}
+                </AppText>
+              </View>
+            ) : null}
             <View style={[styles.card, { borderColor: tone.edge }]}>
               <PressableScale
                 accessibilityRole="button"
@@ -81,53 +89,38 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
               </View>
             </View>
 
-            {status ? (
-              <View style={styles.status}>
-                <AppText variant="caption" color={colors.inkInverse} style={styles.centerText}>
-                  {status}
-                </AppText>
-              </View>
-            ) : null}
-            {action && (
+            {/* Subito sotto la carta: l'azione della schermata (gialla) e, accanto, salvare per dopo */}
+            <View style={styles.actions}>
+              {action && (
+                <Button
+                  label={action.label}
+                  variant={action.variant ?? 'primary'}
+                  disabled={action.disabled}
+                  onDark
+                  style={styles.flex}
+                  onPress={() => {
+                    action.onPress();
+                    onClose();
+                  }}
+                />
+              )}
               <Button
-                label={action.label}
-                variant={action.variant ?? 'primary'}
-                disabled={action.disabled}
+                label={saved ? 'Salvata' : 'Salva'}
+                icon={saved ? 'check' : 'plus'}
+                variant="secondary"
                 onDark
+                style={action ? undefined : styles.flex}
                 onPress={() => {
-                  action.onPress();
-                  onClose();
+                  haptics.tap();
+                  const now = toggleSaved(rule.id);
+                  showToast({ text: now ? `${rule.label} salvata nelle tue carte` : 'Tolta dalle tue carte' });
                 }}
               />
-            )}
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityState={{ selected: saved }}
-              onPress={() => {
-                haptics.tap();
-                const now = toggleSaved(rule.id);
-                showToast({ text: now ? `${rule.label} salvata nelle tue carte` : 'Tolta dalle tue carte' });
-              }}
-              style={styles.save}>
-              <Icon name={saved ? 'check' : 'plus'} size={16} color={colors.inkInverse} />
-              <AppText variant="caption" color={colors.inkInverse}>
-                {saved ? 'Salvata nelle tue carte' : 'Salva nelle mie carte'}
-              </AppText>
-            </PressableScale>
+            </View>
           </Animated.View>
         </View>
       )}
     </Modal>
-  );
-}
-
-function Tag({ label, gold }: { label: string; gold?: boolean }) {
-  return (
-    <View style={[styles.tag, gold && styles.tagGold]}>
-      <AppText variant="micro" color={gold ? '#9A7200' : colors.inkSoft}>
-        {label}
-      </AppText>
-    </View>
   );
 }
 
@@ -153,6 +146,8 @@ const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.55)' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.lg },
   stack: { width: '100%', maxWidth: 320, gap: space.sm },
+  actions: { flexDirection: 'row', gap: space.sm },
+  flex: { flex: 1 },
   card: {
     width: '100%',
     aspectRatio: 0.78,

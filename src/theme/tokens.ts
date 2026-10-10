@@ -13,6 +13,8 @@ export const colors = {
   background: '#F2F2F7', // off-white di sistema iOS
   surface: '#FFFFFF',
   surfaceMuted: '#E9E9EE',
+  /** Proposte (mazzi e partite suggerite): un tono più freddo, così non sembrano stanze attive */
+  proposal: '#E4E8F1',
   placeholder: '#D9D9D9',
   hairline: 'rgba(0, 0, 0, 0.08)',
   /** Bordo dei bottoni secondari e delle carte: grigio scuro, sottile */

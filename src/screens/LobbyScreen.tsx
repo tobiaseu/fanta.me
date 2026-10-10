@@ -2,14 +2,15 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { RulebookCard } from '@/components/game/RulebookCard';
-import { CommunityStrip } from '@/components/lobby/CommunityStrip';
-import { QuickRoom } from '@/components/lobby/QuickRoom';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
 import { Wordmark } from '@/components/ui/Brand';
+import { HeroCard, PosterCard, RowCard, RowGroup } from '@/components/ui/Cards';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { COMMUNITY_DECKS } from '@/data/community';
+import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TopBar } from '@/components/ui/TopBar';
 import { ME } from '@/data/mock';
@@ -31,6 +32,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const { games, events, players, friendships } = useGameStore();
   const lastGameId = useSessionStore((s) => s.lastGameId);
   const openPlayer = useOpenPlayer();
+  const playDeck = usePlayDeck();
   const requests = Object.values(friendships).filter((f) => f === 'received').length;
 
   const myGames = useMemo(() => (forceEmpty ? [] : games), [games, forceEmpty]);
@@ -60,6 +62,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
             : `${day.label} ${day.index} di ${day.total}, sei ${rank}°`;
     return { line, people: players.filter((p) => last.playerIds.includes(p.id)) };
   };
+
   const resume = last && infoOf(last);
 
   return (
@@ -102,74 +105,93 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           </PressableScale>
         </View>
 
-        {last && resume ? <RoomCard game={last} info={resume} primary onPress={() => openGame(last)} /> : null}
+        {last && resume ? (
+          <HeroCard
+            emoji={last.emoji}
+            eyebrow={<StatusBadge status={last.status} />}
+            title={last.name}
+            body={resume.line}
+            footer={<AvatarStack players={resume.people} size={32} max={6} />}
+            onPress={() => openGame(last)}
+            primary={{ label: 'Rientra', onPress: () => openGame(last) }}
+          />
+        ) : null}
 
-        <QuickRoom primary={!resume} />
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel="Crea una stanza: da zero o da un mazzo pronto"
+          onPress={() => router.push('/room/start')}
+          style={styles.create}>
+          <View style={[styles.plus, !resume && styles.plusPrimary]}>
+            <Icon name="plus" size={22} strokeWidth={2.4} />
+          </View>
+          <View style={styles.flex}>
+            <AppText variant="headline">Crea una stanza</AppText>
+            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+              Da zero o da una partita pronta
+            </AppText>
+          </View>
+          <Icon name="chevron-right" size={20} color={colors.inkFaint} />
+        </PressableScale>
 
-        <CommunityStrip />
+        <View style={styles.list}>
+          <SectionHeader
+            title="Partite pronte"
+            caption="Mazzi pubblicati da giocare subito"
+            action={{ label: 'Esplora', onPress: () => router.push('/explore') }}
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.hScroll}
+            contentContainerStyle={styles.hRow}>
+            {[...COMMUNITY_DECKS]
+              .sort((a, b) => b.plays - a.plays)
+              .slice(0, 8)
+              .map((d) => (
+                <PosterCard
+                  key={d.id}
+                  emoji={d.emoji}
+                  title={d.name}
+                  meta={`${d.occasion} · ${d.ruleIds.length} carte`}
+                  badge={d.season ? 'Di stagione' : undefined}
+                  onPress={() => playDeck(d)}
+                />
+              ))}
+          </ScrollView>
+        </View>
 
         {others.length > 0 && (
           <View style={styles.list}>
-            <AppText variant="headline">Le altre stanze</AppText>
-            {others.map((g) => (
-              <RoomCard key={g.id} game={g} info={infoOf(g)} onPress={() => openGame(g)} />
-            ))}
+            <SectionHeader title="Le tue stanze" />
+            <RowGroup>
+              {others.map((g) => (
+                <RowCard
+                  key={g.id}
+                  emoji={g.emoji}
+                  title={g.name}
+                  meta={<StatusBadge status={g.status} />}
+                  accessibilityLabel={`Apri ${g.name}. ${infoOf(g).line}`}
+                  onPress={() => openGame(g)}
+                />
+              ))}
+            </RowGroup>
           </View>
         )}
 
-        <RulebookCard />
+        <RowGroup>
+          {[
+            <RowCard
+              key="book"
+              emoji="📖"
+              title="Il Libro del Fanta"
+              meta="Regole e come si gioca bene"
+              onPress={() => router.push('/rulebook')}
+            />,
+          ]}
+        </RowGroup>
       </ScrollView>
     </View>
-  );
-}
-
-/**
- * Card stanza, uguale per tutte: quella da riprendere ha il CTA giallo,
- * le altre un bottone secondario trasparente (un solo giallo per schermata).
- */
-function RoomCard({
-  game,
-  info,
-  primary,
-  onPress,
-}: {
-  game: Game;
-  info: { line: string; people: Player[] };
-  primary?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={`${primary ? 'Rientra in' : 'Apri'} ${game.name}. ${info.line}`}
-      onPress={onPress}
-      pressedScale={0.98}
-      style={styles.resume}>
-      {primary && (
-        <AppText variant="micro" color={colors.inkSoft}>
-          Rientra in partita
-        </AppText>
-      )}
-      <AppText variant="title" numberOfLines={2}>
-        {game.emoji} {game.name}
-      </AppText>
-      <StatusBadge status={game.status} />
-      <AppText variant="body" color={colors.inkSoft}>
-        {info.line}
-      </AppText>
-      <View style={styles.resumeFoot}>
-        <AvatarStack players={info.people} size={32} max={5} />
-        {primary ? (
-          <View style={styles.go}>
-            <Icon name="chevron-right" size={22} />
-          </View>
-        ) : (
-          <View style={styles.open}>
-            <AppText variant="caption">Apri</AppText>
-          </View>
-        )}
-      </View>
-    </PressableScale>
   );
 }
 
@@ -230,6 +252,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   list: { gap: space.sm },
+  create: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: layout.card,
+  },
+  plus: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusPrimary: { backgroundColor: colors.cta, borderColor: colors.cta },
+  regular: { fontWeight: '400' },
+  hScroll: { marginHorizontal: -layout.gutter, flexGrow: 0 },
+  hRow: { gap: space.sm, paddingHorizontal: layout.gutter },
   rows: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
   row: {
     flexDirection: 'row',

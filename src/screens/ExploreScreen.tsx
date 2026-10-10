@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckCard } from '@/components/cards/DeckCard';
 import { Icon } from '@/components/icons/Icon';
@@ -47,12 +48,7 @@ export function ExploreScreen() {
   const community = selected && COMMUNITY_CARDS.find((c) => c.rule.id === selected.id);
   const isMine = selected && mine.some((r) => r.id === selected.id);
 
-  const play = (d: CommunityDeck) => {
-    haptics.press();
-    const game = createGame({ name: d.name, mode: 'sprint', startsInHours: 24, emoji: d.emoji, ruleIds: d.ruleIds });
-    showToast({ text: `Stanza creata con il mazzo ${d.name}` });
-    router.replace({ pathname: '/onboarding/invite', params: { gameId: game.id } });
-  };
+  const play = usePlayDeck();
 
   return (
     <View style={styles.screen}>
