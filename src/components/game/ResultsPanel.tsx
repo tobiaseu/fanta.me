@@ -5,7 +5,7 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
-import { computeStandings, useGameStore } from '@/store/useGameStore';
+import { computeStandings, nameIn, useGameStore } from '@/store/useGameStore';
 import { colors, layout, radius, shadow, space } from '@/theme/tokens';
 import type { Game, Player } from '@/types/game';
 
@@ -52,12 +52,14 @@ export function ResultsPanel({ game }: { game: Game }) {
           <AppText style={styles.confetti}>🎉</AppText>
           <Avatar player={winner.player} size={88} />
           <AppText variant="serifTitle" style={styles.center}>
-            {winner.player.id === ME.id ? 'Hai vinto tu' : `Ha vinto ${winner.player.name}`}
+            {winner.player.id === ME.id ? 'Hai vinto tu' : `Ha vinto ${nameIn(game, winner.player)}`}
           </AppText>
           <AppText variant="body" color={colors.inkSoft} style={styles.center}>
             {[
               `${winner.points} punti`,
-              ...standings.slice(1, 3).map((r, i) => `${i + 2}° ${r.player.id === ME.id ? 'tu' : r.player.name}`),
+              ...standings
+                .slice(1, 3)
+                .map((r, i) => `${i + 2}° ${r.player.id === ME.id ? 'tu' : nameIn(game, r.player)}`),
             ].join(', ')}
           </AppText>
         </View>
@@ -75,7 +77,7 @@ export function ResultsPanel({ game }: { game: Game }) {
                     {t.detail}
                   </AppText>
                 </View>
-                <AppText variant="name">{t.player.id === ME.id ? 'Tu' : t.player.name}</AppText>
+                <AppText variant="name">{t.player.id === ME.id ? 'Tu' : nameIn(game, t.player)}</AppText>
                 <Avatar player={t.player} size={32} sticker={false} />
               </View>
             ) : null,

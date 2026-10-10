@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { ME } from '@/data/mock';
+import { useSessionStore } from '@/store/useSessionStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 
 const STEPS = [
@@ -18,9 +20,23 @@ const STEPS = [
 export function HelloScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const finishOnboarding = useSessionStore((s) => s.finishOnboarding);
   return (
     <View
-      style={[styles.screen, { paddingTop: insets.top + space.xxl, paddingBottom: Math.max(insets.bottom, space.md) }]}>
+      style={[styles.screen, { paddingTop: insets.top + space.md, paddingBottom: Math.max(insets.bottom, space.md) }]}>
+      <PressableScale
+        accessibilityRole="button"
+        hitSlop={12}
+        style={styles.skip}
+        onPress={() => {
+          finishOnboarding();
+          router.replace('/');
+        }}>
+        <AppText variant="headline" color={colors.inkSoft}>
+          Salta
+        </AppText>
+      </PressableScale>
+      <View style={styles.flex} />
       <Animated.View entering={FadeInDown.duration(400)} style={styles.copy}>
         <AppText style={styles.party}>🎉</AppText>
         <AppText variant="serifTitle">Benvenuto, {ME.name}!</AppText>
@@ -50,6 +66,7 @@ export function HelloScreen() {
 }
 
 const styles = StyleSheet.create({
+  skip: { alignSelf: 'flex-end', paddingVertical: space.xs },
   screen: {
     flex: 1,
     backgroundColor: colors.background,

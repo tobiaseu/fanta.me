@@ -15,7 +15,7 @@ import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 
 const TABS: Record<string, { label: string; icon?: IconName }> = {
   index: { label: 'Dashboard', icon: 'home' },
-  rules: { label: 'Regolamento', icon: 'book' },
+  rules: { label: 'Mazzo', icon: 'grid' },
   action: { label: 'Punti' },
   leaderboard: { label: 'Classifica', icon: 'people' },
   profile: { label: 'Profilo' },
@@ -38,8 +38,8 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
     : game.status === 'waiting'
       ? {
           icon: 'grid',
-          label: 'Apri il mazzo',
-          short: 'Mazzo',
+          label: 'Le mie carte nel mazzo',
+          short: 'Carte',
           onPress: () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } }),
         }
       : game.status === 'live'
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     ...shadow.floating,
   },
   tab: { alignItems: 'center', justifyContent: 'center', gap: 3, width: 64, height: 56 },
-  label: { fontSize: 10, lineHeight: 12, fontWeight: '600' },
+  label: { fontSize: 11.5, lineHeight: 14, fontWeight: '600' },
   avatarRing: { padding: 1, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
   avatarRingActive: { borderColor: colors.ink },
   play: {

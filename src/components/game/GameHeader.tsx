@@ -28,7 +28,9 @@ function countdownOf(game: Game, now: number) {
   const end = new Date(game.endsAt ?? day.end).getTime();
   return {
     target: day.end,
-    short: `· ${day.label.toLowerCase()} ${day.index} di ${day.total}, ${game.endsAt ? `fine tra ${formatLong(end - now)}` : `chiude tra ${formatLong(day.end - now)}`}`,
+    short: game.endsAt
+      ? `· finisce tra ${formatLong(end - now)}`
+      : `· la giornata chiude tra ${formatLong(day.end - now)}`,
   };
 }
 

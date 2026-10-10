@@ -28,20 +28,25 @@ export function Avatar({ player, size = 40, sticker = true }: Props) {
           borderWidth: border,
         },
       ]}>
+      {/* Iniziale sempre sotto: se la foto non carica resta leggibile chi è */}
+      <AppText
+        variant="headline"
+        color={colors.inkInverse}
+        style={{ fontSize: size * 0.42, lineHeight: size * 0.5, fontWeight: '600', letterSpacing: 0 }}>
+        {player.name.charAt(0).toUpperCase()}
+      </AppText>
       {player.photo ? (
         <Image
           source={{ uri: player.photo }}
-          style={{ width: size - border * 2, height: size - border * 2, borderRadius: size / 2 }}
+          style={{
+            position: 'absolute',
+            width: size - border * 2,
+            height: size - border * 2,
+            borderRadius: size / 2,
+          }}
           accessibilityIgnoresInvertColors
         />
-      ) : (
-        <AppText
-          variant="headline"
-          color={colors.inkInverse}
-          style={{ fontSize: size * 0.42, lineHeight: size * 0.5, fontWeight: '800', letterSpacing: 0 }}>
-          {player.name.charAt(0).toUpperCase()}
-        </AppText>
-      )}
+      ) : null}
     </View>
   );
 }

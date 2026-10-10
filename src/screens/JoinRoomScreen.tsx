@@ -49,7 +49,7 @@ export function JoinRoomScreen() {
     return (
       <View style={styles.screen}>
         <View style={styles.head}>
-          <AppText variant="title">Come ti chiamano qui?</AppText>
+          <AppText variant="serifHeading">Come ti chiamano qui?</AppText>
           <PressableScale onPress={() => setJoinId(undefined)} style={styles.close} accessibilityLabel="Indietro">
             <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
           </PressableScale>
@@ -80,7 +80,7 @@ export function JoinRoomScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.head}>
-        <AppText variant="title">Entra con codice</AppText>
+        <AppText variant="serifHeading">Entra con codice</AppText>
         <PressableScale onPress={() => router.back()} style={styles.close} accessibilityLabel="Chiudi">
           <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
         </PressableScale>
@@ -97,7 +97,7 @@ export function JoinRoomScreen() {
         autoCapitalize="characters"
         autoCorrect={false}
         maxLength={6}
-        placeholder="CODICE"
+        placeholder="Codice"
         placeholderTextColor={colors.placeholder}
         style={[styles.input, error && styles.inputError]}
         onSubmitEditing={submit}

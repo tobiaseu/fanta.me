@@ -15,6 +15,9 @@ const EMOJI_FONT = Platform.select({
 export const TROPHY_GOLD = '#D4A017';
 
 /** Toni della carta: goccia verde bonus, rossa malus, viola per le carte personali. */
+/** Lunghezza della parola più lunga: oltre 9 lettere il nome si rimpicciolisce invece di spezzarsi. */
+const longestWord = (label: string) => Math.max(...label.split(/\s+/).map((w) => w.length));
+
 export function cardTone(rule: Rule) {
   // Carte pulite: fondo bianco, bordo sottile grigio scuro; il colore sta solo nella goccia dei punti
   const gem = rule.authorId ? colors.toonPurple : rule.points > 0 ? colors.bonus : colors.malus;
@@ -60,7 +63,10 @@ export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, st
           {rule.emoji}
         </Text>
         {!bare && (
-          <AppText variant="serifCard" numberOfLines={2} style={styles.inName}>
+          <AppText
+            variant="serifCard"
+            numberOfLines={2}
+            style={[styles.inName, longestWord(rule.label) > 9 && styles.inNameSmall]}>
             {rule.label}
           </AppText>
         )}
@@ -69,8 +75,8 @@ export function DeckCard({ rule, dimmed, checked, note, onPress, onLongPress, st
             <Text style={styles.trophyEmoji}>🏆</Text>
           </View>
         )}
-        <View style={[styles.gem, { backgroundColor: tone.gem }]}>
-          <AppText variant="micro" color={colors.inkInverse} style={styles.gemText}>
+        <View style={[styles.gem, { borderColor: tone.gem }]}>
+          <AppText variant="micro" color={tone.gem} style={styles.gemText}>
             {rule.points > 0 ? `+${rule.points}` : rule.points}
           </AppText>
         </View>
@@ -136,10 +142,13 @@ const styles = StyleSheet.create({
     height: 20,
     paddingHorizontal: 4,
     borderRadius: 10,
+    borderWidth: 1,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gemText: { fontSize: 11, lineHeight: 13, fontWeight: '800' },
+  gemText: { fontSize: 11, lineHeight: 13, fontWeight: '700' },
+  inNameSmall: { fontSize: 10.5, lineHeight: 13, paddingHorizontal: 3 },
   check: {
     position: 'absolute',
     top: 4,

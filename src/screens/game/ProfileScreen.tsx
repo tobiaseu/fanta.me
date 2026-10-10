@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
+import { Icon } from '@/components/icons/Icon';
 import { TeamFormation } from '@/components/game/TeamFormation';
 import { PlayerGameSection } from '@/components/game/PlayerGameSection';
 import { AppText } from '@/components/ui/AppText';
@@ -45,37 +46,29 @@ export function ProfileScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <Avatar player={ME} size={88} sticker={false} />
-        <TextInput
-          accessibilityLabel="Il tuo nickname in questa stanza"
-          value={nick ?? nameIn(game, ME)}
-          onChangeText={setNick}
-          onBlur={() => nick !== undefined && setNickname(game.id, nick)}
-          onSubmitEditing={() => nick !== undefined && setNickname(game.id, nick)}
-          style={styles.nick}
-          maxLength={20}
-        />
+        <View style={styles.nickRow}>
+          <TextInput
+            accessibilityLabel="Il tuo nickname in questa stanza, tocca per cambiarlo"
+            value={nick ?? nameIn(game, ME)}
+            onChangeText={setNick}
+            onBlur={() => nick !== undefined && setNickname(game.id, nick)}
+            onSubmitEditing={() => nick !== undefined && setNickname(game.id, nick)}
+            style={styles.nick}
+            maxLength={20}
+          />
+          <Icon name="edit" size={18} color={colors.inkSoft} />
+        </View>
         <AppText variant="caption" color={colors.inkFaint}>
-          @{ME.handle} · nickname valido solo in questa stanza
+          @{ME.handle}. Il nickname vale solo in questa stanza
         </AppText>
       </View>
 
-      <View style={styles.rankRow}>
-        {teamPlace > 0 && team && (
-          <View
-            style={[styles.rankCard, styles.rankMain]}
-            accessibilityLabel={`${team.name} ${teamPlace}ª su ${teamRows.length}`}>
-            <AppText style={styles.rankNumber}>{teamPlace}ª</AppText>
-            <AppText variant="caption" color={colors.inkSoft} style={styles.regular} numberOfLines={2}>
-              {team.name} su {teamRows.length} squadre
-            </AppText>
-          </View>
-        )}
-        <View style={styles.rankCard} accessibilityLabel={`${myRank}° su ${standings.length} individuale`}>
-          <AppText style={[styles.rankNumber, teamPlace > 0 && styles.rankSmall]}>{myRank}°</AppText>
-          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-            individuale su {standings.length}
-          </AppText>
-        </View>
+      <View style={styles.rankCard} accessibilityLabel={`${myRank}° posto individuale su ${standings.length}`}>
+        <AppText style={styles.rankNumber}>{myRank}°</AppText>
+        <AppText variant="caption" color={colors.inkSoft} style={[styles.regular, styles.flex1]}>
+          posto individuale su {standings.length}
+          {team ? '. La classifica che conta è quella di squadra, qui sotto.' : ''}
+        </AppText>
       </View>
 
       {team && (
@@ -84,6 +77,7 @@ export function ProfileScreen() {
           team={team}
           place={teamPlace}
           points={teamRows.find((t) => t.team.id === team.id)?.points}
+          mine
         />
       )}
 
@@ -110,7 +104,7 @@ export function ProfileScreen() {
               style={[styles.row, i > 0 && styles.rowDivider]}>
               <Avatar player={r.player} size={40} sticker={false} />
               <View style={styles.flex}>
-                <AppText variant="name">{r.player.name}</AppText>
+                <AppText variant="name">{nameIn(game, r.player)}</AppText>
                 <AppText variant="body" color={colors.inkMuted}>
                   @{r.player.handle}
                 </AppText>
@@ -141,6 +135,8 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
 }
 
 const styles = StyleSheet.create({
+  flex1: { flex: 1 },
+  nickRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: layout.gutter,
@@ -159,17 +155,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     color: colors.ink,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairline,
     paddingVertical: 2,
-    minWidth: 160,
+    minWidth: 80,
   },
-  rankRow: { flexDirection: 'row', gap: space.sm },
-  rankMain: { flex: 1.3 },
-  rankSmall: { fontSize: 32, lineHeight: 38 },
   rankCard: {
-    flex: 1,
-    gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: layout.card,

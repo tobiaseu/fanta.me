@@ -21,7 +21,7 @@ export function SettingsScreen() {
         { paddingTop: insets.top + space.md, paddingBottom: insets.bottom + space.xl },
       ]}>
       <View style={styles.head}>
-        <AppText variant="title">Impostazioni</AppText>
+        <AppText variant="serifHeading">Impostazioni</AppText>
         <PressableScale onPress={() => router.back()} style={styles.close} accessibilityLabel="Chiudi">
           <Icon name="close" size={18} color={colors.inkSoft} />
         </PressableScale>

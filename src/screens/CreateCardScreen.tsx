@@ -102,7 +102,7 @@ export function CreateCardScreen() {
       keyboardShouldPersistTaps="handled">
       <View style={styles.head}>
         <View>
-          <AppText variant="title">Nuova carta</AppText>
+          <AppText variant="serifHeading">Nuova carta</AppText>
           <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
             Ti restano {Math.max(0, left)} carte personali
           </AppText>

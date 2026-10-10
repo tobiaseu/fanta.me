@@ -5,7 +5,7 @@ import { colors, space } from '@/theme/tokens';
 import type { GameStatus } from '@/types/game';
 
 export const PHASES = [
-  { id: 'setup', label: 'Setting' },
+  { id: 'setup', label: 'Preparazione' },
   { id: 'waiting', label: 'Pre-partita' },
   { id: 'live', label: 'In partita' },
   { id: 'ended', label: 'Risultati' },

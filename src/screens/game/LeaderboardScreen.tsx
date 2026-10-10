@@ -1,3 +1,4 @@
+import { Segmented } from '@/components/ui/Segmented';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -92,8 +93,10 @@ export function LeaderboardScreen() {
 
   if (!game) return null;
 
+  // Podio solo con tre posizioni nette: con pari merito o tutti a zero basta la lista
+  const showPodium = rows.length >= 3 && new Set(rows.slice(0, 3).map((r) => r.points)).size === 3;
   const podium = [rows[1], rows[0], rows[2]]; // 2° · 1° · 3°
-  const rest = rows.slice(3);
+  const rest = showPodium ? rows.slice(3) : rows;
   /** Giocatore → profilo; squadra → classifica individuale, per vedere chi ha portato i punti. */
   const open = (row: Row) => {
     if (!row.isTeam) return openPlayer(row.lead.id);
@@ -104,94 +107,71 @@ export function LeaderboardScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       {game.teams?.length ? (
-        <View style={styles.segment} accessibilityRole="tablist">
-          {(
-            [
-              ['teams', 'Squadre'],
-              ['players', 'Individuale'],
-            ] as const
-          ).map(([id, label]) => (
-            <Pressable
-              key={id}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: mode === id }}
-              onPress={() => {
-                haptics.tap();
-                setMode(id);
-              }}
-              style={[styles.segmentItem, mode === id && styles.segmentActive]}>
-              <AppText variant="headline" color={mode === id ? colors.ink : colors.inkFaint}>
-                {label}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
+        <Segmented
+          value={mode}
+          onChange={setMode}
+          options={[
+            { id: 'teams', label: 'Squadre' },
+            { id: 'players', label: 'Individuale' },
+          ]}
+        />
       ) : null}
 
-      <View style={styles.periods} accessibilityRole="tablist">
-        {(
-          [
-            ['all', 'Tutta la partita'],
-            ['today', `Oggi · ${gameDay(game, Date.now()).label} ${gameDay(game, Date.now()).index}`],
-          ] as const
-        ).map(([id, label]) => (
-          <Pressable
-            key={id}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: period === id }}
-            onPress={() => {
-              haptics.tap();
-              setPeriod(id);
-            }}
-            style={[styles.period, period === id && styles.periodActive]}>
-            <AppText variant="caption" color={period === id ? colors.inkInverse : colors.inkSoft}>
-              {label}
-            </AppText>
-          </Pressable>
-        ))}
-      </View>
+      <Segmented
+        value={period}
+        onChange={setPeriod}
+        options={[
+          { id: 'all', label: 'Tutta la partita' },
+          {
+            id: 'today',
+            label: `Oggi, ${gameDay(game, Date.now()).label.toLowerCase()} ${gameDay(game, Date.now()).index}`,
+          },
+        ]}
+      />
 
-      <View style={styles.podium}>
-        {podium.map((row, i) => {
-          if (!row) return <View key={i} style={styles.podiumCol} />;
-          const slot = i === 1 ? 1 : i === 0 ? 2 : 3;
-          const tie = rows.filter((r) => r.place === row.place).length > 1;
-          return (
-            <Animated.View
-              key={row.id}
-              entering={FadeInUp.delay(slot * 90)
-                .springify()
-                .damping(16)}
-              style={styles.podiumCol}>
-              <PressableScale
-                onPress={() => open(row)}
-                accessibilityRole="button"
-                accessibilityLabel={row.isTeam ? `${row.name}: vedi i singoli giocatori` : `Profilo di ${row.name}`}
-                style={styles.podiumHead}>
-                <Avatar player={row.lead} size={slot === 1 ? 76 : 62} shape="square" sticker={false} />
-                <AppText variant="headline" numberOfLines={1} style={styles.center}>
-                  {row.name}
-                </AppText>
-                {row.members.length > 0 && <AvatarStack players={row.members} size={22} />}
-                <View style={styles.coinPill}>
-                  <CoinIcon />
-                  <AppText variant="headline">{row.points}</AppText>
-                </View>
-              </PressableScale>
-              <View style={[styles.pedestal, { height: slot === 1 ? 128 : slot === 2 ? 100 : 76 }]}>
-                <AppText style={styles.pedestalNumber} color={colors.placeholder}>
-                  {row.place}
-                </AppText>
-                {tie && (
-                  <AppText variant="micro" color={colors.inkFaint}>
-                    pari merito
+      {showPodium && (
+        <View style={styles.podium}>
+          {podium.map((row, i) => {
+            if (!row) return <View key={i} style={styles.podiumCol} />;
+            const slot = i === 1 ? 1 : i === 0 ? 2 : 3;
+            const tie = rows.filter((r) => r.place === row.place).length > 1;
+            return (
+              <Animated.View
+                key={row.id}
+                entering={FadeInUp.delay(slot * 90)
+                  .springify()
+                  .damping(16)}
+                style={styles.podiumCol}>
+                <PressableScale
+                  onPress={() => open(row)}
+                  accessibilityRole="button"
+                  accessibilityLabel={row.isTeam ? `${row.name}: vedi i singoli giocatori` : `Profilo di ${row.name}`}
+                  style={styles.podiumHead}>
+                  <Avatar player={row.lead} size={slot === 1 ? 76 : 62} shape="square" sticker={false} />
+                  <AppText variant="headline" numberOfLines={1} style={styles.center}>
+                    {row.name}
                   </AppText>
-                )}
-              </View>
-            </Animated.View>
-          );
-        })}
-      </View>
+                  {row.members.length > 0 && <AvatarStack players={row.members} size={22} />}
+                  <View style={styles.coinPill}>
+                    <CoinIcon />
+                    <AppText variant="headline">{row.points}</AppText>
+                  </View>
+                </PressableScale>
+                <View style={[styles.pedestal, { height: slot === 1 ? 128 : slot === 2 ? 100 : 76 }]}>
+                  <AppText style={styles.pedestalNumber} color={colors.placeholder}>
+                    {row.place}
+                  </AppText>
+                  {tie && (
+                    <AppText variant="micro" color={colors.inkFaint}>
+                      pari merito
+                    </AppText>
+                  )}
+                </View>
+              </Animated.View>
+            );
+          })}
+        </View>
+      )}
 
       <View style={styles.list}>
         {rest.map((row) => {

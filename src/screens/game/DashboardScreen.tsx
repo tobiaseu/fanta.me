@@ -123,6 +123,58 @@ export function DashboardScreen() {
             </PressableScale>
           )}
 
+          <PowersPanel game={game} now={now} />
+        </>
+      )}
+      {game.status === 'ended' && <ResultsPanel game={game} />}
+      {game.status === 'live' && (
+        <>
+          <View style={styles.section}>
+            <SectionHeader
+              title={toVote > 0 ? 'Da votare' : 'Chiamate'}
+              caption={
+                toVote > 0
+                  ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+                  : 'Hai votato tutto. Usa il + giallo per chiamare un punto.'
+              }
+            />
+            <StoriesRow
+              calls={calls}
+              players={players}
+              onOpen={(call) => {
+                haptics.tap();
+                router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
+              }}
+            />
+          </View>
+
+          {card && (
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`Carta del giorno: ${card.label}, oggi vale ${card.points * 2} punti. Chiamala.`}
+              onPress={() => {
+                haptics.press();
+                openQuickAction();
+              }}
+              style={styles.dayCard}>
+              <RuleSticker rule={card} size={84} />
+              <View style={styles.flex}>
+                <AppText variant="micro" color={colors.inkSoft}>
+                  Carta del giorno
+                </AppText>
+                <AppText variant="serifCard" numberOfLines={2}>
+                  {card.label}
+                </AppText>
+                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                  Fino a fine {day.label.toLowerCase()} vale +{card.points * 2} invece di +{card.points}
+                </AppText>
+              </View>
+              <View style={styles.double}>
+                <AppText variant="headline">×2</AppText>
+              </View>
+            </PressableScale>
+          )}
+
           {myTeam && (
             <View style={styles.section}>
               <SectionHeader title="Il tuo capitano" caption="I suoi punti di oggi contano doppio per la squadra." />

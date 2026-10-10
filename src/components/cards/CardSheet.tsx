@@ -29,7 +29,7 @@ interface Props {
 
 /**
  * Carta ingrandita al tocco: stessa proporzione della carta piccola (0,78),
- * X in alto a sinistra e chiusura anche toccando fuori.
+ * X in alto a destra e chiusura anche toccando fuori.
  * Sotto: l'azione della schermata e "Salva nelle mie carte" per le partite future.
  */
 export function CardSheet({ rule, author, status, action, onClose }: Props) {
@@ -54,8 +54,8 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
                 style={styles.close}>
                 <Icon name="close" size={16} />
               </PressableScale>
-              <View style={[styles.gem, { backgroundColor: tone.gem }]}>
-                <AppText variant="headline" color={colors.inkInverse}>
+              <View style={[styles.gem, { borderColor: tone.gem }]}>
+                <AppText variant="headline" color={tone.gem}>
                   {rule.points > 0 ? `+${rule.points}` : rule.points}
                 </AppText>
               </View>
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   close: {
     position: 'absolute',
     top: space.sm,
-    left: space.sm,
+    right: space.sm,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -147,11 +147,12 @@ const styles = StyleSheet.create({
   gem: {
     position: 'absolute',
     top: space.sm,
-    right: space.sm,
+    left: space.sm,
     minWidth: 48,
     height: 32,
     borderRadius: 16,
     paddingHorizontal: space.xs,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

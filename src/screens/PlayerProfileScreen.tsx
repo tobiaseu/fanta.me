@@ -91,7 +91,7 @@ export function PlayerProfileScreen() {
         { paddingTop: insets.top + space.md, paddingBottom: insets.bottom + space.xl },
       ]}>
       <View style={styles.head}>
-        <AppText variant="title">{isMe ? 'Il tuo profilo' : 'Profilo'}</AppText>
+        <AppText variant="serifHeading">{isMe ? 'Il tuo profilo' : 'Profilo'}</AppText>
         <View style={styles.headActions}>
           {isMe && (
             <PressableScale
@@ -216,7 +216,7 @@ export function PlayerProfileScreen() {
       )}
       {isMe && (
         <View style={styles.section}>
-          <AppText variant="title">Impostazioni</AppText>
+          <AppText variant="serifHeading">Impostazioni</AppText>
           <SettingsPanel />
         </View>
       )}

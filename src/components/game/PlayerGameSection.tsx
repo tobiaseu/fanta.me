@@ -18,8 +18,8 @@ const EMOJI_FONT = Platform.select({
 
 /** Ombreggiature "da collezione": Rara (oro, carta del giorno) e Furia (rosso, in corso adesso). */
 const SHADE = {
-  rara: { color: '#E8A400', glow: 'rgba(255, 196, 0, 0.55)', label: 'RARA' },
-  furia: { color: '#E5352B', glow: 'rgba(255, 70, 40, 0.5)', label: 'FURIA' },
+  rara: { color: '#E8A400', glow: 'rgba(255, 196, 0, 0.55)', label: 'Rara' },
+  furia: { color: '#E5352B', glow: 'rgba(255, 70, 40, 0.5)', label: 'Furia' },
 } as const;
 type Shade = keyof typeof SHADE;
 
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   shadeWrap: { width: '100%', borderRadius: radius.sm + 3, borderWidth: 1, borderColor: 'transparent', padding: 1 },
   fill: { width: '100%' },
   tag: { marginTop: 4, borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 1 },
-  tagText: { fontSize: 10, lineHeight: 13, fontWeight: '800', letterSpacing: 0.6 },
+  tagText: { fontSize: 10, lineHeight: 13, fontWeight: '700' },
   powers: { flexDirection: 'row', gap: space.xs },
   power: {
     flex: 1,

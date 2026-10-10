@@ -103,6 +103,7 @@ export const type = {
   micro: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
   number: { fontSize: 22, lineHeight: 26, fontWeight: '800', fontVariant: ['tabular-nums'] },
   serifTitle: { fontFamily: fonts.serifBold, fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
+  serifHeading: { fontFamily: fonts.serifBold, fontSize: 26, lineHeight: 32, letterSpacing: -0.4 },
   serifCard: { fontFamily: fonts.serifSemi, fontSize: 18, lineHeight: 22, letterSpacing: -0.2 },
 } as const;
 

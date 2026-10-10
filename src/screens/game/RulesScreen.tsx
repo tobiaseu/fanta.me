@@ -13,7 +13,7 @@ import { ME } from '@/data/mock';
 import { powerById, RULES, ruleById } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { haptics } from '@/lib/haptics';
-import { customSlots, proposalsNeeded, useGameStore } from '@/store/useGameStore';
+import { customSlots, nameIn, proposalsNeeded, useGameStore } from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Rule } from '@/types/game';
 
@@ -224,7 +224,7 @@ export function RulesScreen() {
               <View key={p.id} style={[styles.row, i > 0 && styles.rowDivider]}>
                 <Avatar player={p} size={36} sticker={false} />
                 <AppText variant="name" style={styles.flex}>
-                  {p.id === ME.id ? 'Tu' : p.name}
+                  {p.id === ME.id ? 'Tu' : nameIn(game, p)}
                 </AppText>
                 {[main, second].map((pp, k) =>
                   pp ? (

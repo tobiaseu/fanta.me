@@ -1,3 +1,4 @@
+import { nameIn, useGameStore } from '@/store/useGameStore';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
@@ -19,6 +20,7 @@ interface Props {
  * Riga "storie": le chiamate del gruppo da votare (anello giallo) o già votate (badge ✓ / ✕).
  */
 export function StoriesRow({ calls, players, onOpen }: Props) {
+  const games = useGameStore((s) => s.games);
   return (
     <ScrollView
       horizontal
@@ -33,7 +35,10 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
           <PressableScale
             key={call.id}
             accessibilityRole="button"
-            accessibilityLabel={`Chiamata su ${player.name}${voted ? ', già votata' : ', da votare'}`}
+            accessibilityLabel={`Chiamata su ${nameIn(
+              games.find((g) => g.id === call.gameId),
+              player,
+            )}${voted ? ', già votata' : ', da votare'}`}
             onPress={() => onOpen(call)}
             style={styles.item}>
             <View style={[styles.circle, styles.ring, voted && styles.ringVoted]}>
@@ -50,7 +55,10 @@ export function StoriesRow({ calls, players, onOpen }: Props) {
               </View>
             )}
             <AppText variant="micro" style={styles.label} numberOfLines={1}>
-              {player.name}
+              {nameIn(
+                games.find((g) => g.id === call.gameId),
+                player,
+              )}
             </AppText>
           </PressableScale>
         );

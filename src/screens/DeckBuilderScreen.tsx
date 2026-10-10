@@ -1,3 +1,4 @@
+import { Segmented } from '@/components/ui/Segmented';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -193,7 +194,7 @@ export function DeckBuilderScreen() {
             })}
           </View>
           <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-            Scorri le carte qui sotto e toccane una per metterla. Tieni premuto e trascina per scambiare.
+            Tocca una carta per metterla nel mazzo.
           </AppText>
         </View>
       </View>
@@ -201,28 +202,14 @@ export function DeckBuilderScreen() {
         style={styles.flex1}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.xxl }]}>
         <View style={styles.section}>
-          <View style={styles.segment} accessibilityRole="tablist">
-            {(
-              [
-                ['mine', `Personali ${mineAll.length}`],
-                ['base', `Base ${RULES.length}`],
-              ] as const
-            ).map(([id, label]) => (
-              <Pressable
-                key={id}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: tab === id }}
-                onPress={() => {
-                  haptics.tap();
-                  setTab(id);
-                }}
-                style={[styles.segmentItem, tab === id && styles.segmentActive]}>
-                <AppText variant="caption" color={tab === id ? colors.ink : colors.inkSoft}>
-                  {label}
-                </AppText>
-              </Pressable>
-            ))}
-          </View>
+          <Segmented
+            value={tab}
+            onChange={setTab}
+            options={[
+              { id: 'mine', label: `Personali ${mineAll.length}` },
+              { id: 'base', label: `Base ${RULES.length}` },
+            ]}
+          />
           <View style={styles.grid}>
             {tab === 'mine' && (
               <EmptySlot

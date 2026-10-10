@@ -7,7 +7,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
 import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
-import { inviteCode, useGameStore } from '@/store/useGameStore';
+import { inviteCode, nameIn, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, radius, space } from '@/theme/tokens';
 import { DEFAULT_SETTINGS, type Game } from '@/types/game';
@@ -50,7 +50,7 @@ export function PregamePanel({ game, onOpenDeck }: { game: Game; onOpenDeck: () 
         <View style={styles.card}>
           <AvatarStack players={people} size={40} max={6} />
           <AppText variant="body" color={colors.inkSoft} style={styles.flex} numberOfLines={2}>
-            {people.map((p) => (p.id === ME.id ? 'Tu' : p.name)).join(', ')}
+            {people.map((p) => (p.id === ME.id ? 'Tu' : nameIn(game, p))).join(', ')}
           </AppText>
         </View>
         {game.ownerId === ME.id && (

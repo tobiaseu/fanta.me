@@ -8,6 +8,8 @@ import { ruleById } from '@/data/rules';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { teamColor } from '@/lib/teams';
 import { nameIn, useGameStore } from '@/store/useGameStore';
+import { useUiStore } from '@/store/useUiStore';
+import { haptics } from '@/lib/haptics';
 import { colors, radius, space } from '@/theme/tokens';
 import type { Game, Rule, Team } from '@/types/game';
 
@@ -20,15 +22,20 @@ export function TeamFormation({
   team,
   points,
   place,
+  mine,
 }: {
   game: Game;
   team: Team;
   points?: number;
   place?: number;
+  /** La mia squadra: si sceglie il capitano del giorno */
+  mine?: boolean;
 }) {
   const players = useGameStore((s) => s.players);
   const proposals = useGameStore((s) => s.proposals);
   const captains = useGameStore((s) => s.captains);
+  const setCaptain = useGameStore((s) => s.setCaptain);
+  const showToast = useUiStore((s) => s.showToast);
   const openPlayer = useOpenPlayer();
 
   return (
@@ -44,6 +51,11 @@ export function TeamFormation({
           </AppText>
         ) : null}
       </View>
+      {mine && (
+        <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+          Il capitano © fa contare doppio i suoi punti di oggi. Tocca «Capitano» per sceglierlo.
+        </AppText>
+      )}
       {team.memberIds.map((id) => {
         const p = players.find((x) => x.id === id);
         if (!p) return null;
@@ -68,8 +80,22 @@ export function TeamFormation({
                   @{p.handle}
                 </AppText>
               </View>
+              {mine && captains[team.id] !== id && (
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={`Fai capitano ${nameIn(game, p)}`}
+                  hitSlop={8}
+                  onPress={() => {
+                    haptics.press();
+                    setCaptain(team.id, id);
+                    showToast({ text: `${nameIn(game, p)} è il capitano di oggi` });
+                  }}
+                  style={styles.capBtn}>
+                  <AppText variant="micro">Capitano</AppText>
+                </PressableScale>
+              )}
               <AppText variant="caption" color={colors.inkSoft}>
-                {cards.length} carte
+                {cards.length === 1 ? '1 carta' : `${cards.length} carte`}
               </AppText>
             </PressableScale>
             {cards.length > 0 && (
@@ -91,6 +117,15 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   dot: { width: 12, height: 12, borderRadius: 6 },
   flex: { flex: 1 },
+  regular: { fontWeight: '400' },
+  capBtn: {
+    paddingHorizontal: space.sm,
+    height: 28,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   member: { gap: space.sm },
   who: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.sm },

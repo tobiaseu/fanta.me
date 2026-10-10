@@ -30,7 +30,7 @@ export function PowersScreen() {
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.lg }]}>
       <View style={styles.head}>
-        <AppText variant="title">I tuoi fantapoteri</AppText>
+        <AppText variant="serifHeading">I tuoi fantapoteri</AppText>
         <PressableScale onPress={() => router.back()} style={styles.close} accessibilityLabel="Chiudi">
           <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
         </PressableScale>
@@ -45,7 +45,7 @@ export function PowersScreen() {
           return (
             <View key={slot.id} style={[styles.slot, slot.id === 'main' && styles.slotMain]}>
               <AppText variant="micro" color={colors.inkSoft}>
-                {slot.label.toUpperCase()}
+                {slot.label}
               </AppText>
               <AppText style={styles.slotEmoji}>{p?.emoji}</AppText>
               <AppText variant="name">{p?.label}</AppText>

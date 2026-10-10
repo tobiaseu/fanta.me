@@ -1,3 +1,5 @@
+import { timeAgo } from '@/lib/time';
+import { Segmented } from '@/components/ui/Segmented';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
@@ -11,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
-import { trophyHolder, useGameStore } from '@/store/useGameStore';
+import { nameIn, trophyHolder, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Rule, Game, RuleKind } from '@/types/game';
@@ -46,9 +48,19 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
   const [kind, setKind] = useState<RuleKind>('bonus');
   const [ruleId, setRuleId] = useState<string>();
 
+  // In cima le carte chiamate di recente in questa stanza: di solito si richiamano quelle
+  const recent = events
+    .filter((e) => e.gameId === game.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((e) => e.ruleId);
+  const rank = (id: string) => {
+    const i = recent.indexOf(id);
+    return i < 0 ? Infinity : i;
+  };
   const rules = game.ruleIds
     .map(ruleById)
-    .filter((r): r is Rule => !!r && (kind === 'bonus' ? r.points > 0 : r.points < 0));
+    .filter((r): r is Rule => !!r && (kind === 'bonus' ? r.points > 0 : r.points < 0))
+    .sort((a, b) => rank(a.id) - rank(b.id));
   const rule = ruleId ? ruleById(ruleId) : undefined;
   const player = players.find((p) => p.id === playerId);
 
@@ -60,7 +72,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
     onDone();
     if (event) {
       showToast({
-        text: `Chiamata inviata: ${rule.label} su ${player.name}`,
+        text: `Chiamata inviata: ${rule.label} su ${nameIn(game, player)}`,
         action: { label: 'Annulla', onPress: () => restoreEvent(undefined, event.id) },
       });
     }
@@ -103,7 +115,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                   <Avatar player={p} size={52} sticker={false} shape="circle" />
                 </View>
                 <AppText variant="micro" color={selected ? colors.ink : colors.inkSoft}>
-                  {p.name}
+                  {nameIn(game, p)}
                 </AppText>
               </Pressable>
             );
@@ -113,30 +125,27 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
         <AppText variant="caption" color={colors.inkSoft}>
           2 · Quale carta?
         </AppText>
-        <View style={styles.segment}>
-          {(['bonus', 'malus'] as const).map((k) => (
-            <Pressable
-              key={k}
-              onPress={() => {
-                haptics.tap();
-                setKind(k);
-                setRuleId(undefined);
-              }}
-              style={[styles.segmentItem, kind === k && styles.segmentActive]}>
-              <AppText
-                variant="headline"
-                color={kind === k ? (k === 'bonus' ? colors.bonus : colors.malus) : colors.inkFaint}>
-                {k === 'bonus' ? 'Bonus' : 'Malus'}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
+        <Segmented
+          value={kind}
+          onChange={(k) => {
+            setKind(k);
+            setRuleId(undefined);
+          }}
+          options={[
+            { id: 'bonus', label: 'Bonus' },
+            { id: 'malus', label: 'Malus' },
+          ]}
+        />
         <ScrollView style={styles.rulesScroll} contentContainerStyle={styles.rules}>
           {rules.map((r) => {
             const selected = r.id === ruleId;
             const isBonus = r.points > 0;
             // Carta trofeo già presa: una volta sola, dal primo che ci arriva
-            const holder = r.trophy ? players.find((p) => p.id === trophyHolder(events, game.id, r.id)) : undefined;
+            const holderId = r.trophy ? trophyHolder(events, game.id, r.id) : undefined;
+            const holder = players.find((p) => p.id === holderId);
+            const takenAt = holderId
+              ? events.find((e) => e.gameId === game.id && e.ruleId === r.id && e.status === 'confirmed')?.createdAt
+              : undefined;
             return (
               <Pressable
                 key={r.id}
@@ -163,7 +172,7 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
                   </AppText>
                   <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
                     {holder
-                      ? `Trofeo già preso da ${holder.name}`
+                      ? `Trofeo già preso da ${nameIn(game, holder)}${takenAt ? `, ${timeAgo(takenAt)}` : ''}`
                       : r.trophy
                         ? 'Trofeo: vale solo per il primo'
                         : r.description}
@@ -182,8 +191,10 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
           onPress={confirm}
           label={
             player && rule
-              ? `Chiama ${rule.points > 0 ? '+' : ''}${rule.points} su ${player.name}`
-              : 'Scegli giocatore e carta'
+              ? `Chiama ${rule.points > 0 ? '+' : ''}${rule.points} su ${nameIn(game, player)}`
+              : !player
+                ? 'Scegli chi'
+                : 'Scegli la carta'
           }
         />
         <AppText variant="micro" color={colors.inkFaint} style={styles.hint}>

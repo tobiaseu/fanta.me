@@ -38,7 +38,7 @@ const CHAPTERS = [
   {
     title: 'II. I momenti del gioco',
     items: [
-      ['⚙️', 'Setting', 'L’host crea la stanza: nome, tipo di partita, orario e regole avanzate.'],
+      ['⚙️', 'Preparazione', 'L’host crea la stanza: nome, tipo di partita, orario e regole avanzate.'],
       [
         '🧩',
         'Pre-partita',

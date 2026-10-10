@@ -38,7 +38,7 @@ export default function GameLayout() {
             sceneStyle: { backgroundColor: colors.background },
           }}>
           <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
-          <Tabs.Screen name="rules" options={{ title: 'Regolamento' }} />
+          <Tabs.Screen name="rules" options={{ title: 'Mazzo' }} />
           <Tabs.Screen name="action" options={{ title: 'Aggiungi punti' }} />
           <Tabs.Screen name="leaderboard" options={{ title: 'Classifica' }} />
           <Tabs.Screen name="profile" options={{ title: 'Profilo' }} />
