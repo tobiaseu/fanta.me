@@ -60,10 +60,9 @@ export function CallScreen() {
   if (!event || !rule || !player) return null;
 
   const confirmed = event.status === 'confirmed';
-  // La fila di storie: chiamate da votare, oppure punti confermati, nello stesso ordine della dashboard
-  const siblings: FeedEvent[] = events.filter(
-    (e) => e.gameId === event.gameId && (confirmed ? e.status === 'confirmed' : e.status === 'pending'),
-  );
+  // Le chiamate da votare scorrono come storie; un punto già deciso si apre da solo, senza proseguire
+  const siblings: FeedEvent[] =
+    event.status === 'pending' ? events.filter((e) => e.gameId === event.gameId && e.status === 'pending') : [event];
   const index = siblings.findIndex((e) => e.id === event.id);
   const go = (delta: number) => {
     const next = siblings[index + delta];

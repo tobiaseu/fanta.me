@@ -1,5 +1,13 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View, type ScrollViewProps } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  type GestureResponderEvent,
+  StyleSheet,
+  View,
+  type ScrollViewProps,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { interpolate, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -72,12 +80,40 @@ export function PullToRefresh({
       pull.value = Math.max(0, e.translationY * 0.5);
     })
     .onEnd(() => {
+      if (busy.value) return;
       if (pull.value >= TRIGGER) {
         busy.value = true;
         pull.value = withTiming(TRIGGER, { duration: 120 });
         runOnJS(run)();
       } else pull.value = withTiming(0, { duration: 200 });
     });
+
+  // Sul web da telefono il browser si prende il trascinamento: lo seguiamo con i touch event
+  const touch = useRef<{ y: number; x: number; on: boolean } | null>(null);
+  const touchPull = {
+    onTouchStart: (e: GestureResponderEvent) => {
+      touch.current = { y: e.nativeEvent.pageY, x: e.nativeEvent.pageX, on: false };
+    },
+    onTouchMove: (e: GestureResponderEvent) => {
+      const t = touch.current;
+      if (!t || busy.value) return;
+      const dy = e.nativeEvent.pageY - t.y;
+      const dx = e.nativeEvent.pageX - t.x;
+      if (!t.on && (dy < 8 || !atTop.value || Math.abs(dx) > Math.abs(dy))) return;
+      t.on = true;
+      pull.value = Math.max(0, dy * 0.5);
+    },
+    onTouchEnd: () => {
+      const t = touch.current;
+      touch.current = null;
+      if (!t?.on || busy.value) return;
+      if (pull.value >= TRIGGER) {
+        busy.value = true;
+        pull.value = withTiming(TRIGGER, { duration: 120 });
+        run();
+      } else pull.value = withTiming(0, { duration: 200 });
+    },
+  };
 
   const contentStyle = useAnimatedStyle(() => ({ transform: [{ translateY: pull.value }] }));
   const spinnerStyle = useAnimatedStyle(() => ({
@@ -98,6 +134,8 @@ export function PullToRefresh({
         <Animated.View style={[styles.flex, contentStyle]}>
           <ScrollView
             {...scroll}
+            {...(Platform.OS === 'web' ? touchPull : null)}
+            style={[scroll.style, Platform.OS === 'web' && ({ overscrollBehaviorY: 'contain' } as object)]}
             scrollEventThrottle={16}
             onScroll={(e) => {
               atTop.value = e.nativeEvent.contentOffset.y <= 0;

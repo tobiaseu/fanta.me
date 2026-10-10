@@ -148,6 +148,10 @@ export const GAMES: Game[] = [
     startsAt: hoursFromNow(72),
     endsAt: hoursFromNow(48 + 72),
     playerIds: ['u-me', 'u-sara', 'u-giulia', 'u-ale'],
+    teams: [
+      { id: 'tc1', name: 'I Secchioni', memberIds: ['u-me'] },
+      { id: 'tc2', name: 'Ultimo Banco', memberIds: ['u-sara'] },
+    ],
     ruleIds: [
       'r-toast',
       'r-phone',

@@ -9,6 +9,9 @@ import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
 import { FinaleSettings } from '@/components/game/FinaleSettings';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
+import { TeamsBuilder } from '@/components/game/TeamsBuilder';
+import { Segmented } from '@/components/ui/Segmented';
+import { useUiStore } from '@/store/useUiStore';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -46,6 +49,10 @@ export function RulesScreen() {
   const powers = useGameStore((s) => s.powers);
   const toggleLike = useGameStore((s) => s.toggleLike);
   const [tab, setTab] = useState<Tab>('base');
+  const [division, setDivision] = useState<'cards' | 'players'>('cards');
+  const proposeCard = useGameStore((s) => s.proposeCard);
+  const withdrawCard = useGameStore((s) => s.withdrawCard);
+  const showToast = useUiStore((s) => s.showToast);
   const [selected, setSelected] = useState<Rule>();
   const [explore, setExplore] = useState(false);
   const updateSettings = useGameStore((s) => s.updateSettings);
@@ -101,177 +108,208 @@ export function RulesScreen() {
     };
   })();
 
+  const myCards = proposals
+    .filter((p) => p.authorId === ME.id)
+    .map((p) => ruleById(p.ruleId))
+    .filter((r): r is Rule => !!r);
+  const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
+  const pick = (r: Rule) => {
+    if (!pregame || game.ruleIds.includes(r.id)) return setSelected(r);
+    if (myCards.length >= perPlayer) {
+      haptics.malus();
+      return showToast({ text: `Hai già ${perPlayer} carte nel mazzo: togline una per scambiarla` });
+    }
+    haptics.tap();
+    proposeCard(game.id, r.id);
+    showToast({
+      text: `${r.emoji} ${r.label} è nel mazzo`,
+      action: { label: 'Annulla', onPress: () => withdrawCard(game.id, r.id) },
+    });
+  };
+  const drop = (r: Rule) => {
+    haptics.tap();
+    withdrawCard(game.id, r.id);
+    showToast({
+      text: `${r.label} tolta dal mazzo`,
+      action: { label: 'Annulla', onPress: () => proposeCard(game.id, r.id) },
+    });
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.phase}>
-        <AppText variant="body" color={colors.inkSoft}>
-          {pregame
-            ? `Pre-partita: fino a ${DATE.format(new Date(game.startsAt ?? Date.now()))} tutti possono proporre carte. Entrano con la maggioranza.`
-            : game.status === 'live'
-              ? 'Il mazzo è chiuso: si gioca con queste carte fino alla fine.'
-              : 'Partita conclusa. Ecco il mazzo con cui avete giocato.'}
-        </AppText>
-      </View>
+      <Segmented
+        value={division}
+        options={[
+          { id: 'cards', label: 'Carte' },
+          { id: 'players', label: game.teams?.length ? 'Giocatori e squadre' : 'Giocatori' },
+        ]}
+        onChange={setDivision}
+      />
 
-      <View style={styles.section}>
-        <SectionHeader
-          title="Mazzo della partita"
-          caption={`${deck.length} carte, valore medio ${avg > 0 ? '+' : ''}${avg}${game.premium ? ', stanza Premium' : ''}`}
-        />
-        <DeckPile deck={deck} onOpen={() => setExplore(true)} />
-        <View style={styles.grid}>
-          {deck.map((r) => (
-            <DeckCard key={r.id} rule={r} onPress={() => setSelected(r)} />
-          ))}
-        </View>
-      </View>
-
-      {game.playerIds[0] === ME.id && game.status !== 'ended' && (
-        <View style={styles.section}>
-          <SectionHeader title="Avanzate partita" caption="Le decidi tu da host. Valgono per tutta la stanza." />
-          <FinaleSettings
-            votes
-            settings={{ ...DEFAULT_SETTINGS, ...game.settings, votesToConfirm: votesNeeded(game) }}
-            onChange={(patch) => updateSettings(game.id, patch)}
-          />
-        </View>
-      )}
-
-      {pregame && (
-        <View style={styles.section}>
-          <SectionHeader
-            title="Proposte"
-            caption={
-              open.length
-                ? `Servono ${needed} mi piace su ${game.playerIds.length} per entrare nel mazzo.`
-                : 'Nessuna proposta aperta. Proponi una carta dalla tua collezione.'
-            }
-          />
-          {open.length > 0 && (
+      {division === 'players' ? (
+        <TeamsBuilder game={game} />
+      ) : (
+        <>
+          <View style={styles.section}>
+            <SectionHeader
+              title="Mazzo della partita"
+              caption={
+                pregame
+                  ? `${deck.length} carte finora. Si chiude ${DATE.format(new Date(game.startsAt ?? Date.now()))}.`
+                  : `${deck.length} carte, valore medio ${avg > 0 ? '+' : ''}${avg}. ${game.status === 'live' ? 'Il mazzo è chiuso.' : 'Partita conclusa.'}`
+              }
+            />
+            <DeckPile deck={deck} onOpen={() => setExplore(true)} />
             <View style={styles.grid}>
-              {open.map((p) => {
-                const r = ruleById(p.ruleId);
-                return r ? (
-                  <DeckCard
-                    key={p.id}
-                    rule={r}
-                    checked={p.likes.includes(ME.id)}
-                    note={`${p.likes.length}/${needed} 👍`}
-                    onPress={() => setSelected(r)}
+              {deck.map((r) => (
+                <DeckCard key={r.id} rule={r} onPress={() => setSelected(r)} />
+              ))}
+            </View>
+          </View>
+
+          {pregame && (
+            <View style={styles.section}>
+              <SectionHeader
+                title="Le tue carte nel mazzo"
+                caption={`${myCards.length} di ${perPlayer}. Tocca una carta per toglierla.`}
+              />
+              <View style={styles.slots}>
+                {myCards.map((r) => (
+                  <DeckCard key={r.id} rule={r} onPress={() => drop(r)} note="Togli" />
+                ))}
+                {Array.from({ length: Math.max(0, perPlayer - myCards.length) }, (_, i) => (
+                  <EmptySlot
+                    key={`slot-${i}`}
+                    label="Scegli sotto"
+                    onPress={() => showToast({ text: 'Scegli una carta dalla tua collezione qui sotto' })}
                   />
-                ) : null;
-              })}
+                ))}
+              </View>
             </View>
           )}
-        </View>
-      )}
 
-      <View style={styles.section}>
-        <SectionHeader
-          title="La tua collezione"
-          caption={
-            tab === 'base'
-              ? pregame
-                ? 'Le 20 carte del gioco. Tocca quelle spente per proporle.'
-                : 'Le 20 carte del gioco. Quelle accese sono nel mazzo.'
-              : `${mine.length} di ${slots} carte personali. Inventale tu, con le vostre regole.`
-          }
-        />
-        <View style={styles.segment} accessibilityRole="tablist">
-          {(
-            [
-              ['base', `Base ${RULES.length}`],
-              ['mine', `Personali ${mine.length}/${slots}`],
-            ] as const
-          ).map(([id, label]) => (
-            <Pressable
-              key={id}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === id }}
-              onPress={() => {
-                haptics.tap();
-                setTab(id);
-              }}
-              style={[styles.segmentItem, tab === id && styles.segmentActive]}>
-              <AppText variant="caption" color={tab === id ? colors.ink : colors.inkSoft}>
-                {label}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
-        <View style={styles.grid}>
-          {tab === 'base'
-            ? RULES.map((r) => (
-                <DeckCard
-                  key={r.id}
-                  rule={r}
-                  checked={game.ruleIds.includes(r.id)}
-                  dimmed={!game.ruleIds.includes(r.id)}
-                  onPress={() => setSelected(r)}
-                />
-              ))
-            : [
-                ...mine.map((r) => (
-                  <DeckCard
-                    key={r.id}
-                    rule={r}
-                    checked={game.ruleIds.includes(r.id)}
-                    note={proposals.some((p) => p.ruleId === r.id && p.status === 'open') ? 'proposta' : undefined}
-                    onPress={() => setSelected(r)}
-                  />
-                )),
-                ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (
-                  <EmptySlot key={`empty-${i}`} onPress={createCard} />
-                )),
-                <EmptySlot key="locked" locked onPress={openPremium} />,
-              ]}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <SectionHeader
-          title="Fantapoteri in gioco"
-          caption="Ognuno porta un potere principale e uno secondario. Si usano una volta a partita."
-          action={{ label: 'Scegli i tuoi', onPress: () => router.push('/powers') }}
-        />
-        <View style={styles.list}>
-          {roomPlayers.map((p, i) => {
-            const pw = powers[p.id];
-            const main = powerById(pw?.main);
-            const second = powerById(pw?.secondary);
-            return (
-              <View key={p.id} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <Avatar player={p} size={36} sticker={false} />
-                <AppText variant="name" style={styles.flex}>
-                  {p.id === ME.id ? 'Tu' : nameIn(game, p)}
-                </AppText>
-                {[main, second].map((pp, k) =>
-                  pp ? (
-                    <View key={k} style={[styles.power, k === 0 && styles.powerMain]}>
-                      <AppText variant="micro">
-                        {pp.emoji} {pp.label}
-                      </AppText>
-                    </View>
-                  ) : null,
-                )}
+          {pregame && open.length > 0 && (
+            <View style={styles.section}>
+              <SectionHeader
+                title="Proposte"
+                caption={`Servono ${needed} mi piace su ${game.playerIds.length} per entrare.`}
+              />
+              <View style={styles.grid}>
+                {open.map((p) => {
+                  const r = ruleById(p.ruleId);
+                  return r ? (
+                    <DeckCard
+                      key={p.id}
+                      rule={r}
+                      checked={p.likes.includes(ME.id)}
+                      note={`${p.likes.length}/${needed} 👍`}
+                      onPress={() => setSelected(r)}
+                    />
+                  ) : null;
+                })}
               </View>
-            );
-          })}
-        </View>
-        {!game.premium && (
-          <PressableScale accessibilityRole="button" onPress={openPremium} style={styles.premium}>
-            <AppText style={styles.premiumEmoji}>👑</AppText>
-            <View style={styles.flex}>
-              <AppText variant="name" color={colors.inkInverse}>
-                Rendi la stanza Premium
-              </AppText>
-              <AppText variant="caption" color="rgba(255,255,255,0.7)" style={styles.regular}>
-                10 carte personali a testa e i poteri speciali Ladro e Jolly.
-              </AppText>
             </View>
-          </PressableScale>
-        )}
-      </View>
+          )}
+
+          <View style={styles.section}>
+            <SectionHeader
+              title="La tua collezione"
+              caption={
+                pregame
+                  ? 'Tocca una carta spenta per metterla nel mazzo.'
+                  : tab === 'base'
+                    ? 'Le 20 carte del gioco. Quelle accese sono nel mazzo.'
+                    : `${mine.length} di ${slots} carte personali.`
+              }
+            />
+            <Segmented
+              value={tab}
+              options={[
+                { id: 'base', label: `Base ${RULES.length}` },
+                { id: 'mine', label: `Personali ${mine.length}/${slots}` },
+              ]}
+              onChange={setTab}
+            />
+            <View style={styles.grid}>
+              {tab === 'base'
+                ? RULES.map((r) => (
+                    <DeckCard
+                      key={r.id}
+                      rule={r}
+                      checked={game.ruleIds.includes(r.id)}
+                      dimmed={!game.ruleIds.includes(r.id)}
+                      onPress={() => pick(r)}
+                    />
+                  ))
+                : [
+                    ...mine.map((r) => (
+                      <DeckCard key={r.id} rule={r} checked={game.ruleIds.includes(r.id)} onPress={() => pick(r)} />
+                    )),
+                    ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (
+                      <EmptySlot key={`empty-${i}`} onPress={createCard} />
+                    )),
+                    <EmptySlot key="locked" locked onPress={openPremium} />,
+                  ]}
+            </View>
+          </View>
+
+          {game.playerIds[0] === ME.id && game.status !== 'ended' && (
+            <View style={styles.section}>
+              <SectionHeader title="Avanzate partita" caption="Le decidi tu da host. Valgono per tutta la stanza." />
+              <FinaleSettings
+                votes
+                settings={{ ...DEFAULT_SETTINGS, ...game.settings, votesToConfirm: votesNeeded(game) }}
+                onChange={(patch) => updateSettings(game.id, patch)}
+              />
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <SectionHeader
+              title="Fantapoteri in gioco"
+              caption="Ognuno porta un potere principale e uno secondario. Si usano una volta a partita."
+              action={{ label: 'Scegli i tuoi', onPress: () => router.push('/powers') }}
+            />
+            <View style={styles.list}>
+              {roomPlayers.map((p, i) => {
+                const pw = powers[p.id];
+                const main = powerById(pw?.main);
+                const second = powerById(pw?.secondary);
+                return (
+                  <View key={p.id} style={[styles.row, i > 0 && styles.rowDivider]}>
+                    <Avatar player={p} size={36} sticker={false} />
+                    <AppText variant="name" style={styles.flex}>
+                      {p.id === ME.id ? 'Tu' : nameIn(game, p)}
+                    </AppText>
+                    {[main, second].map((pp, k) =>
+                      pp ? (
+                        <View key={k} style={[styles.power, k === 0 && styles.powerMain]}>
+                          <AppText variant="micro">
+                            {pp.emoji} {pp.label}
+                          </AppText>
+                        </View>
+                      ) : null,
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+            {!game.premium && (
+              <PressableScale accessibilityRole="button" onPress={openPremium} style={styles.premium}>
+                <AppText style={styles.premiumEmoji}>👑</AppText>
+                <View style={styles.flex}>
+                  <AppText variant="name" color={colors.inkInverse}>
+                    Rendi la stanza Premium
+                  </AppText>
+                  <AppText variant="caption" color="rgba(255,255,255,0.7)" style={styles.regular}>
+                    10 carte personali a testa e i poteri speciali Ladro e Jolly.
+                  </AppText>
+                </View>
+              </PressableScale>
+            )}
+          </View>
+        </>
+      )}
 
       <CardSheet
         rule={selected}
@@ -286,6 +324,17 @@ export function RulesScreen() {
 }
 
 const styles = StyleSheet.create({
+  slots: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: '5%',
+    rowGap: space.md,
+    padding: space.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.line,
+  },
   voteChips: { flexDirection: 'row', gap: space.xs },
   voteChip: {
     width: 52,

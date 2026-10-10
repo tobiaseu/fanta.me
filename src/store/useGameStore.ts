@@ -76,6 +76,8 @@ interface GameState {
   /** Capitano di oggi per squadra (stile FantaSanremo): i suoi punti di oggi valgono doppio */
   captains: Record<string, string>;
   setCaptain: (teamId: string, playerId: string) => void;
+  /** Pre-partita: prendo o lascio un giocatore nella mia squadra */
+  toggleTeammate: (gameId: string, playerId: string) => void;
   setNickname: (gameId: string, nickname: string) => void;
   /** L'host cambia le impostazioni della stanza */
   updateSettings: (gameId: string, patch: Partial<GameSettings>) => void;
@@ -92,6 +94,25 @@ export const useGameStore = create<GameState>((set, get) => ({
   events: FEED,
   friendships: FRIENDSHIPS,
   captains: { t1: 'u-ale', t2: 'u-giulia', t3: 'u-sara' },
+  toggleTeammate: (gameId, playerId) =>
+    set((s) => ({
+      games: s.games.map((g) => {
+        if (g.id !== gameId || !g.teams || playerId === ME.id) return g;
+        const mine = g.teams.find((t) => t.memberIds.includes(ME.id));
+        if (!mine) return g;
+        const inMine = mine.memberIds.includes(playerId);
+        if (!inMine && (mine.memberIds.length >= teamSize(g) || g.teams.some((t) => t.memberIds.includes(playerId))))
+          return g;
+        return {
+          ...g,
+          teams: g.teams.map((t) =>
+            t.id === mine.id
+              ? { ...t, memberIds: inMine ? t.memberIds.filter((id) => id !== playerId) : [...t.memberIds, playerId] }
+              : t,
+          ),
+        };
+      }),
+    })),
   setCaptain: (teamId, playerId) => set((s) => ({ captains: { ...s.captains, [teamId]: playerId } })),
   updateSettings: (gameId, patch) =>
     set((s) => ({
@@ -415,6 +436,10 @@ export function computeDayStandings(game: Game, events: FeedEvent[], players: Pl
 /** Conferme necessarie: le decide l'host (3 di base), mai più dei giocatori che possono votare. */
 export const votesNeeded = (game: Game) =>
   Math.max(1, Math.min((game.settings ?? DEFAULT_SETTINGS).votesToConfirm ?? 3, game.playerIds.length - 1));
+
+/** Giocatori per squadra: la stanza divisa in parti uguali, tra 2 e 4. */
+export const teamSize = (game: Game) =>
+  Math.max(2, Math.min(4, Math.ceil(game.playerIds.length / Math.max(1, game.teams?.length ?? 1))));
 
 /** Il finale: le ultime 6 ore di una partita in corso (o l'ultima giornata se più corta). */
 export const FINALE_MS = 6 * 3_600_000;

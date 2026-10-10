@@ -6,11 +6,13 @@ import Animated, { LinearTransition } from 'react-native-reanimated';
 import { ActivePowers } from '@/components/game/ActivePowers';
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
-import { LockedState } from '@/components/game/LockedState';
 import { StoriesRow } from '@/components/game/StoriesRow';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { PointCard } from '@/components/game/PointCard';
+import { Countdown } from '@/components/game/Countdown';
+import { Button } from '@/components/ui/Button';
 import { EmptyNote } from '@/components/ui/EmptyNote';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { Scrim } from '@/components/ui/Scrim';
@@ -21,11 +23,11 @@ import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { nameIn, useGameStore } from '@/store/useGameStore';
+import { nameIn, teamSize, useGameStore } from '@/store/useGameStore';
 import { timeAgo } from '@/lib/time';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
-import type { FeedEvent, Player } from '@/types/game';
+import { DEFAULT_SETTINGS, type FeedEvent, type Player } from '@/types/game';
 
 /**
  * LIVE: il centro del gioco. Prima dell'inizio è bloccato e spiega cosa ci sarà;
@@ -40,6 +42,7 @@ export function LiveScreen() {
   const players = useGameStore((s) => s.players);
   const openQuickAction = useUiStore((s) => s.openQuickAction);
   const openPlayer = useOpenPlayer();
+  const proposals = useGameStore((s) => s.proposals);
   const simulateCall = useGameStore((s) => s.simulateCall);
   const refreshTick = useUiStore((s) => s.refreshTick);
   const [view, setView] = useState<'list' | 'photo'>('list');
@@ -53,20 +56,52 @@ export function LiveScreen() {
   }, [events, game?.id]);
 
   if (!game) return null;
-  if (game.status === 'waiting')
+  if (game.status === 'waiting') {
+    const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
+    const myCards = proposals.filter((p) => p.gameId === game.id && p.authorId === ME.id).length;
+    const myTeam = game.teams?.find((t) => t.memberIds.includes(ME.id));
+    const todo =
+      myCards < perPlayer
+        ? {
+            title: `Ti mancano ${perPlayer - myCards} carte`,
+            body: 'Mettile nel mazzo prima che si parta.',
+            cta: 'Scegli le carte',
+          }
+        : myTeam && myTeam.memberIds.length < teamSize(game)
+          ? {
+              title: 'La tua squadra non è completa',
+              body: `Prendi ${teamSize(game) - myTeam.memberIds.length} giocatori liberi.`,
+              cta: 'Fai la squadra',
+            }
+          : undefined;
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <LockedState
-          game={game}
-          title="Qui si gioca"
-          points={[
-            'Le chiamate da votare, come storie con la foto',
-            'Il feed di tutti i punti, con le reazioni',
-            'Il + per chiamare un punto quando succede qualcosa',
-          ]}
-        />
+        <View style={styles.waiting}>
+          <AppText variant="serifHeading" style={styles.center}>
+            Si parte tra poco
+          </AppText>
+          <Countdown target={new Date(game.startsAt ?? Date.now()).getTime()} label="Il Live si apre tra" />
+          <AppText variant="body" color={colors.inkSoft} style={[styles.center, styles.regular]}>
+            Qui arriveranno le chiamate da votare, i fantapoteri in gioco e tutti i punti.
+          </AppText>
+        </View>
+        {todo ? (
+          <View style={styles.todo}>
+            <AppText variant="name">{todo.title}</AppText>
+            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+              {todo.body}
+            </AppText>
+            <Button
+              label={todo.cta}
+              onPress={() => router.navigate({ pathname: '/game/[gameId]/rules', params: { gameId: game.id } })}
+            />
+          </View>
+        ) : (
+          <EmptyNote emoji="✅" title="Sei pronto" body="Carte e squadra sono a posto. Ora si aspetta il via." />
+        )}
       </ScrollView>
     );
+  }
 
   const live = game.status === 'live';
   const toVote = calls.filter((c) => !c.myVote && c.playerId !== ME.id && c.authorId !== ME.id).length;
@@ -160,16 +195,16 @@ export function LiveScreen() {
                         ago={timeAgo(e.createdAt, now)}
                         onPress={() => open(e.id)}
                       />
-                    ) : e.photo ? (
-                      <Tile event={e} player={player} onPress={() => open(e.id)} />
                     ) : (
-                      <FeedItem
+                      <PointCard
                         event={e}
-                        now={now}
-                        detailed
                         player={player}
-                        author={players.find((p) => p.id === e.authorId)}
-                        onOpenPlayer={openPlayer}
+                        name={player ? nameIn(game, player) : ''}
+                        author={(() => {
+                          const a = players.find((p) => p.id === e.authorId);
+                          return a ? nameIn(game, a) : undefined;
+                        })()}
+                        now={now}
                         onPress={() => open(e.id)}
                       />
                     )}
@@ -199,6 +234,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   section: { gap: space.sm },
+  waiting: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: layout.card,
+    gap: space.md,
+    alignItems: 'center',
+  },
+  center: { textAlign: 'center' },
+  regular: { fontWeight: '400' },
+  todo: { gap: space.xs, padding: layout.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
   list: { gap: space.sm },
   headRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   toggle: { flexDirection: 'row', borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, padding: 2 },
@@ -233,38 +278,6 @@ const styles = StyleSheet.create({
   },
   slimText: { flex: 1, gap: 2 },
 });
-
-/** Riquadro della vista a griglia: la foto del momento (o l'emoji della carta), chi e quanti punti. */
-function Tile({ event, player, onPress }: { event: FeedEvent; player?: Player; onPress: () => void }) {
-  const rule = ruleById(event.ruleId);
-  const photo = Boolean(event.photo);
-  const ink = photo ? '#fff' : colors.ink;
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={`${rule?.label ?? 'Punto'}, ${player?.name ?? ''}, ${event.points} punti`}
-      onPress={onPress}
-      style={[styles.tile, event.status === 'rejected' && styles.rejected]}>
-      {photo ? (
-        <>
-          <Image source={{ uri: event.photo }} style={styles.tileFill} />
-          <Scrim height="60%" strength={0.75} />
-        </>
-      ) : (
-        <AppText style={styles.tileEmoji}>{rule?.emoji ?? '✨'}</AppText>
-      )}
-      <View style={styles.tileText}>
-        <AppText variant="name" color={ink} numberOfLines={2}>
-          {rule?.label ?? 'Punto'}
-        </AppText>
-        <AppText variant="micro" color={photo ? 'rgba(255,255,255,0.85)' : colors.inkSoft} numberOfLines={1}>
-          {player?.name} · {event.points > 0 ? '+' : ''}
-          {event.points} pt{event.status === 'rejected' ? ' · respinto' : ''}
-        </AppText>
-      </View>
-    </PressableScale>
-  );
-}
 
 /** Vista a lista: card orizzontale snella, solo testo. Chi, quale carta, quanti punti. */
 function SlimRow({ event, name, ago, onPress }: { event: FeedEvent; name: string; ago: string; onPress: () => void }) {

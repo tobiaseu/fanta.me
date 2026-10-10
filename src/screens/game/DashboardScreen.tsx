@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivePowers } from '@/components/game/ActivePowers';
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
+import { PointCard } from '@/components/game/PointCard';
 import { PowersPanel } from '@/components/game/PowersPanel';
 import { PregamePanel } from '@/components/game/PregamePanel';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
@@ -87,7 +88,10 @@ export function DashboardScreen() {
     const mine = events.filter((e) => e.gameId === game?.id);
     return {
       calls: mine.filter((e) => e.status === 'pending').sort((a, b) => Number(!!a.myVote) - Number(!!b.myVote)),
-      latest: mine.filter((e) => e.status === 'confirmed').slice(0, 1),
+      latest: mine
+        .filter((e) => e.status === 'confirmed')
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 6),
     };
   }, [events, players, game, now]);
 
@@ -159,19 +163,23 @@ export function DashboardScreen() {
               body="Finale a sorpresa: si svela tutto con i risultati."
             />
           ) : (
-            <View style={styles.card}>
-              {top.map((r, i) => (
-                <View key={r.id} style={[styles.topRow, i > 0 && styles.divider]}>
-                  <AppText variant="headline" style={styles.place}>
-                    {i + 1}
-                  </AppText>
-                  <View style={[styles.teamDot, { backgroundColor: r.color }]} />
-                  <AppText variant="name" style={styles.flex} numberOfLines={1}>
-                    {r.name}
-                  </AppText>
-                  <AppText variant="headline">{r.points} pt</AppText>
-                </View>
-              ))}
+            <View style={styles.podium}>
+              {[top[1], top[0], top[2]].map((r, k) =>
+                r ? (
+                  <View key={r.id} style={styles.podiumCol}>
+                    <View style={[styles.podiumDot, { backgroundColor: r.color }]} />
+                    <AppText variant="name" numberOfLines={1} style={styles.center}>
+                      {r.name}
+                    </AppText>
+                    <AppText variant="caption" color={colors.inkSoft}>
+                      {r.points} pt
+                    </AppText>
+                    <View style={[styles.block, { height: k === 1 ? 72 : k === 0 ? 52 : 36 }]}>
+                      <AppText variant="headline">{k === 1 ? 1 : k === 0 ? 2 : 3}</AppText>
+                    </View>
+                  </View>
+                ) : null,
+              )}
             </View>
           )}
           {!hidden && <Button label="Vedi la classifica" variant="tertiary" onPress={() => goTo('leaderboard')} />}
@@ -180,19 +188,30 @@ export function DashboardScreen() {
 
       {game.status !== 'waiting' && (
         <View style={styles.section}>
-          <SectionHeader title="Ultimo punto" />
+          <SectionHeader title="Ultimi punti" action={{ label: 'Tutti nel Live', onPress: () => goTo('live') }} />
           {latest.length ? (
-            latest.map((e) => (
-              <FeedItem
-                key={e.id}
-                event={e}
-                now={now}
-                player={players.find((p) => p.id === e.playerId)}
-                author={players.find((p) => p.id === e.authorId)}
-                onOpenPlayer={openPlayer}
-                onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: e.id } })}
-              />
-            ))
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.hScroll}
+              contentContainerStyle={styles.hRow}>
+              {latest.map((e) => {
+                const p = players.find((x) => x.id === e.playerId);
+                const a = players.find((x) => x.id === e.authorId);
+                return (
+                  <PointCard
+                    key={e.id}
+                    event={e}
+                    player={p}
+                    name={p ? nameIn(game, p) : ''}
+                    author={a ? nameIn(game, a) : undefined}
+                    now={now}
+                    style={styles.pointCard}
+                    onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: e.id } })}
+                  />
+                );
+              })}
+            </ScrollView>
           ) : (
             <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
           )}
@@ -264,6 +283,31 @@ export function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  podium: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: space.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingTop: layout.card,
+    paddingHorizontal: space.sm,
+    overflow: 'hidden',
+  },
+  podiumCol: { flex: 1, alignItems: 'center', gap: 2 },
+  podiumDot: { width: 28, height: 28, borderRadius: 14, marginBottom: space.xxs },
+  center: { textAlign: 'center' },
+  block: {
+    alignSelf: 'stretch',
+    marginTop: space.xs,
+    borderTopLeftRadius: radius.sm,
+    borderTopRightRadius: radius.sm,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    paddingTop: space.xs,
+  },
+  hScroll: { marginHorizontal: -layout.gutter, flexGrow: 0 },
+  hRow: { gap: space.sm, paddingHorizontal: layout.gutter },
+  pointCard: { width: 220 },
   sudden: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,7 +386,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  podium: { flexDirection: 'row', alignItems: 'flex-end', gap: space.xs },
   step: { flex: 1, alignItems: 'center', gap: space.xxs, paddingTop: space.md },
   stepFirst: { paddingTop: 0 },
   mvp: {
