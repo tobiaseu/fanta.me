@@ -18,6 +18,9 @@ interface SessionState {
   /** Ultima stanza aperta: la Home la propone per rientrare al volo */
   lastGameId?: string;
   setLastGame: (gameId: string) => void;
+  /** Partite in cui ho già visto il momento "Si gioca!" */
+  liveIntroSeen: string[];
+  markLiveIntro: (gameId: string) => void;
   collectionVisibility: Visibility;
   /** Notifiche per tipo: chiamate da votare, inizio/fine partita, richieste d'amicizia */
   notifications: Record<NotificationKind, boolean>;
@@ -59,6 +62,8 @@ export const useSessionStore = create<SessionState>()(
       signedIn: false,
       onboarded: false,
       setLastGame: (gameId) => set({ lastGameId: gameId }),
+      liveIntroSeen: [],
+      markLiveIntro: (gameId) => set((s) => ({ liveIntroSeen: [...(s.liveIntroSeen ?? []), gameId] })),
       collectionVisibility: 'private',
       notifications: { calls: true, phases: true, friends: true },
       toggleNotification: (kind) =>

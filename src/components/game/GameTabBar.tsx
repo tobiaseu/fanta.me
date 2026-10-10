@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useGameStore } from '@/store/useGameStore';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +16,7 @@ import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
 const TABS: Record<string, { label: string; icon?: IconName }> = {
   index: { label: 'Dashboard', icon: 'home' },
   rules: { label: 'Mazzo', icon: 'grid' },
-  action: { label: 'Punti' },
+  live: { label: 'Live' },
   leaderboard: { label: 'Classifica', icon: 'people' },
   profile: { label: 'Profilo' },
 };
@@ -29,22 +29,16 @@ export const TAB_BAR_SPACE = 72 + space.lg + space.md;
  */
 export function GameTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const openQuickAction = useUiStore((s) => s.openQuickAction);
-  const router = useRouter();
   const game = useCurrentGame();
-  // Il tasto centrale è sempre "la cosa da fare adesso": mazzo → punti → rivincita
-  const center: { icon: IconName; label: string; short: string; onPress: () => void } | undefined = !game
-    ? undefined
-    : game.status === 'waiting'
-      ? {
-          icon: 'grid',
-          label: 'Le mie carte nel mazzo',
-          short: 'Carte',
-          onPress: () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } }),
-        }
-      : game.status === 'live'
-        ? { icon: 'plus', label: 'Aggiungi punti', short: 'Punti', onPress: openQuickAction }
-        : { icon: 'trophy', label: 'Rivincita', short: 'Rivincita', onPress: () => router.push('/room/new') };
+  // Il centro è un posto fisso, "Live": bloccato prima dell'inizio, il cuore del gioco in partita, l'archivio dopo
+  const events = useGameStore((st) => st.events);
+  const toVote = game
+    ? events.filter(
+        (e) =>
+          e.gameId === game.id && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
+      ).length
+    : 0;
+  const locked = game?.status === 'waiting';
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
@@ -54,28 +48,31 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
           if (!tab) return null;
           const current = state.routes[state.index]?.name;
           // la cronaca completa appartiene alla Dashboard
-          const focused = state.index === index || (route.name === 'index' && current === 'feed');
+          const focused = state.index === index || (route.name === 'live' && current === 'feed');
           // inattivi in #6E6E6E: contrasto 4,9:1 sul vetro chiaro (WCAG AA)
           const tint = focused ? colors.ink : colors.inkSoft;
 
-          if (route.name === 'action') {
-            if (!center) return null;
+          if (route.name === 'live') {
             return (
               <PressableScale
                 key={route.key}
-                accessibilityRole="button"
-                accessibilityLabel={center.label}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: focused }}
+                accessibilityLabel={
+                  locked ? 'Live, si apre quando parte la partita' : toVote ? `Live, ${toVote} da votare` : 'Live'
+                }
                 onPress={() => {
                   haptics.press();
-                  center.onPress();
+                  navigation.navigate(route.name, route.params);
                 }}
                 pressedScale={0.88}
                 style={styles.tab}>
-                <View style={styles.play}>
-                  <Icon name={center.icon} size={center.icon === 'plus' ? 26 : 22} color={colors.ink} />
+                <View style={[styles.play, locked && styles.playLocked, focused && styles.playFocused]}>
+                  <Icon name={locked ? 'lock' : 'play'} size={locked ? 20 : 22} color={colors.ink} />
+                  {toVote > 0 && !locked && <View style={styles.dot} />}
                 </View>
                 <AppText style={styles.label} color={colors.ink} numberOfLines={1}>
-                  {center.short}
+                  Live
                 </AppText>
               </PressableScale>
             );
@@ -114,6 +111,19 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
+  playLocked: { backgroundColor: colors.surfaceMuted },
+  playFocused: { borderWidth: 2, borderColor: colors.ink },
+  dot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.malus,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
   wrap: {
     position: 'absolute',
     left: 0,

@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router/js-tabs';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 
+import { LiveIntro } from '@/components/game/LiveIntro';
 import { GameHeader } from '@/components/game/GameHeader';
 import { GameTabBar } from '@/components/game/GameTabBar';
 import { QuickActionSheet } from '@/components/game/QuickActionSheet';
@@ -39,12 +40,13 @@ export default function GameLayout() {
           }}>
           <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
           <Tabs.Screen name="rules" options={{ title: 'Mazzo' }} />
-          <Tabs.Screen name="action" options={{ title: 'Aggiungi punti' }} />
+          <Tabs.Screen name="live" options={{ title: 'Live' }} />
           <Tabs.Screen name="leaderboard" options={{ title: 'Classifica' }} />
           <Tabs.Screen name="profile" options={{ title: 'Profilo' }} />
           <Tabs.Screen name="feed" options={{ title: 'Cronaca' }} />
         </Tabs>
         <QuickActionSheet game={game} />
+        <LiveIntro game={game} />
       </View>
     </CurrentGameProvider>
   );

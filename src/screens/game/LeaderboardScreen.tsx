@@ -1,3 +1,4 @@
+import { LockedState } from '@/components/game/LockedState';
 import { Segmented } from '@/components/ui/Segmented';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -92,6 +93,38 @@ export function LeaderboardScreen() {
   }, [game, events, players, mode, captains, period]);
 
   if (!game) return null;
+  // Prima dell'inizio la classifica è bloccata: si vedono già le squadre, i punti no
+  if (game.status === 'waiting')
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <LockedState
+          game={game}
+          title="La classifica si accende all'inizio"
+          points={[
+            game.teams?.length
+              ? 'Prima le squadre, poi la classifica individuale'
+              : 'La classifica di tutti i giocatori',
+            'Tutta la partita oppure solo oggi',
+            'Chi sale e chi scende, punto dopo punto',
+          ]}
+        />
+        {game.teams?.map((t) => (
+          <View key={t.id} style={styles.lockedTeam}>
+            <View style={[styles.lockedDot, { backgroundColor: teamColor(game, t.id) }]} />
+            <AppText variant="name" style={styles.flex1}>
+              {t.name}
+            </AppText>
+            <AppText variant="caption" color={colors.inkSoft}>
+              {t.memberIds
+                .map((id) => players.find((p) => p.id === id))
+                .filter((p): p is NonNullable<typeof p> => !!p)
+                .map((p) => nameIn(game, p))
+                .join(', ')}
+            </AppText>
+          </View>
+        ))}
+      </ScrollView>
+    );
 
   // Podio solo con tre posizioni nette: con pari merito o tutti a zero basta la lista
   const showPodium = rows.length >= 3 && new Set(rows.slice(0, 3).map((r) => r.points)).size === 3;
@@ -214,6 +247,16 @@ export function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  lockedTeam: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: space.md,
+  },
+  lockedDot: { width: 10, height: 10, borderRadius: 5 },
+  flex1: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: layout.gutter,

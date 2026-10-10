@@ -31,6 +31,32 @@ import type { Player } from '@/types/game';
  * chiamate da votare, carta del giorno che vale doppio, capitano della squadra,
  * podio e MVP della giornata, ultimi punti.
  */
+/** La card "prossima mossa": una sola, sempre in cima, cambia con la fase. */
+function NextStep({
+  emoji,
+  title,
+  body,
+  cta,
+  onPress,
+}: {
+  emoji: string;
+  title: string;
+  body: string;
+  cta: string;
+  onPress: () => void;
+}) {
+  return (
+    <View style={styles.next}>
+      <AppText style={styles.nextEmoji}>{emoji}</AppText>
+      <AppText variant="serifHeading">{title}</AppText>
+      <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
+        {body}
+      </AppText>
+      <Button label={cta} onPress={onPress} />
+    </View>
+  );
+}
+
 export function DashboardScreen() {
   const game = useCurrentGame();
   const router = useRouter();
@@ -47,7 +73,7 @@ export function DashboardScreen() {
     const mine = events.filter((e) => e.gameId === game?.id);
     return {
       calls: mine.filter((e) => e.status === 'pending').sort((a, b) => Number(!!a.myVote) - Number(!!b.myVote)),
-      latest: mine.filter((e) => e.status === 'confirmed').slice(0, 5),
+      latest: mine.filter((e) => e.status === 'confirmed').slice(0, 1),
     };
   }, [events, players, game, now]);
 
@@ -68,7 +94,7 @@ export function DashboardScreen() {
         .slice(0, 3)
         .map((r) => ({ id: r.player.id, name: nameIn(game, r.player), points: r.points, color: r.player.color }));
   const toVote = calls.filter((c) => !c.myVote && c.playerId !== ME.id && c.authorId !== ME.id).length;
-  const goTo = (tab: 'feed' | 'leaderboard' | 'rules') => {
+  const goTo = (tab: 'live' | 'leaderboard' | 'rules') => {
     haptics.tap();
     router.navigate({ pathname: `/game/[gameId]/${tab}`, params: { gameId: game.id } });
   };
@@ -84,38 +110,37 @@ export function DashboardScreen() {
           <PowersPanel game={game} now={now} />
         </>
       )}
+      {game.status === 'live' && (
+        <NextStep
+          emoji={toVote > 0 ? '👀' : '📣'}
+          title={
+            toVote > 0
+              ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+              : 'Succede qualcosa?'
+          }
+          body={
+            toVote > 0
+              ? 'Votale nel Live: tre sì e il punto è ufficiale.'
+              : 'Chiama un punto dal Live, il gruppo conferma.'
+          }
+          cta="Vai al Live"
+          onPress={() => goTo('live')}
+        />
+      )}
+      {game.status === 'ended' && (
+        <NextStep
+          emoji="🔁"
+          title="Rivincita?"
+          body="Stessa gente, stanza nuova. Il mazzo di questa partita resta nella tua collezione."
+          cta="Crea la rivincita"
+          onPress={() => router.push('/room/new')}
+        />
+      )}
       {game.status === 'ended' && <ResultsPanel game={game} />}
-      {game.status === 'live' && (
-        <View style={styles.section}>
-          <SectionHeader
-            title={toVote > 0 ? 'Da votare' : 'Chiamate'}
-            caption={
-              toVote > 0
-                ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
-                : 'Hai votato tutto. Usa il + giallo per chiamare un punto.'
-            }
-          />
-          <StoriesRow
-            calls={calls}
-            players={players}
-            onOpen={(call) => {
-              haptics.tap();
-              router.push({ pathname: '/call/[eventId]', params: { eventId: call.id } });
-            }}
-          />
-        </View>
-      )}
-
-      {game.status === 'live' && (
-        <View style={styles.section}>
-          <SectionHeader title="Fantapoteri in gioco" />
-          <ActivePowers game={game} now={now} />
-        </View>
-      )}
 
       {game.status !== 'waiting' && (
         <View style={styles.section}>
-          <SectionHeader title="Ultimi punti confermati" />
+          <SectionHeader title="Ultimo punto" />
           {latest.length ? (
             <View style={styles.list}>
               {latest.map((e) => (
@@ -135,7 +160,7 @@ export function DashboardScreen() {
               Ancora nessun punto ufficiale. Qualcuno dovrà pur fare la prima figuraccia.
             </AppText>
           )}
-          <Button label="Guarda tutti i punti" variant="tertiary" onPress={() => goTo('feed')} />
+          <Button label="Tutti i punti nel Live" variant="tertiary" onPress={() => goTo('live')} />
         </View>
       )}
 
@@ -197,6 +222,8 @@ export function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  next: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: layout.card, gap: space.xs },
+  nextEmoji: { fontSize: 32, lineHeight: 40 },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: layout.gutter,
