@@ -10,6 +10,7 @@ import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
 import { FinaleSettings } from '@/components/game/FinaleSettings';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
+import { PowersPanel } from '@/components/game/PowersPanel';
 import { TeamsBuilder } from '@/components/game/TeamsBuilder';
 import { Segmented } from '@/components/ui/Segmented';
 import { useUiStore } from '@/store/useUiStore';
@@ -156,13 +157,16 @@ export function RulesScreen() {
         value={division}
         options={[
           { id: 'cards', label: 'Carte' },
-          { id: 'players', label: game.teams?.length ? 'Giocatori e squadre' : 'Giocatori' },
+          { id: 'players', label: game.teams?.length ? 'Squadre e poteri' : 'Giocatori e poteri' },
         ]}
         onChange={setDivision}
       />
 
       {division === 'players' ? (
-        <TeamsBuilder game={game} />
+        <View style={styles.playersTab}>
+          <TeamsBuilder game={game} />
+          <PowersPanel game={game} now={Date.now()} />
+        </View>
       ) : (
         <>
           <View style={styles.section}>
@@ -388,6 +392,7 @@ export function RulesScreen() {
 }
 
 const styles = StyleSheet.create({
+  playersTab: { gap: 40 },
   cell: { width: '30%' },
   slot: { width: '22%' },
   full: { width: '100%' },

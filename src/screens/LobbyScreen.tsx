@@ -94,15 +94,6 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           <AppText variant="serifTitle" style={styles.helloText}>
             Ciao {ME.name}
           </AppText>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="Entra in una stanza con un codice"
-            hitSlop={8}
-            onPress={() => router.push('/room/join')}
-            style={styles.codeChip}>
-            <Icon name="ticket" size={16} />
-            <AppText variant="caption">Ho un codice</AppText>
-          </PressableScale>
         </View>
 
         {last && resume ? (
@@ -117,22 +108,35 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           />
         ) : null}
 
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Crea una stanza: da zero o da un mazzo pronto"
-          onPress={() => router.push('/room/start')}
-          style={styles.create}>
-          <View style={[styles.plus, !resume && styles.plusPrimary]}>
-            <Icon name="plus" size={22} strokeWidth={2.4} />
-          </View>
-          <View style={styles.flex}>
+        {/* Stesso punto, due ingressi: creare o entrare con un codice */}
+        <View style={styles.entries}>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Crea una stanza: da zero o da una partita pronta"
+            onPress={() => router.push('/room/start')}
+            style={styles.entry}>
+            <View style={[styles.plus, !resume && styles.plusPrimary]}>
+              <Icon name="plus" size={22} strokeWidth={2.4} />
+            </View>
             <AppText variant="headline">Crea una stanza</AppText>
             <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-              Da zero o da una partita pronta
+              Da zero o pronta
             </AppText>
-          </View>
-          <Icon name="chevron-right" size={20} color={colors.inkFaint} />
-        </PressableScale>
+          </PressableScale>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Entra in una stanza con un codice"
+            onPress={() => router.push('/room/join')}
+            style={styles.entry}>
+            <View style={styles.plus}>
+              <Icon name="ticket" size={20} />
+            </View>
+            <AppText variant="headline">Entra con codice</AppText>
+            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+              Te l'ha mandato un amico
+            </AppText>
+          </PressableScale>
+        </View>
 
         <View style={styles.list}>
           <SectionHeader
@@ -252,6 +256,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   list: { gap: space.sm },
+  entries: { flexDirection: 'row', gap: space.sm },
+  entry: {
+    flex: 1,
+    gap: space.xxs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: layout.card,
+  },
   create: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -261,6 +273,7 @@ const styles = StyleSheet.create({
     padding: layout.card,
   },
   plus: {
+    marginBottom: 8,
     width: 48,
     height: 48,
     borderRadius: 24,

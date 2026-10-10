@@ -6,7 +6,6 @@ import { ActivePowers } from '@/components/game/ActivePowers';
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { PointCard } from '@/components/game/PointCard';
-import { PowersPanel } from '@/components/game/PowersPanel';
 import { PregamePanel } from '@/components/game/PregamePanel';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
@@ -159,7 +158,6 @@ export function DashboardScreen() {
       {game.status === 'waiting' && (
         <>
           <PregamePanel game={game} />
-          <PowersPanel game={game} now={now} />
         </>
       )}
 
@@ -273,7 +271,6 @@ export function DashboardScreen() {
               </View>
             </PressableScale>
           )}
-          <PowersPanel game={game} now={now} />
         </View>
       )}
     </PullToRefresh>
