@@ -7,15 +7,30 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { haptics } from '@/lib/haptics';
+import { ME } from '@/data/mock';
 import { inviteCode, useGameStore } from '@/store/useGameStore';
-import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
+import { colors, fonts, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 
-/** Entra con codice (modale): sei caratteri, maiuscoli, niente altro. */
+/**
+ * Entra con codice (modale): sei caratteri, poi il nickname di stanza,
+ * precompilato con il nome dell'account e valido solo in quella stanza.
+ */
 export function JoinRoomScreen() {
   const router = useRouter();
   const games = useGameStore((s) => s.games);
   const [code, setCode] = useState('');
   const [error, setError] = useState(false);
+  const setNickname = useGameStore((s) => s.setNickname);
+  const [joinId, setJoinId] = useState<string>();
+  const [nick, setNick] = useState('');
+  const joinGame = games.find((g) => g.id === joinId);
+
+  const enter = () => {
+    if (!joinId) return;
+    haptics.bonus();
+    setNickname(joinId, nick.trim() === ME.name ? '' : nick);
+    router.replace({ pathname: '/game/[gameId]', params: { gameId: joinId } });
+  };
 
   const submit = () => {
     // Fase 2: il codice si risolve lato Supabase
@@ -25,9 +40,42 @@ export function JoinRoomScreen() {
       setError(true);
       return;
     }
-    haptics.bonus();
-    router.replace({ pathname: '/game/[gameId]', params: { gameId } });
+    haptics.tap();
+    setNick(games.find((g) => g.id === gameId)?.nicknames?.[ME.id] ?? ME.name);
+    setJoinId(gameId);
   };
+
+  if (joinGame) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.head}>
+          <AppText variant="title">Come ti chiamano qui?</AppText>
+          <PressableScale onPress={() => setJoinId(undefined)} style={styles.close} accessibilityLabel="Indietro">
+            <Icon name="close" size={18} color={colors.inkSoft} strokeWidth={2} />
+          </PressableScale>
+        </View>
+        <AppText variant="body" color={colors.inkSoft} style={styles.regular}>
+          In {joinGame.name} puoi usare un nickname diverso. Lo vedono solo in questa stanza, con la tua @{ME.handle}{' '}
+          piccola sotto.
+        </AppText>
+        <TextInput
+          value={nick}
+          onChangeText={setNick}
+          maxLength={24}
+          autoFocus
+          placeholder={ME.name}
+          placeholderTextColor={colors.placeholder}
+          style={[styles.input, styles.nickInput]}
+          onSubmitEditing={enter}
+          accessibilityLabel="Nickname di stanza"
+        />
+        <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+          Amicizie e inviti restano sul tuo account @{ME.handle}. Puoi cambiare nickname dal tuo profilo nella partita.
+        </AppText>
+        <Button label="Entra nella stanza" disabled={!nick.trim()} onPress={enter} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -98,5 +146,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
+  nickInput: { fontSize: 24, letterSpacing: 0, fontFamily: fonts.serifSemi, fontWeight: '600' },
   inputError: { borderColor: colors.malus },
 });
