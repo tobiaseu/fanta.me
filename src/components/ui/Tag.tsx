@@ -8,10 +8,21 @@ import { colors, radius } from '@/theme/tokens';
  * Un solo tag in tutta l'app: pillola bordata, testo micro.
  * `gold` per trofei e cose rare, `filled` per lo stato su fondo colorato.
  */
-export function Tag({ label, gold, filled }: { label: string; gold?: boolean; filled?: boolean }) {
+export function Tag({
+  label,
+  gold,
+  filled,
+  onDark,
+}: {
+  label: string;
+  gold?: boolean;
+  filled?: boolean;
+  /** Su fondo colorato: vetro chiaro e testo bianco */
+  onDark?: boolean;
+}) {
   return (
-    <View style={[styles.tag, gold && styles.gold, filled && styles.filled]}>
-      <AppText variant="micro" color={gold ? '#9A7200' : colors.inkSoft}>
+    <View style={[styles.tag, gold && styles.gold, filled && styles.filled, onDark && styles.onDark]}>
+      <AppText variant="micro" color={onDark ? '#FFFFFF' : gold ? '#9A7200' : colors.inkSoft}>
         {label}
       </AppText>
     </View>
@@ -28,5 +39,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   gold: { borderColor: '#D4A017' },
+  onDark: { backgroundColor: 'rgba(255,255,255,0.22)', borderColor: 'transparent' },
   filled: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'transparent' },
 });

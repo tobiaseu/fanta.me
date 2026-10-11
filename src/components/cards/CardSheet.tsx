@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, ZoomIn } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
-import { cardTone } from '@/components/cards/DeckCard';
+import { CardArt, PLAY_RATIO, cardSubtitle, type CardRect } from '@/components/cards/PlayCard';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
@@ -21,7 +28,7 @@ const EMOJI_FONT = Platform.select({
 });
 
 /** Proporzione unica delle carte: la stessa in anteprima e ingrandita. */
-export const CARD_RATIO = 0.78;
+export const CARD_RATIO = PLAY_RATIO;
 
 type SheetAction = { label: string; onPress: () => void; icon?: IconName };
 
@@ -36,6 +43,10 @@ interface Props {
   primary?: SheetAction;
   /** Un'alternativa, come testo sotto il giallo */
   secondary?: SheetAction;
+  /** Rettangolo della carta in griglia: la carta si apre da lì e ci torna */
+  from?: CardRect;
+  /** Aperta dal pulsante "i": parte già girata sul retro */
+  startOnBack?: boolean;
   onClose: () => void;
 }
 
@@ -51,30 +62,59 @@ export function rarityOf(rule: Rule) {
  * Fronte: tipo e punti in alto a sinistra, X a destra, emoji, nome con la "i", tag, regola, azioni.
  * Retro (tocca la "i"): statistiche della carta.
  */
-export function CardSheet({ rule, author, state, primary, secondary, onClose }: Props) {
+export function CardSheet({ rule, author, state, primary, secondary, from, startOnBack, onClose }: Props) {
   const { width, height } = useWindowDimensions();
   // La carta più grande che sta nello schermo mantenendo la proporzione
   const cardW = Math.min(360, width - 32, (height - 64) * CARD_RATIO);
+  const cardH = cardW / CARD_RATIO;
   const [back, setBack] = useState(false);
   const flip = useSharedValue(0);
+  // Apertura "dalla carta": parte dal rettangolo in griglia e arriva al centro, stessa proporzione
+  const grow = useSharedValue(0);
+  const origin = useSharedValue({ dx: 0, dy: 0, s: 0.6 });
   useEffect(() => {
-    setBack(false);
-    flip.value = 0;
-  }, [rule?.id, flip]);
+    if (!rule) return;
+    setBack(!!startOnBack);
+    flip.value = startOnBack ? 180 : 0;
+    origin.value = from
+      ? {
+          dx: from.x + from.width / 2 - width / 2,
+          dy: from.y + from.height / 2 - height / 2,
+          s: from.width / cardW,
+        }
+      : { dx: 0, dy: 40, s: 0.85 };
+    grow.value = 0;
+    grow.value = withSpring(1, { damping: 20, stiffness: 190, mass: 0.9 });
+  }, [rule?.id, startOnBack]); // eslint-disable-line react-hooks/exhaustive-deps
+  const close = () => {
+    grow.value = withTiming(0, { duration: 240, easing: Easing.inOut(Easing.cubic) }, (done) => {
+      if (done) runOnJS(onClose)();
+    });
+  };
   const turn = () => {
     haptics.tap();
     flip.value = withTiming(back ? 0 : 180, { duration: 420 });
     setBack((b) => !b);
   };
+  const moving = useAnimatedStyle(() => {
+    const t = grow.value;
+    const o = origin.value;
+    return {
+      transform: [{ translateX: o.dx * (1 - t) }, { translateY: o.dy * (1 - t) }, { scale: o.s + (1 - o.s) * t }],
+    };
+  });
+  const dim = useAnimatedStyle(() => ({ opacity: Math.min(1, grow.value) }));
   const front = useAnimatedStyle(() => ({ transform: [{ perspective: 1200 }, { rotateY: `${flip.value}deg` }] }));
   const rear = useAnimatedStyle(() => ({ transform: [{ perspective: 1200 }, { rotateY: `${flip.value + 180}deg` }] }));
 
   return (
-    <Modal visible={!!rule} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Chiudi la carta" />
+    <Modal visible={!!rule} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
+      <Animated.View style={[styles.backdrop, dim]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Chiudi la carta" />
+      </Animated.View>
       {rule && (
         <View style={styles.center} pointerEvents="box-none">
-          <Animated.View entering={ZoomIn.springify().damping(16)} style={{ width: cardW, aspectRatio: CARD_RATIO }}>
+          <Animated.View style={[{ width: cardW, height: cardH }, moving]}>
             <Animated.View style={[styles.face, front]} pointerEvents={back ? 'none' : 'auto'}>
               <Front
                 rule={rule}
@@ -82,12 +122,12 @@ export function CardSheet({ rule, author, state, primary, secondary, onClose }: 
                 state={state}
                 primary={primary}
                 secondary={secondary}
-                onClose={onClose}
+                onClose={close}
                 onInfo={turn}
               />
             </Animated.View>
             <Animated.View style={[styles.face, rear]} pointerEvents={back ? 'auto' : 'none'}>
-              <Back rule={rule} author={author} onClose={onClose} onFlip={turn} />
+              <Back rule={rule} author={author} onClose={close} onFlip={turn} />
             </Animated.View>
           </Animated.View>
         </View>
@@ -96,14 +136,13 @@ export function CardSheet({ rule, author, state, primary, secondary, onClose }: 
   );
 }
 
-function Corner({ rule, onClose }: { rule: Rule; onClose: () => void }) {
-  const tone = cardTone(rule);
+function Corner({ rule, onClose, label }: { rule: Rule; onClose: () => void; label?: string }) {
   const bonus = rule.points > 0;
   return (
     <View style={styles.corner}>
-      <View style={[styles.gem, { borderColor: tone.gem }]}>
-        <AppText variant="caption" color={tone.gem}>
-          {bonus ? `Bonus +${rule.points}` : `Malus ${rule.points}`}
+      <View style={styles.gem}>
+        <AppText variant="caption" color={colors.ink} style={styles.bold}>
+          {label ?? (bonus ? `Bonus +${rule.points}` : `Malus ${rule.points}`)}
         </AppText>
       </View>
       <PressableScale
@@ -112,7 +151,7 @@ function Corner({ rule, onClose }: { rule: Rule; onClose: () => void }) {
         hitSlop={12}
         onPress={onClose}
         style={styles.close}>
-        <Icon name="close" size={16} />
+        <Icon name="close" size={16} color="#FFFFFF" />
       </PressableScale>
     </View>
   );
@@ -127,51 +166,51 @@ function Front({
   onClose,
   onInfo,
 }: Omit<Props, 'rule'> & { rule: Rule; onInfo: () => void }) {
-  const cat = RULE_CATEGORIES.find((c) => c.id === rule.categoryId);
-  const typeLabel =
-    rule.authorId === 'community'
-      ? 'Community'
-      : rule.authorId
-        ? `Carta di ${author?.name ?? 'un amico'}`
-        : `${cat?.emoji ?? ''} ${cat?.label ?? ''}`.trim();
   const run = (a: SheetAction) => () => {
     a.onPress();
     onClose();
   };
   return (
-    <View style={[styles.card, { borderColor: cardTone(rule).edge }]}>
+    <View style={styles.card}>
+      <CardArt rule={rule} id={`s-${rule.id}`} />
       <Corner rule={rule} onClose={onClose} />
       <View style={styles.art}>
         <Text style={styles.emoji} allowFontScaling={false}>
           {rule.emoji}
         </Text>
       </View>
+      <View style={styles.tags}>
+        <Tag label={rule.trophy ? '🏆 Unica: solo il primo' : 'Cumulabile'} onDark />
+        <Tag label={rarityOf(rule)} onDark />
+      </View>
       <View style={styles.titleRow}>
-        <AppText variant="serifTitle" style={styles.title} numberOfLines={2}>
-          {rule.label}
-        </AppText>
+        <View style={styles.flex}>
+          <AppText variant="headline" color="#FFFFFF" style={styles.title} numberOfLines={2}>
+            {rule.label}
+          </AppText>
+          <AppText variant="caption" color="rgba(255,255,255,0.82)" style={styles.regular}>
+            {cardSubtitle(rule, author?.name)}
+          </AppText>
+        </View>
         <PressableScale
           accessibilityRole="button"
-          accessibilityLabel="Statistiche della carta"
+          accessibilityLabel="Statistiche e altre azioni"
           hitSlop={12}
           onPress={onInfo}
           style={styles.info}>
-          <AppText variant="caption">i</AppText>
+          <AppText variant="caption" color="#FFFFFF" style={styles.bold}>
+            i
+          </AppText>
         </PressableScale>
       </View>
-      <View style={styles.tags}>
-        <Tag label={typeLabel} />
-        <Tag label={rule.trophy ? '🏆 Speciale: solo il primo' : 'Cumulabile'} gold={rule.trophy} />
-        <Tag label={rarityOf(rule)} />
-      </View>
-      <AppText variant="body" color={colors.inkSoft} numberOfLines={5} style={styles.desc}>
+      <AppText variant="body" color="rgba(255,255,255,0.92)" numberOfLines={5} style={styles.desc}>
         {rule.description}
       </AppText>
       <View style={styles.actions}>
         {primary ? (
           <>
             {state?.text ? (
-              <AppText variant="micro" color={colors.inkSoft} style={styles.centerText} numberOfLines={1}>
+              <AppText variant="micro" color="rgba(255,255,255,0.85)" style={styles.centerText} numberOfLines={1}>
                 {state.text}
               </AppText>
             ) : null}
@@ -182,21 +221,22 @@ function Front({
             label={secondary.label}
             icon={secondary.icon}
             variant="secondary"
+            onDark
             onPress={run(secondary)}
             style={styles.btn}
           />
         ) : (
           // Niente da fare: il bottone resta, spento, e dice perché
           <View style={[styles.btn, styles.disabled]} accessibilityRole="text">
-            {state?.tone === 'locked' && <Icon name="lock" size={14} color={colors.inkSoft} />}
-            {state?.tone === 'ok' && <Icon name="check" size={14} color={colors.bonus} />}
-            <AppText variant="caption" color={colors.inkSoft} numberOfLines={2} style={styles.centerText}>
+            {state?.tone === 'locked' && <Icon name="lock" size={14} color="#FFFFFF" />}
+            {state?.tone === 'ok' && <Icon name="check" size={14} color="#FFFFFF" />}
+            <AppText variant="caption" color="#FFFFFF" numberOfLines={2} style={styles.centerText}>
               {state?.text ?? 'Solo da leggere'}
             </AppText>
           </View>
         )}
         {primary && secondary ? (
-          <Button label={secondary.label} variant="tertiary" onPress={run(secondary)} style={styles.link} />
+          <Button label={secondary.label} variant="tertiary" onDark onPress={run(secondary)} style={styles.link} />
         ) : null}
       </View>
     </View>
@@ -234,9 +274,20 @@ function Back({
     ['Rarità', rarityOf(rule)],
     ['Valore', `${rule.points > 0 ? '+' : ''}${rule.points} punti${rule.trophy ? ', una volta sola' : ', ogni volta'}`],
   ];
+  const saved = useGameStore((s) => s.savedRuleIds.includes(rule.id));
+  const toggleSaved = useGameStore((s) => s.toggleSaved);
+  const share = () => {
+    const text = `${rule.emoji} ${rule.label}: ${rule.description} (Fanta.me)`;
+    haptics.tap();
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
+      const nav = navigator as Navigator & { share?: (d: { text: string }) => Promise<void> };
+      if (nav.share) nav.share({ text }).catch(() => {});
+      else navigator.clipboard?.writeText(text);
+    }
+  };
   return (
     <View style={[styles.card, styles.cardBack]}>
-      <Corner rule={rule} onClose={onClose} />
+      <Corner rule={rule} onClose={onClose} label="Retro della carta" />
       <AppText variant="serifHeading" color={colors.inkInverse} numberOfLines={2}>
         {rule.emoji} {rule.label}
       </AppText>
@@ -252,7 +303,21 @@ function Back({
           </View>
         ))}
       </View>
-      <Button label="Gira la carta" variant="secondary" onDark onPress={onFlip} style={styles.btn} />
+      <View style={styles.actions}>
+        <Button
+          label={saved ? 'Salvata nella collezione' : 'Salva nella collezione'}
+          icon={saved ? 'check' : undefined}
+          onPress={() => {
+            haptics.tap();
+            toggleSaved(rule.id);
+          }}
+          style={styles.btn}
+        />
+        <View style={styles.backRow}>
+          <Button label="Condividi" variant="secondary" onDark onPress={share} style={[styles.btn, styles.flex]} />
+          <Button label="Gira la carta" variant="secondary" onDark onPress={onFlip} style={[styles.btn, styles.flex]} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -263,33 +328,42 @@ const styles = StyleSheet.create({
   face: { ...StyleSheet.absoluteFill, backfaceVisibility: 'hidden' },
   card: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    backgroundColor: '#0E0E11',
+    borderRadius: 28,
+    overflow: 'hidden',
     padding: space.md,
     gap: space.xs,
   },
-  cardBack: { backgroundColor: '#0E0E11', borderColor: '#0E0E11', gap: space.md },
+  cardBack: { gap: space.md },
+  backRow: { flexDirection: 'row', gap: space.xs },
+  flex: { flex: 1, gap: 2 },
+  bold: { fontWeight: '700' },
   corner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  gem: { height: 30, paddingHorizontal: space.sm, borderRadius: 15, borderWidth: 1, justifyContent: 'center' },
+  gem: {
+    height: 30,
+    paddingHorizontal: space.sm,
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+  },
   close: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(0,0,0,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   art: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 64, lineHeight: 76, fontFamily: EMOJI_FONT },
+  emoji: { fontSize: 96, lineHeight: 112, fontFamily: EMOJI_FONT },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  title: { flex: 1, fontSize: 24, lineHeight: 28 },
+  title: { fontSize: 24, lineHeight: 28, fontWeight: '700' },
   info: {
     width: 26,
     height: 26,
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: 'rgba(255,255,255,0.8)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -304,7 +378,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(0,0,0,0.22)',
     paddingHorizontal: space.md,
   },
   centerText: { textAlign: 'center', flexShrink: 1 },

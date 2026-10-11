@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   dimmed: { opacity: 0.38 },
   card: {
     width: '100%',
-    aspectRatio: 0.78,
+    aspectRatio: 63 / 88,
     borderRadius: radius.sm,
     borderWidth: 1,
     alignItems: 'center',

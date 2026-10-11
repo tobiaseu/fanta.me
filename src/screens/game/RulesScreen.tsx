@@ -8,6 +8,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
+import { PlayCard, type CardRect } from '@/components/cards/PlayCard';
 import { FinaleSettings } from '@/components/game/FinaleSettings';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { PowersPanel } from '@/components/game/PowersPanel';
@@ -72,6 +73,13 @@ export function RulesScreen() {
   const events = useGameStore((s) => s.events);
   const captains = useGameStore((s) => s.captains);
   const [selected, setSelected] = useState<Rule>();
+  const [openFrom, setOpenFrom] = useState<{ from?: CardRect; back?: boolean }>({});
+  const openCard =
+    (r: Rule, back = false) =>
+    (from?: CardRect) => {
+      setOpenFrom({ from, back });
+      setSelected(r);
+    };
   const [explore, setExplore] = useState(false);
   const updateSettings = useGameStore((s) => s.updateSettings);
   useLiveDeck(game);
@@ -254,7 +262,19 @@ export function RulesScreen() {
                       .springify()
                       .damping(16)}
                     style={styles.cell}>
-                    <DeckCard rule={r} style={styles.full} onPress={() => setSelected(r)} />
+                    <PlayCard
+                      rule={r}
+                      style={styles.full}
+                      authorName={players.find((p) => p.id === r.authorId)?.name}
+                      cta={
+                        game.status === 'live'
+                          ? { label: 'Chiama', icon: 'plus', onPress: () => openQuickAction(r.id) }
+                          : undefined
+                      }
+                      status={game.status === 'live' ? undefined : 'Nel mazzo'}
+                      onOpen={openCard(r)}
+                      onInfo={openCard(r, true)}
+                    />
                   </Animated.View>
                 ))}
               </Animated.View>
@@ -281,7 +301,7 @@ export function RulesScreen() {
                     key={r.id}
                     rule={r}
                     style={styles.slot}
-                    onPress={() => setSelected(r)}
+                    onPress={() => openCard(r)()}
                     onLongPress={() => drop(r)}
                   />
                 ))}
@@ -306,13 +326,22 @@ export function RulesScreen() {
               <View style={styles.grid}>
                 {open.map((p) => {
                   const r = ruleById(p.ruleId);
+                  const liked = p.likes.includes(ME.id);
                   return r ? (
-                    <DeckCard
+                    <PlayCard
                       key={p.id}
                       rule={r}
-                      checked={p.likes.includes(ME.id)}
-                      note={`${p.likes.length}/${needed} 👍`}
-                      onPress={() => setSelected(r)}
+                      authorName={players.find((pl) => pl.id === r.authorId)?.name}
+                      cta={{
+                        label: liked
+                          ? `La vuoi · ${p.likes.length}/${needed}`
+                          : `La voglio · ${p.likes.length}/${needed}`,
+                        icon: liked ? 'check' : 'plus',
+                        done: liked,
+                        onPress: () => toggleLike(p.id),
+                      }}
+                      onOpen={openCard(r)}
+                      onInfo={openCard(r, true)}
                     />
                   ) : null;
                 })}
@@ -325,7 +354,7 @@ export function RulesScreen() {
               title="La tua collezione"
               caption={
                 pregame
-                  ? 'Tocca per leggere, tieni premuto per metterla nel mazzo.'
+                  ? 'Tocca la carta per aprirla, "i" per salvarla o condividerla.'
                   : tab === 'base'
                     ? 'Le 20 carte del gioco. Quelle accese sono nel mazzo.'
                     : `${mine.length} di ${slots} carte personali.`
@@ -345,33 +374,51 @@ export function RulesScreen() {
                   // Come su iPhone: tocco = apri la carta, pressione lunga = azione rapida (metti nel mazzo).
                   RULES.map((r) => {
                     const inDeck = game.ruleIds.includes(r.id);
+                    const minePick = proposals.some((p) => p.ruleId === r.id && p.authorId === ME.id);
                     return (
-                      <DeckCard
+                      <PlayCard
                         key={r.id}
                         rule={r}
-                        addable={pregame && !inDeck}
-                        checked={inDeck}
                         dimmed={!pregame && !inDeck}
-                        onPress={() => setSelected(r)}
+                        cta={
+                          pregame && !inDeck
+                            ? { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(r) }
+                            : pregame && minePick
+                              ? { label: 'Nel mazzo', icon: 'check', done: true, onPress: () => drop(r) }
+                              : undefined
+                        }
+                        status={inDeck ? 'Nel mazzo' : pregame ? undefined : 'Fuori dal mazzo'}
+                        onOpen={openCard(r)}
+                        onInfo={openCard(r, true)}
                         onLongPress={pregame && !inDeck ? () => pick(r) : undefined}
                       />
                     );
                   })
                 : [
-                    ...mine.map((r) => (
-                      <DeckCard
-                        key={r.id}
-                        rule={r}
-                        checked={game.ruleIds.includes(r.id)}
-                        addable={pregame && !game.ruleIds.includes(r.id)}
-                        onPress={() => setSelected(r)}
-                        onLongPress={pregame ? () => (game.ruleIds.includes(r.id) ? drop(r) : pick(r)) : undefined}
-                      />
-                    )),
+                    ...mine.map((r) => {
+                      const inDeck = game.ruleIds.includes(r.id);
+                      return (
+                        <PlayCard
+                          key={r.id}
+                          rule={r}
+                          authorName="te"
+                          cta={
+                            pregame
+                              ? inDeck
+                                ? { label: 'Nel mazzo', icon: 'check', done: true, onPress: () => drop(r) }
+                                : { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(r) }
+                              : undefined
+                          }
+                          status={pregame ? undefined : inDeck ? 'Nel mazzo' : 'Fuori dal mazzo'}
+                          onOpen={openCard(r)}
+                          onInfo={openCard(r, true)}
+                        />
+                      );
+                    }),
                     ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (
-                      <EmptySlot key={`empty-${i}`} onPress={createCard} />
+                      <EmptySlot key={`empty-${i}`} onPress={createCard} style={styles.halfSlot} />
                     )),
-                    <EmptySlot key="locked" locked onPress={openPremium} />,
+                    <EmptySlot key="locked" locked onPress={openPremium} style={styles.halfSlot} />,
                   ]}
             </View>
           </View>
@@ -458,6 +505,8 @@ export function RulesScreen() {
         rule={selected}
         author={players.find((p) => p.id === selected?.authorId)}
         {...sheet}
+        from={openFrom.from}
+        startOnBack={openFrom.back}
         onClose={() => setSelected(undefined)}
       />
       <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />
@@ -467,7 +516,8 @@ export function RulesScreen() {
 
 const styles = StyleSheet.create({
   playersTab: { gap: 40 },
-  cell: { width: '30%' },
+  cell: { width: '47.5%' },
+  halfSlot: { width: '47.5%' },
   slot: { width: '22%' },
   full: { width: '100%' },
   slots: {
@@ -504,7 +554,7 @@ const styles = StyleSheet.create({
   },
   phase: { gap: space.sm },
   section: { gap: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.lg },
   segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, padding: 4 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs, borderRadius: radius.pill },
   segmentActive: { backgroundColor: colors.surface },
