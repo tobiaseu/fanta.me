@@ -39,7 +39,7 @@ export function ProfileScreen() {
       bonus: mine.filter((e) => e.points > 0).reduce((s, e) => s + e.points, 0),
       malus: mine.filter((e) => e.points < 0).reduce((s, e) => s + e.points, 0),
       standings: game ? computeStandings(game, events, players) : [],
-      team: game?.teams?.find((t) => t.memberIds.includes(ME.id)),
+      team: game?.teams?.find((t) => t.ownerId === ME.id),
       teamRows: game?.teams?.length ? computeTeamStandings(game, events, players, captains, Date.now()) : [],
     };
   }, [events, players, game, captains]);

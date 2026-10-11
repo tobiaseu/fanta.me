@@ -102,9 +102,9 @@ export const GAMES: Game[] = [
     endsAt: hoursFromNow(17.6),
     playerIds: ['u-me', 'u-ale', 'u-giulia', 'u-marco', 'u-sara', 'u-luca'],
     teams: [
-      { id: 't1', name: 'FC Sculo', memberIds: ['u-me', 'u-ale'] },
-      { id: 't2', name: 'Avantisavoia', memberIds: ['u-giulia', 'u-marco'] },
-      { id: 't3', name: 'Lepori Industris', memberIds: ['u-sara', 'u-luca'] },
+      { id: 't1', name: 'FC Sculo', ownerId: 'u-me', memberIds: ['u-ale', 'u-luca'] },
+      { id: 't2', name: 'Avantisavoia', ownerId: 'u-giulia', memberIds: ['u-marco', 'u-me'] },
+      { id: 't3', name: 'Lepori Industris', ownerId: 'u-sara', memberIds: ['u-luca', 'u-ale'] },
     ],
     nicknames: { 'u-sara': 'La Sirena', 'u-ale': 'Il Conte', 'u-marco': 'Marchino', 'u-me': 'Toby' },
     ruleIds: [
@@ -149,8 +149,8 @@ export const GAMES: Game[] = [
     endsAt: hoursFromNow(48 + 72),
     playerIds: ['u-me', 'u-sara', 'u-giulia', 'u-ale'],
     teams: [
-      { id: 'tc1', name: 'I Secchioni', memberIds: ['u-me'] },
-      { id: 'tc2', name: 'Ultimo Banco', memberIds: ['u-sara'] },
+      { id: 'tc1', name: 'I Secchioni', ownerId: 'u-me', memberIds: [] },
+      { id: 'tc2', name: 'Ultimo Banco', ownerId: 'u-sara', memberIds: ['u-giulia'] },
     ],
     ruleIds: [
       'r-toast',

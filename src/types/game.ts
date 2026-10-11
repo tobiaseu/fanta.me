@@ -79,6 +79,9 @@ export interface CardProposal {
 export interface Team {
   id: string;
   name: string;
+  /** Chi ha formato la squadra: non ne fa mai parte */
+  ownerId: string;
+  /** I giocatori scelti (mai il proprietario). Lo stesso giocatore può stare in più squadre. */
   memberIds: string[];
 }
 

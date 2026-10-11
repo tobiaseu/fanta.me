@@ -109,11 +109,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((s) => ({
       games: s.games.map((g) => {
         if (g.id !== gameId || !g.teams || playerId === ME.id) return g;
-        const mine = g.teams.find((t) => t.memberIds.includes(ME.id));
+        const mine = g.teams.find((t) => t.ownerId === ME.id);
         if (!mine) return g;
         const inMine = mine.memberIds.includes(playerId);
-        if (!inMine && (mine.memberIds.length >= teamSize(g) || g.teams.some((t) => t.memberIds.includes(playerId))))
-          return g;
+        // Si sceglie chiunque tranne se stessi; lo stesso giocatore può essere in più squadre
+        if (!inMine && mine.memberIds.length >= teamSize(g)) return g;
         return {
           ...g,
           teams: g.teams.map((t) =>
@@ -272,7 +272,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       endsAt: mode === 'sprint' ? new Date(start + (hours ?? 48) * HOUR_MS).toISOString() : undefined,
       week: mode === 'marathon' ? { current: 1, total: 4 } : undefined,
       playerIds: [ME.id, ...friendIds],
-      ruleIds: ruleIds ?? RULES.map((r) => r.id), // le 20 carte base; le personali si propongono nel pre-partita
+      // Il mazzo nasce vuoto (o dal mazzo pronto scelto): lo formano le carte che ognuno porta nel pre-partita
+      ruleIds: ruleIds ?? [],
       accent: '#0B8200',
     };
     set((s) => ({ games: [game, ...s.games] }));
@@ -464,8 +465,10 @@ export const votesNeeded = (game: Game) =>
   Math.max(1, Math.min((game.settings ?? DEFAULT_SETTINGS).votesToConfirm ?? 3, game.playerIds.length - 1));
 
 /** Giocatori per squadra: la stanza divisa in parti uguali, tra 2 e 4. */
-export const teamSize = (game: Game) =>
-  Math.max(2, Math.min(4, Math.ceil(game.playerIds.length / Math.max(1, game.teams?.length ?? 1))));
+/** Quanti giocatori si scelgono in squadra: fino a 3, mai più degli altri in stanza. */
+export const teamSize = (game: Game) => Math.max(1, Math.min(3, game.playerIds.length - 1));
+/** La squadra che un giocatore ha formato (lui non ne fa parte). */
+export const teamOf = (game: Game, playerId: string) => game.teams?.find((t) => t.ownerId === playerId);
 
 /** Il finale: le ultime 6 ore di una partita in corso (o l'ultima giornata se più corta). */
 export const FINALE_MS = 6 * 3_600_000;

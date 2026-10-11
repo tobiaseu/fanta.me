@@ -75,7 +75,7 @@ export function DashboardScreen() {
   if (!game) return null;
   const day = gameDay(game, now);
   const card = game.status === 'live' ? cardOfDay(game, now) : undefined;
-  const myTeam = game.teams?.find((t) => t.memberIds.includes(ME.id));
+  const myTeam = game.teams?.find((t) => t.ownerId === ME.id);
   const members = myTeam
     ? (myTeam.memberIds.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[])
     : [];
@@ -106,7 +106,11 @@ export function DashboardScreen() {
   // La card primaria: sempre in cima, sempre un solo passaggio da fare, cambia con la fase
   const mineProposed = proposals.filter((p) => p.gameId === game.id && p.authorId === ME.id).length;
   const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
-  const openDeck = () => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } });
+  // Le carte si scelgono nel tab Mazzo, lo stesso che si apre dal menu: nessuna schermata parallela
+  const openDeck = () => {
+    useUiStore.getState().setDeckView('cards');
+    goTo('rules');
+  };
   const next: Parameters<typeof HeroCard>[0] =
     game.status === 'waiting'
       ? mineProposed < perPlayer

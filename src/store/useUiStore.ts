@@ -15,6 +15,9 @@ interface UiState {
   quickRuleId?: string;
   /** Squadra aperta nel pop-up "Guarda squadra" */
   teamSheetId?: string;
+  /** Quale metà del tab Mazzo mostrare: ci si arriva anche dalle CTA di Dashboard e Live */
+  deckView: 'cards' | 'players';
+  setDeckView: (v: 'cards' | 'players') => void;
   openTeam: (teamId?: string) => void;
   closeQuickAction: () => void;
   toast?: Toast;
@@ -32,6 +35,8 @@ interface UiState {
 export const useUiStore = create<UiState>((set) => ({
   quickActionOpen: false,
   openTeam: (teamSheetId) => set({ teamSheetId }),
+  deckView: 'cards',
+  setDeckView: (deckView) => set({ deckView }),
   openQuickAction: (ruleId) => set({ quickActionOpen: true, quickRuleId: ruleId }),
   closeQuickAction: () => set({ quickActionOpen: false, quickRuleId: undefined }),
   toast: undefined,

@@ -62,7 +62,8 @@ export function RulesScreen() {
   const toggleLike = useGameStore((s) => s.toggleLike);
   const [tab, setTab] = useState<Tab>('base');
   const [showAll, setShowAll] = useState(false);
-  const [division, setDivision] = useState<'cards' | 'players'>('cards');
+  const division = useUiStore((s) => s.deckView);
+  const setDivision = useUiStore((s) => s.setDeckView);
   const proposeCard = useGameStore((s) => s.proposeCard);
   const withdrawCard = useGameStore((s) => s.withdrawCard);
   const showToast = useUiStore((s) => s.showToast);
@@ -191,7 +192,7 @@ export function RulesScreen() {
           <View style={styles.playersTab}>
             {(() => {
               const rows = computeTeamStandings(game, events, players, captains, Date.now());
-              const myTeam = game.teams.find((t) => t.memberIds.includes(ME.id));
+              const myTeam = game.teams.find((t) => t.ownerId === ME.id);
               const place = (id: string) => rows.findIndex((r) => r.team.id === id) + 1;
               return (
                 <>
@@ -276,7 +277,13 @@ export function RulesScreen() {
               />
               <View style={styles.slots}>
                 {myCards.map((r) => (
-                  <DeckCard key={r.id} rule={r} style={styles.slot} onPress={() => setSelected(r)} />
+                  <DeckCard
+                    key={r.id}
+                    rule={r}
+                    style={styles.slot}
+                    onPress={() => setSelected(r)}
+                    onLongPress={() => drop(r)}
+                  />
                 ))}
                 {Array.from({ length: Math.max(0, perPlayer - myCards.length) }, (_, i) => (
                   <EmptySlot

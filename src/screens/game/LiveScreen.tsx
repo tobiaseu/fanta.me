@@ -66,7 +66,7 @@ export function LiveScreen() {
   if (game.status === 'waiting') {
     const perPlayer = (game.settings ?? DEFAULT_SETTINGS).cardsPerPlayer;
     const myCards = proposals.filter((p) => p.gameId === game.id && p.authorId === ME.id).length;
-    const myTeam = game.teams?.find((t) => t.memberIds.includes(ME.id));
+    const myTeam = game.teams?.find((t) => t.ownerId === ME.id);
     const todo =
       myCards < perPlayer
         ? {
@@ -77,7 +77,7 @@ export function LiveScreen() {
         : myTeam && myTeam.memberIds.length < teamSize(game)
           ? {
               title: 'La tua squadra non è completa',
-              body: `Prendi ${teamSize(game) - myTeam.memberIds.length} giocatori liberi.`,
+              body: `Scegli ancora ${teamSize(game) - myTeam.memberIds.length} giocatori: chiunque tranne te.`,
               cta: 'Fai la squadra',
             }
           : undefined;
@@ -101,7 +101,10 @@ export function LiveScreen() {
             </AppText>
             <Button
               label={todo.cta}
-              onPress={() => router.navigate({ pathname: '/game/[gameId]/rules', params: { gameId: game.id } })}
+              onPress={() => {
+                useUiStore.getState().setDeckView(todo.cta === 'Fai la squadra' ? 'players' : 'cards');
+                router.navigate({ pathname: '/game/[gameId]/rules', params: { gameId: game.id } });
+              }}
             />
           </View>
         ) : (

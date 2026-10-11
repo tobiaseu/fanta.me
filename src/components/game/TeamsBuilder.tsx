@@ -54,10 +54,11 @@ export function TeamsBuilder({ game }: { game: Game }) {
       </View>
     );
 
-  const mine = game.teams.find((t) => t.memberIds.includes(ME.id));
-  const free = roomPlayers.filter((p) => !game.teams!.some((t) => t.memberIds.includes(p.id)));
+  const mine = game.teams.find((t) => t.ownerId === ME.id);
+  const others = roomPlayers.filter((p) => p.id !== ME.id);
+  const inTeams = (id: string) => game.teams!.filter((t) => t.memberIds.includes(id)).length;
   const toggle = (p: Player) => {
-    if (!mine) return;
+    if (!mine || p.id === ME.id) return;
     const inMine = mine.memberIds.includes(p.id);
     if (!inMine && mine.memberIds.length >= size) {
       haptics.malus();
@@ -71,32 +72,27 @@ export function TeamsBuilder({ game }: { game: Game }) {
     });
   };
 
-  // Tocco = apri la carta (si vede cosa si può fare); pressione lunga = azione rapida
+  // Stessa grammatica delle carte: tocco = apri, pressione lunga = prendi/lascia
   const sheetOf = (p: Player) => {
-    const team = game.teams!.find((t) => t.memberIds.includes(p.id));
-    if (p.id === ME.id) return { state: { text: `Sei tu · ${team?.name ?? 'senza squadra'}` } };
-    if (!pregame) return { state: { text: team ? `In ${team.name} · ${points.get(p.id) ?? 0} punti` : '' } };
-    if (team && team.id === mine?.id)
+    if (p.id === ME.id) return { state: { text: 'Sei tu: non puoi stare nella tua squadra', tone: 'locked' as const } };
+    const n = inTeams(p.id);
+    const elsewhere = n > 0 ? ` · scelto in ${n} ${n === 1 ? 'squadra' : 'squadre'}` : '';
+    if (!pregame) return { state: { text: `${points.get(p.id) ?? 0} punti${elsewhere}` } };
+    if (mine?.memberIds.includes(p.id))
       return {
         state: { text: `Nella tua squadra · ${mine.memberIds.length} di ${size}`, tone: 'ok' as const },
-        secondary: { label: 'Lascialo libero', onPress: () => toggle(p) },
+        secondary: { label: 'Togli dalla squadra', onPress: () => toggle(p) },
       };
-    if (team) return { state: { text: `Già in ${team.name}`, tone: 'locked' as const } };
     if (mine && mine.memberIds.length >= size)
       return {
-        state: { text: `La tua squadra è piena (${size} di ${size}): lascia un compagno`, tone: 'locked' as const },
+        state: { text: `Squadra piena (${size} di ${size}): togline uno per fare posto`, tone: 'locked' as const },
       };
     return {
-      state: {
-        text: `Libero · ti manca${size - (mine?.memberIds.length ?? 0) > 1 ? 'no' : ''} ${size - (mine?.memberIds.length ?? 0)} in squadra`,
-      },
-      primary: { label: `Prendi in ${mine?.name ?? 'squadra'}`, onPress: () => toggle(p) },
+      state: { text: `Ti restano ${size - (mine?.memberIds.length ?? 0)} posti su ${size}${elsewhere}` },
+      primary: { label: 'Metti in squadra', onPress: () => toggle(p) },
     };
   };
-  const quick = (p: Player) =>
-    pregame && p.id !== ME.id && !game.teams!.some((t) => t.id !== mine?.id && t.memberIds.includes(p.id))
-      ? () => toggle(p)
-      : undefined;
+  const quick = (p: Player) => (pregame && p.id !== ME.id ? () => toggle(p) : undefined);
 
   return (
     <>
@@ -108,12 +104,12 @@ export function TeamsBuilder({ game }: { game: Game }) {
         onProfile={open ? () => openPlayer(open.id) : undefined}
         onClose={() => setOpen(undefined)}
       />
+
+      {/* 1. Vista d'insieme, come "Mazzo della partita" */}
       <View style={styles.section}>
         <SectionHeader
-          title="Squadre"
-          caption={
-            pregame ? `Squadre da ${size}. Scorri per vederle tutte.` : 'Tocca un giocatore per aprire il suo profilo.'
-          }
+          title="Squadre della partita"
+          caption={`${game.teams.length} squadre. Ognuno sceglie ${size} giocatori, mai se stesso.`}
         />
         <ScrollView
           horizontal
@@ -123,6 +119,7 @@ export function TeamsBuilder({ game }: { game: Game }) {
           {game.teams.map((t) => {
             const stand = teamStand.find((x) => x.team.id === t.id);
             const place = teamStand.findIndex((x) => x.team.id === t.id) + 1;
+            const owner = byId(t.ownerId);
             return (
               <View key={t.id} style={[styles.team, t.id === mine?.id && styles.teamMine]}>
                 <View style={styles.teamHead}>
@@ -138,6 +135,9 @@ export function TeamsBuilder({ game }: { game: Game }) {
                       : `${place}ª · ${stand?.points ?? 0} pt`}
                   </AppText>
                 </View>
+                <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+                  di {t.ownerId === ME.id ? 'te' : owner ? nameIn(game, owner) : '?'}
+                </AppText>
                 <View style={styles.teamCards}>
                   {t.memberIds.map((id) => {
                     const p = byId(id);
@@ -152,10 +152,9 @@ export function TeamsBuilder({ game }: { game: Game }) {
                       />
                     ) : null;
                   })}
-                  {pregame &&
-                    Array.from({ length: Math.max(0, size - t.memberIds.length) }, (_, i) => (
-                      <View key={i} style={[styles.mini, styles.ghost]} />
-                    ))}
+                  {Array.from({ length: Math.max(0, size - t.memberIds.length) }, (_, i) => (
+                    <View key={i} style={[styles.mini, styles.ghost]} />
+                  ))}
                 </View>
               </View>
             );
@@ -163,11 +162,12 @@ export function TeamsBuilder({ game }: { game: Game }) {
         </ScrollView>
       </View>
 
-      {pregame && mine && (
+      {/* 2. Le tue caselle, come "Le tue carte nel mazzo" */}
+      {mine && (
         <View style={styles.section}>
           <SectionHeader
-            title={`La tua squadra: ${mine.name}`}
-            caption={`${mine.memberIds.length} di ${size}. Tocca per aprire, tieni premuto per lasciarlo.`}
+            title="La tua squadra"
+            caption={`${mine.name}: ${mine.memberIds.length} di ${size}. ${pregame ? `Scegline ${size} dai giocatori qui sotto.` : 'Squadra chiusa: si gioca con questi.'}`}
           />
           <View style={styles.slots}>
             {mine.memberIds.map((id) => {
@@ -176,7 +176,9 @@ export function TeamsBuilder({ game }: { game: Game }) {
                 <PlayerCard
                   key={id}
                   player={p}
-                  name={id === ME.id ? 'Tu' : nameIn(game, p)}
+                  name={nameIn(game, p)}
+                  points={pregame ? undefined : (points.get(id) ?? 0)}
+                  style={styles.slot}
                   onPress={() => setOpen(p)}
                   onLongPress={quick(p)}
                 />
@@ -185,31 +187,38 @@ export function TeamsBuilder({ game }: { game: Game }) {
             {Array.from({ length: Math.max(0, size - mine.memberIds.length) }, (_, i) => (
               <EmptySlot
                 key={i}
-                label="Scegli sotto"
-                onPress={() => showToast({ text: 'Scegli un giocatore libero qui sotto' })}
+                label={`Posto ${mine.memberIds.length + i + 1}`}
+                style={styles.slot}
+                onPress={() => showToast({ text: 'Scegli un giocatore qui sotto' })}
               />
             ))}
           </View>
         </View>
       )}
 
+      {/* 3. Da dove si sceglie, come "La tua collezione" */}
       {pregame && (
         <View style={styles.section}>
-          <SectionHeader title="Giocatori liberi" caption="Tocca per aprire, tieni premuto per prenderlo al volo." />
-          {free.length ? (
+          <SectionHeader title="I giocatori" caption="Tocca per leggere, tieni premuto per metterlo in squadra." />
+          {others.length ? (
             <View style={styles.grid}>
-              {free.map((p) => (
+              {others.map((p) => (
                 <PlayerCard
                   key={p.id}
                   player={p}
                   name={nameIn(game, p)}
+                  checked={mine?.memberIds.includes(p.id)}
                   onPress={() => setOpen(p)}
                   onLongPress={quick(p)}
                 />
               ))}
             </View>
           ) : (
-            <EmptyNote emoji="🤝" title="Tutti hanno una squadra" body="Le squadre sono fatte. Si parte con queste." />
+            <EmptyNote
+              emoji="🤝"
+              title="Sei solo in stanza"
+              body="Invita qualcuno: in squadra puoi mettere tutti tranne te."
+            />
           )}
         </View>
       )}
@@ -220,10 +229,12 @@ export function TeamsBuilder({ game }: { game: Game }) {
 const styles = StyleSheet.create({
   section: { gap: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
+  regular: { fontWeight: '400' },
+  slot: { width: '22%' },
   slots: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    columnGap: '5%',
+    columnGap: '4%',
     rowGap: space.md,
     padding: space.sm,
     borderRadius: radius.lg,
