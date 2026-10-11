@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -48,6 +48,7 @@ import { DEFAULT_SETTINGS, type Player } from '@/types/game';
 export function DashboardScreen() {
   const game = useCurrentGame();
   const router = useRouter();
+  const navigation = useNavigation();
   const now = useNow(30_000);
   const events = useGameStore((s) => s.events);
   const players = useGameStore((s) => s.players);
@@ -91,7 +92,8 @@ export function DashboardScreen() {
   const toVote = calls.filter((c) => !c.myVote && c.playerId !== ME.id && c.authorId !== ME.id).length;
   const goTo = (tab: 'live' | 'leaderboard' | 'rules') => {
     haptics.tap();
-    router.navigate({ pathname: `/game/[gameId]/${tab}`, params: { gameId: game.id } });
+    // Cambio di tab nella stessa partita: niente pagina nuova sopra
+    navigation.navigate(tab as never);
   };
 
   const invite = () => router.push({ pathname: '/onboarding/invite', params: { gameId: game.id } });

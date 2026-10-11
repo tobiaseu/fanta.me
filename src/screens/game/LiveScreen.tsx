@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -44,6 +44,7 @@ import { DEFAULT_SETTINGS, type FeedEvent, type Player } from '@/types/game';
 export function LiveScreen() {
   const game = useCurrentGame();
   const router = useRouter();
+  const navigation = useNavigation();
   const now = useNow(30_000);
   const events = useGameStore((s) => s.events);
   const players = useGameStore((s) => s.players);
@@ -103,7 +104,7 @@ export function LiveScreen() {
               label={todo.cta}
               onPress={() => {
                 useUiStore.getState().setDeckView(todo.cta === 'Fai la squadra' ? 'players' : 'cards');
-                router.navigate({ pathname: '/game/[gameId]/rules', params: { gameId: game.id } });
+                navigation.navigate('rules' as never);
               }}
             />
           </View>
