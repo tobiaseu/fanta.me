@@ -1,5 +1,4 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import type { CardState } from '@/components/cards/CardSheet';
 import { Icon } from '@/components/icons/Icon';
@@ -7,7 +6,8 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { ActionRow, CardGlow } from '@/components/ui/ActionRow';
 import { Button } from '@/components/ui/Button';
-import { PressableScale } from '@/components/ui/PressableScale';
+import { ObjectModal, SheetClose } from '@/components/ui/ObjectModal';
+import type { CardRect } from '@/components/cards/PlayCard';
 import { colors, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
 
@@ -25,6 +25,7 @@ export function PlayerSheet({
   primary,
   secondary,
   onProfile,
+  from,
   onClose,
 }: {
   player?: Player;
@@ -34,18 +35,28 @@ export function PlayerSheet({
   primary?: Action;
   secondary?: Action;
   onProfile?: () => void;
+  from?: CardRect;
   onClose: () => void;
 }) {
-  const run = (a: Action) => () => {
-    a.onPress();
-    onClose();
-  };
+  const { width } = useWindowDimensions();
+  const w = Math.min(340, width - 32);
   return (
-    <Modal visible={!!player} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Chiudi" />
-      {player && (
-        <View style={styles.center} pointerEvents="box-none">
-          <Animated.View entering={ZoomIn.springify().damping(16)} style={styles.card}>
+    <ObjectModal
+      visible={!!player}
+      resetKey={player?.id}
+      from={from}
+      width={w}
+      height={w / (63 / 88)}
+      closeLabel="Chiudi"
+      onClose={onClose}>
+      {(close) => {
+        if (!player) return null;
+        const run = (a: Action) => () => {
+          a.onPress();
+          close();
+        };
+        return (
+          <View style={styles.card}>
             <CardGlow id={`p-${player.id}`} cy={50} />
             <View style={styles.top}>
               <View style={styles.kind}>
@@ -53,14 +64,7 @@ export function PlayerSheet({
                   Giocatore
                 </AppText>
               </View>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel="Chiudi"
-                hitSlop={12}
-                onPress={onClose}
-                style={styles.close}>
-                <Icon name="close" size={16} />
-              </PressableScale>
+              <SheetClose onPress={close} ink={colors.ink} onDark={false} />
             </View>
             <View style={styles.art}>
               <Avatar player={player} size={120} sticker={false} />
@@ -103,20 +107,16 @@ export function PlayerSheet({
                 style={styles.link}
               />
             )}
-          </Animated.View>
-        </View>
-      )}
-    </Modal>
+          </View>
+        );
+      }}
+    </ObjectModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10, 10, 12, 0.86)' },
-  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.md },
   card: {
-    width: '100%',
-    maxWidth: 340,
-    aspectRatio: 63 / 88,
+    flex: 1,
     backgroundColor: colors.surface,
     borderRadius: 28,
     overflow: 'hidden',
@@ -129,14 +129,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.sm,
     borderRadius: 13,
     backgroundColor: 'rgba(0,0,0,0.06)',
-    justifyContent: 'center',
-  },
-  close: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    alignItems: 'center',
     justifyContent: 'center',
   },
   art: { flex: 1, alignItems: 'center', justifyContent: 'center' },

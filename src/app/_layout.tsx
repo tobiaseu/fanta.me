@@ -55,7 +55,6 @@ export default function RootLayout() {
             <Stack.Screen name="splash" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="onboarding/hello" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="settings" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="explore" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rulebook" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="deck/[gameId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="onboarding/room" options={{ animation: 'fade', gestureEnabled: false }} />

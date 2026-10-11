@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
-import { CardArt, cardPaint, tierOf } from '@/components/cards/PlayCard';
+import { CardArt, cardPaint, signGlow } from '@/components/cards/PlayCard';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { colors, radius, space } from '@/theme/tokens';
@@ -58,35 +58,37 @@ export function DeckCard({ rule, dimmed, checked, addable, note, onPress, onLong
       onLongPress={onLongPress}
       pressedScale={0.94}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
-      <View style={[styles.card, light && styles.cardLight]}>
-        <CardArt rule={rule} id={`d-${rule.id}`} />
-        <Text style={[styles.emoji, !bare && styles.emojiWithName]} allowFontScaling={false}>
-          {rule.emoji}
-        </Text>
-        {!bare && (
-          <AppText
-            variant="micro"
-            color={paint.ink}
-            numberOfLines={2}
-            style={[styles.inName, longestWord(rule.label) > 9 && styles.inNameSmall]}>
-            {rule.label}
-          </AppText>
-        )}
-        <View style={[styles.gem, { backgroundColor: bonus ? colors.bonus : colors.malus }]}>
-          <AppText variant="micro" color="#FFFFFF" style={styles.gemText}>
-            {bonus ? `+${rule.points}` : rule.points}
-          </AppText>
+      <View style={[styles.shell, !bare && signGlow(rule.points, 'sm')]}>
+        <View style={[styles.cardFill, light && styles.cardLight]}>
+          <CardArt rule={rule} id={`d-${rule.id}`} />
+          <Text style={[styles.emoji, !bare && styles.emojiWithName]} allowFontScaling={false}>
+            {rule.emoji}
+          </Text>
+          {!bare && (
+            <AppText
+              variant="micro"
+              color={paint.ink}
+              numberOfLines={2}
+              style={[styles.inName, longestWord(rule.label) > 9 && styles.inNameSmall]}>
+              {rule.label}
+            </AppText>
+          )}
+          <View style={[styles.gem, { backgroundColor: bonus ? colors.bonus : colors.malus }]}>
+            <AppText variant="micro" color="#FFFFFF" style={styles.gemText}>
+              {bonus ? `+${rule.points}` : rule.points}
+            </AppText>
+          </View>
+          {checked && (
+            <View style={styles.check}>
+              <Icon name="check" size={11} strokeWidth={3.2} />
+            </View>
+          )}
+          {addable && (
+            <View style={styles.add}>
+              <Icon name="plus" size={13} strokeWidth={2.4} />
+            </View>
+          )}
         </View>
-        {checked && (
-          <View style={styles.check}>
-            <Icon name="check" size={11} strokeWidth={3.2} />
-          </View>
-        )}
-        {addable && (
-          <View style={styles.add}>
-            <Icon name="plus" size={13} strokeWidth={2.4} />
-          </View>
-        )}
       </View>
       {note ? (
         <AppText variant="micro" color={colors.inkSoft} style={styles.note} numberOfLines={1}>
@@ -129,6 +131,8 @@ export function EmptySlot({
 }
 
 const styles = StyleSheet.create({
+  shell: { width: '100%', aspectRatio: 63 / 88, borderRadius: radius.sm },
+  cardFill: { flex: 1, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   wrap: { width: '30%', alignItems: 'center', gap: space.xxs },
   dimmed: { opacity: 0.38 },
   card: {

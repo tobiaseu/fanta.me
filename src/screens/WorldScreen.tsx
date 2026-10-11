@@ -3,13 +3,16 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { CardSheet } from '@/components/cards/CardSheet';
-import { PlayCard } from '@/components/cards/PlayCard';
+import { DeckStack } from '@/components/cards/DeckStack';
+import { PlayCard, type CardRect } from '@/components/cards/PlayCard';
+import { CommunityRoomCard, CommunityRoomSheet } from '@/components/rooms/CommunityRoom';
+import { ROOM_W } from '@/components/rooms/RoomCard';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyNote } from '@/components/ui/EmptyNote';
 import { HOME_TAB_SPACE } from '@/components/ui/HomeTabBar';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { RoomTile, tilePaint } from '@/components/ui/RoomTile';
+import { tilePaint } from '@/components/ui/RoomArt';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Segmented } from '@/components/ui/Segmented';
 import { TopBar } from '@/components/ui/TopBar';
@@ -44,6 +47,7 @@ export function WorldScreen() {
   const [query, setQuery] = useState('');
   const [occasion, setOccasion] = useState<(typeof OCCASIONS)[number]>('Tutte');
   const [selected, setSelected] = useState<Rule>();
+  const [room, setRoom] = useState<{ room: CommunityRoom; from?: CardRect }>();
   const saved = useGameStore((s) => s.savedRuleIds);
   const liked = useGameStore((s) => s.likedCommunity);
   const toggleSaved = useGameStore((s) => s.toggleSaved);
@@ -80,10 +84,6 @@ export function WorldScreen() {
   const nothing = !rooms.length && !decks.length && !cards.length;
   const community = selected && COMMUNITY_CARDS.find((c) => c.rule.id === selected.id);
 
-  const join = (r: CommunityRoom) => {
-    haptics.bonus();
-    showToast({ text: `Richiesta inviata a ${r.host.name}: ti avvisiamo quando ti fa entrare` });
-  };
   const save = (c: CommunityCard) => {
     const on = saved.includes(c.rule.id);
     toggleSaved(c.rule.id);
@@ -93,41 +93,25 @@ export function WorldScreen() {
     });
   };
 
-  const roomTile = (r: CommunityRoom, style?: object) => (
-    <RoomTile
-      key={r.id}
-      id={`room-${r.id}`}
-      emoji={r.emoji}
-      title={r.name}
-      subtitle={`${r.players} giocatori · ${r.open} posti liberi`}
-      extra={
-        <AppText variant="micro" color={r.status === 'live' ? colors.live : colors.inkSoft} style={styles.meta}>
-          {r.status === 'live' ? `● ${r.calls24h} chiamate oggi` : 'Parte presto'}
-        </AppText>
-      }
-      tone={r.status === 'live' ? 'live' : 'waiting'}
-      cta="Partecipa"
-      onPress={() => join(r)}
-      style={style}
-    />
+  const roomCard = (r: CommunityRoom, width?: number | `${number}%`) => (
+    <CommunityRoomCard key={r.id} room={r} width={width} onOpen={(room, from) => setRoom({ room, from })} />
   );
-  const deckTile = (d: CommunityDeck, i?: number, style?: object) => (
-    <RoomTile
+  const deckStack = (d: CommunityDeck, i?: number, width?: number) => (
+    <DeckStack
       key={d.id}
-      id={`deck-${d.id}`}
+      id={d.id}
       rank={i !== undefined ? i + 1 : undefined}
       emoji={d.emoji}
       title={d.name}
-      subtitle={`di @${d.author.handle} · ${d.ruleIds.length} carte`}
+      subtitle={`${d.ruleIds.length} carte`}
       extra={
-        <AppText variant="micro" color={tilePaint(d.official ? 'official' : 'community').soft} style={styles.meta}>
+        <AppText variant="micro" color={tilePaint('official').soft} style={styles.meta} numberOfLines={1}>
           {fmt(d.plays)} partite · ♥ {fmt(d.likes + (liked.includes(d.id) ? 1 : 0))}
         </AppText>
       }
-      tone={d.official ? 'official' : 'community'}
       cta="Gioca"
       onPress={() => playDeck(d)}
-      style={style}
+      width={width}
     />
   );
   const cardTile = (c: CommunityCard, style?: object) => (
@@ -230,7 +214,7 @@ export function WorldScreen() {
                   showsHorizontalScrollIndicator={false}
                   style={styles.bleed}
                   contentContainerStyle={styles.row}>
-                  {rooms.map((r) => roomTile(r))}
+                  {rooms.map((r) => roomCard(r, ROOM_W))}
                 </ScrollView>
               </View>
             )}
@@ -246,7 +230,7 @@ export function WorldScreen() {
                   showsHorizontalScrollIndicator={false}
                   style={styles.bleed}
                   contentContainerStyle={styles.row}>
-                  {decks.slice(0, 8).map((d, i) => deckTile(d, i))}
+                  {decks.slice(0, 8).map((d, i) => deckStack(d, i, 156))}
                 </ScrollView>
               </View>
             )}
@@ -287,14 +271,15 @@ export function WorldScreen() {
             </View>
           </>
         ) : (
-          <View style={styles.grid}>
-            {view === 'rooms' && rooms.map((r) => roomTile(r, styles.half))}
-            {view === 'decks' && decks.map((d) => deckTile(d, undefined, styles.half))}
+          <View style={view === 'rooms' ? styles.list : styles.grid}>
+            {view === 'rooms' && rooms.map((r) => roomCard(r, '100%'))}
+            {view === 'decks' && decks.map((d) => deckStack(d))}
             {view === 'cards' && cards.map((c) => cardTile(c))}
           </View>
         )}
       </ScrollView>
 
+      <CommunityRoomSheet room={room?.room} from={room?.from} onClose={() => setRoom(undefined)} />
       <CardSheet
         rule={selected}
         state={
@@ -345,7 +330,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, color: colors.ink, outlineStyle: 'none' } as object,
   bleed: { marginHorizontal: -layout.gutter, flexGrow: 0 },
   bleedTight: { marginHorizontal: -layout.gutter, marginTop: -space.xs, flexGrow: 0 },
-  row: { gap: space.sm, paddingHorizontal: layout.gutter },
+  row: { gap: space.sm, paddingHorizontal: layout.gutter, paddingVertical: space.xs },
   chips: { gap: space.xs, paddingHorizontal: layout.gutter },
   chip: {
     paddingHorizontal: space.sm,
@@ -357,8 +342,8 @@ const styles = StyleSheet.create({
   },
   chipOn: { backgroundColor: colors.ink, borderColor: colors.ink },
   section: { gap: space.sm, marginTop: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
-  half: { width: '47.5%' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.lg },
+  list: { gap: space.sm },
   carouselCard: { width: 168 },
   meta: { marginTop: 2 },
   creators: { flexDirection: 'row', justifyContent: 'space-between' },

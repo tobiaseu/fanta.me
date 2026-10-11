@@ -33,8 +33,9 @@ export function tierOf(rule: Rule): Tier {
 export const TIER_LABEL: Record<Tier, string> = { normal: 'Normale', rare: 'Rara', epic: 'Epica' };
 
 /**
- * Il colore dice solo la rarità:
- * normale = bianco con un bagliore giallo Fanta.me, rara = arancio pieno, epica = notte con aura viola e oro.
+ * Una carta dice due cose con due segnali diversi:
+ *  - il CORPO dice la rarità: normale = neutro (bianco o grafite), rara = arancio, epica = viola notte;
+ *  - l'OMBRA dice il segno: verde se è un bonus, rossa se è un malus (sempre, a ogni rarità).
  */
 type Paint = {
   top: string;
@@ -50,37 +51,32 @@ type Paint = {
 
 const WHITE_INK = { ink: '#FFFFFF', soft: 'rgba(255,255,255,0.8)', inverse: true };
 
-/**
- * Normale: verde tenue se è un bonus, rosso tenue se è un malus, con il bagliore giallo Fanta.me.
- * In tema scuro gli stessi toni diventano notturni. Rara e epica sono uguali nei due temi.
- */
-const NORMAL: Record<'bonus' | 'malus', Paint> = isDark
-  ? {
-      bonus: { top: '#16301F', bottom: '#0D1A12', glow: colors.cta, glowOpacity: 0.32, ring: '#FFFFFF', ...WHITE_INK },
-      malus: { top: '#33191A', bottom: '#1C0E0F', glow: colors.cta, glowOpacity: 0.32, ring: '#FFFFFF', ...WHITE_INK },
-    }
+/** Normale: neutra, con un velo giallo Fanta.me dietro l'immagine. In tema scuro diventa grafite. */
+const NORMAL: Paint = isDark
+  ? { top: '#2E2E33', bottom: '#17171A', glow: colors.cta, glowOpacity: 0.26, ring: '#FFFFFF', ...WHITE_INK }
   : {
-      bonus: {
-        top: '#F2FBEF',
-        bottom: '#D9F2D2',
-        glow: colors.cta,
-        glowOpacity: 0.8,
-        ring: '#0B8200',
-        ink: '#0F1A10',
-        soft: 'rgba(15,26,16,0.6)',
-        inverse: false,
-      },
-      malus: {
-        top: '#FFF3F2',
-        bottom: '#FBDCD9',
-        glow: colors.cta,
-        glowOpacity: 0.8,
-        ring: '#D92D20',
-        ink: '#1F0F0E',
-        soft: 'rgba(31,15,14,0.6)',
-        inverse: false,
-      },
+      top: '#FFFFFF',
+      bottom: '#ECECF1',
+      glow: colors.cta,
+      glowOpacity: 0.7,
+      ring: '#000000',
+      ink: '#0B0B0D',
+      soft: 'rgba(0,0,0,0.55)',
+      inverse: false,
     };
+
+/** Ombra di bonus (verde) e malus (rosso): è il segno della carta, visibile anche su arancio e viola. */
+const SHADOW = isDark
+  ? { bonus: 'rgba(52, 199, 89, 0.55)', malus: 'rgba(255, 69, 58, 0.55)' }
+  : { bonus: 'rgba(11, 130, 0, 0.42)', malus: 'rgba(217, 45, 32, 0.42)' };
+
+export type GlowSize = 'sm' | 'md' | 'lg';
+const GLOW: Record<GlowSize, string> = { sm: '0 4px 10px', md: '0 8px 20px', lg: '0 14px 36px' };
+
+/** Ombra colorata secondo il segno dei punti. Va su un contenitore SENZA overflow hidden. */
+export function signGlow(points: number, size: GlowSize = 'md'): ViewStyle {
+  return { boxShadow: `${GLOW[size]} ${points > 0 ? SHADOW.bonus : SHADOW.malus}` } as ViewStyle;
+}
 
 const RARE: Paint = {
   top: '#FFB45C',
@@ -91,10 +87,10 @@ const RARE: Paint = {
   ...WHITE_INK,
 };
 const EPIC: Paint = {
-  top: '#2A1F4E',
-  bottom: '#0E0E11',
-  glow: '#B48CFF',
-  glowOpacity: 0.7,
+  top: '#7B4DE3',
+  bottom: '#2A1472',
+  glow: '#D9C2FF',
+  glowOpacity: 0.55,
   ring: '#FFD27A',
   ...WHITE_INK,
 };
@@ -103,7 +99,7 @@ export function cardPaint(rule: Rule): Paint {
   const tier = tierOf(rule);
   if (tier === 'epic') return EPIC;
   if (tier === 'rare') return RARE;
-  return NORMAL[rule.points > 0 ? 'bonus' : 'malus'];
+  return NORMAL;
 }
 
 const DAY = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -142,7 +138,7 @@ const STARS: [number, number, number][] = [
 export function CardArt({ rule, id }: { rule: Rule; id: string }) {
   const p = cardPaint(rule);
   return (
-    <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 140" preserveAspectRatio="none">
+    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 100 140" preserveAspectRatio="none">
       <Defs>
         <LinearGradient id={`g-${id}`} x1="0" y1="0" x2="0.3" y2="1">
           <Stop offset="0" stopColor={p.top} />
@@ -243,57 +239,59 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
       delayLongPress={350}
       pressedScale={0.96}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
-      <View ref={ref} style={[styles.card, !dark && styles.cardLight]} collapsable={false}>
-        <CardArt rule={rule} id={`c-${rule.id}`} />
-        <View style={styles.top}>
-          <PointsTag points={rule.points} />
-        </View>
-        <View style={styles.art}>
-          <Text style={styles.emoji} allowFontScaling={false}>
-            {rule.emoji}
-          </Text>
-        </View>
-        <View style={styles.body}>
-          <TierTag rule={rule} onDark={dark} />
-          <AppText variant="headline" color={p.ink} numberOfLines={2} style={styles.title}>
-            {rule.label}
-          </AppText>
-          <AppText variant="micro" color={p.soft} numberOfLines={1} style={styles.subtitle}>
-            {cardSubtitle(rule, authorName)}
-          </AppText>
-          {cta ? (
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={cta.label}
-              hitSlop={6}
-              onPress={() => {
-                haptics.tap();
-                cta.onPress();
-              }}
-              style={[styles.cta, dark ? styles.ctaOnDark : styles.ctaOnLight, cta.done && styles.ctaDone]}>
-              {cta.icon && (
-                <Icon
-                  name={cta.icon}
-                  size={13}
-                  strokeWidth={2.6}
-                  color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'}
-                />
-              )}
-              <AppText variant="micro" color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'} style={styles.ctaText}>
-                {cta.label}
-              </AppText>
-            </PressableScale>
-          ) : status ? (
-            <View style={[styles.cta, styles.ctaDone]}>
-              <AppText
-                variant="micro"
-                color={dark ? '#FFFFFF' : colors.inkSoft}
-                style={styles.ctaText}
-                numberOfLines={1}>
-                {status}
-              </AppText>
-            </View>
-          ) : null}
+      <View ref={ref} style={[styles.shell, signGlow(rule.points)]} collapsable={false}>
+        <View style={[styles.card, !dark && styles.cardLight]}>
+          <CardArt rule={rule} id={`c-${rule.id}`} />
+          <View style={styles.top}>
+            <PointsTag points={rule.points} />
+          </View>
+          <View style={styles.art}>
+            <Text style={styles.emoji} allowFontScaling={false}>
+              {rule.emoji}
+            </Text>
+          </View>
+          <View style={styles.body}>
+            <TierTag rule={rule} onDark={dark} />
+            <AppText variant="headline" color={p.ink} numberOfLines={2} style={styles.title}>
+              {rule.label}
+            </AppText>
+            <AppText variant="micro" color={p.soft} numberOfLines={1} style={styles.subtitle}>
+              {cardSubtitle(rule, authorName)}
+            </AppText>
+            {cta ? (
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={cta.label}
+                hitSlop={6}
+                onPress={() => {
+                  haptics.tap();
+                  cta.onPress();
+                }}
+                style={[styles.cta, dark ? styles.ctaOnDark : styles.ctaOnLight, cta.done && styles.ctaDone]}>
+                {cta.icon && (
+                  <Icon
+                    name={cta.icon}
+                    size={13}
+                    strokeWidth={2.6}
+                    color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'}
+                  />
+                )}
+                <AppText variant="micro" color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'} style={styles.ctaText}>
+                  {cta.label}
+                </AppText>
+              </PressableScale>
+            ) : status ? (
+              <View style={[styles.cta, styles.ctaDone]}>
+                <AppText
+                  variant="micro"
+                  color={dark ? '#FFFFFF' : colors.inkSoft}
+                  style={styles.ctaText}
+                  numberOfLines={1}>
+                  {status}
+                </AppText>
+              </View>
+            ) : null}
+          </View>
         </View>
       </View>
     </PressableScale>
@@ -303,7 +301,8 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
 const styles = StyleSheet.create({
   wrap: { width: '47.5%' },
   dimmed: { opacity: 0.4 },
-  card: { width: '100%', aspectRatio: PLAY_RATIO, borderRadius: radius.lg, overflow: 'hidden', padding: space.sm },
+  shell: { width: '100%', aspectRatio: PLAY_RATIO, borderRadius: radius.lg },
+  card: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', padding: space.sm },
   cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   points: { alignSelf: 'flex-start', height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: 'center' },

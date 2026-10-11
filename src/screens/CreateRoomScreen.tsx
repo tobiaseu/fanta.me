@@ -2,7 +2,10 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
-import { HeroCard, PosterCard } from '@/components/ui/Cards';
+import { DeckStack } from '@/components/cards/DeckStack';
+import { HeroCard } from '@/components/ui/Cards';
+import { AppText } from '@/components/ui/AppText';
+import { tilePaint } from '@/components/ui/RoomArt';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TopBar } from '@/components/ui/TopBar';
@@ -68,11 +71,19 @@ export function CreateRoomScreen() {
               style={styles.scroll}
               contentContainerStyle={styles.row}>
               {l.decks.map((d) => (
-                <PosterCard
+                <DeckStack
                   key={d.id}
+                  id={`cr-${d.id}`}
                   emoji={d.emoji}
                   title={d.name}
-                  meta={`${d.ruleIds.length} carte · ${plays(d.plays)} partite`}
+                  subtitle={`${d.ruleIds.length} carte`}
+                  extra={
+                    <AppText variant="micro" color={tilePaint('official').soft} numberOfLines={1}>
+                      {plays(d.plays)} partite
+                    </AppText>
+                  }
+                  cta="Gioca"
+                  width={156}
                   onPress={() => play(d)}
                 />
               ))}
@@ -97,5 +108,5 @@ const styles = StyleSheet.create({
   },
   section: { gap: space.sm },
   scroll: { marginHorizontal: -layout.gutter, flexGrow: 0 },
-  row: { gap: space.sm, paddingHorizontal: layout.gutter },
+  row: { gap: space.sm, paddingHorizontal: layout.gutter, paddingVertical: space.xs },
 });

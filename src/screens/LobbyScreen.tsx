@@ -1,22 +1,24 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import type { CardRect } from '@/components/cards/PlayCard';
 import { Icon } from '@/components/icons/Icon';
+import { CommunityRoomCard, CommunityRoomSheet } from '@/components/rooms/CommunityRoom';
+import { RoomCard } from '@/components/rooms/RoomCard';
 import { AppText } from '@/components/ui/AppText';
 import { AvatarStack } from '@/components/ui/Avatar';
 import { Wordmark } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { HOME_TAB_SPACE } from '@/components/ui/HomeTabBar';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { RoomTile, TileArt, tilePaint, type TileTone } from '@/components/ui/RoomTile';
+import { TileArt, tilePaint, type TileTone } from '@/components/ui/RoomArt';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TopBar } from '@/components/ui/TopBar';
-import { COMMUNITY_DECKS } from '@/data/community';
+import { COMMUNITY_ROOMS, type CommunityRoom } from '@/data/community';
 import { ME } from '@/data/mock';
 import { useNow } from '@/hooks/useNow';
-import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { haptics } from '@/lib/haptics';
 import { computeStandings, gameDay, useGameStore } from '@/store/useGameStore';
 import { useSessionStore } from '@/store/useSessionStore';
@@ -24,6 +26,7 @@ import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Game } from '@/types/game';
 
 const TONE: Record<Game['status'], TileTone> = { live: 'live', waiting: 'waiting', ended: 'ended' };
+const STATUS: Record<Game['status'], string> = { live: 'In corso', waiting: 'Pre-partita', ended: 'Conclusa' };
 
 /**
  * LOBBY: la casa del giocatore. Dall'alto, in ordine di urgenza:
@@ -38,7 +41,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const now = useNow(30_000);
   const { games, events, players } = useGameStore();
   const lastGameId = useSessionStore((s) => s.lastGameId);
-  const playDeck = usePlayDeck();
+  const [room, setRoom] = useState<{ room: CommunityRoom; from?: CardRect }>();
 
   const myGames = useMemo(() => (forceEmpty ? [] : games), [games, forceEmpty]);
   const last = myGames.find((g) => g.id === lastGameId) ?? myGames.find((g) => g.status !== 'ended');
@@ -80,7 +83,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
         ? `${liveCount} ${liveCount === 1 ? 'partita in corso' : 'partite in corso'}`
         : 'Nessuna partita in corso';
 
-  const suggested = [...COMMUNITY_DECKS].sort((a, b) => b.plays - a.plays).slice(0, 8);
+  const suggested = [...COMMUNITY_ROOMS].sort((a, b) => b.calls24h - a.calls24h || b.players - a.players).slice(0, 5);
 
   return (
     <View style={styles.screen}>
@@ -143,20 +146,17 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
               {others.map((g) => {
                 const info = infoOf(g);
                 return (
-                  <RoomTile
+                  <RoomCard
                     key={g.id}
                     id={`mine-${g.id}`}
                     emoji={g.emoji}
                     title={g.name}
                     subtitle={info.line}
+                    status={STATUS[g.status]}
                     tone={TONE[g.status]}
-                    extra={
-                      <View style={styles.extra}>
-                        <AvatarStack players={info.people} size={20} max={4} />
-                      </View>
-                    }
+                    extra={<AvatarStack players={info.people} size={22} max={4} />}
                     cta={info.cta}
-                    onPress={() => openGame(g)}
+                    onCta={() => openGame(g)}
                   />
                 );
               })}
@@ -170,7 +170,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           onPress={() => router.push('/rulebook')}
           pressedScale={0.98}
           style={styles.book}>
-          <TileArt tone="official" id="book" cx={82} cy={60} />
+          <TileArt tone="official" id="book" cx={30} cy={50} wide />
           <Text style={styles.bookEmoji} allowFontScaling={false}>
             📖
           </Text>
@@ -191,7 +191,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
         <View style={styles.section}>
           <SectionHeader
             title="Consigliate per te"
-            caption="Le partite più giocate della settimana."
+            caption="Stanze pubbliche con posti liberi, le più vive per prime."
             action={{ label: 'World', onPress: () => router.navigate('/world') }}
           />
           <ScrollView
@@ -199,22 +199,13 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
             showsHorizontalScrollIndicator={false}
             style={styles.bleed}
             contentContainerStyle={styles.row}>
-            {suggested.map((d, i) => (
-              <RoomTile
-                key={d.id}
-                id={`sug-${d.id}`}
-                rank={i + 1}
-                emoji={d.emoji}
-                title={d.name}
-                subtitle={`${d.occasion} · ${d.ruleIds.length} carte`}
-                tone={d.official ? 'official' : 'community'}
-                cta="Gioca"
-                onPress={() => playDeck(d)}
-              />
+            {suggested.map((r) => (
+              <CommunityRoomCard key={r.id} room={r} onOpen={(room, from) => setRoom({ room, from })} />
             ))}
           </ScrollView>
         </View>
       </ScrollView>
+      <CommunityRoomSheet room={room?.room} from={room?.from} onClose={() => setRoom(undefined)} />
     </View>
   );
 }
@@ -242,7 +233,7 @@ function FeaturedGame({
       onPress={onPress}
       pressedScale={0.98}
       style={[styles.featured, tone === 'ended' && styles.hair]}>
-      <TileArt tone={tone} id={`feat-${game.id}`} cx={78} cy={34} />
+      <TileArt tone={tone} id={`feat-${game.id}`} cx={185} cy={40} wide />
       <View style={styles.featTop}>
         <View style={styles.flex}>
           <AppText variant="micro" color={p.soft}>
@@ -324,7 +315,7 @@ const styles = StyleSheet.create({
   hello: { gap: 2, marginBottom: -space.sm },
   section: { gap: space.sm },
   bleed: { marginHorizontal: -layout.gutter, flexGrow: 0 },
-  row: { gap: space.sm, paddingHorizontal: layout.gutter },
+  row: { gap: space.sm, paddingHorizontal: layout.gutter, paddingVertical: space.xs },
   extra: { marginTop: space.xxs },
   flex: { flex: 1, gap: 2 },
   regular: { fontWeight: '400' },

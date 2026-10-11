@@ -19,6 +19,7 @@ import { useUiStore } from '@/store/useUiStore';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { Button } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
 import { BASE_RULES, DECK_SIZE, EPIC_RULES, powerById, ruleById } from '@/data/rules';
@@ -246,6 +247,13 @@ export function RulesScreen() {
                   : `${deck.length} carte, valore medio ${avg > 0 ? '+' : ''}${avg}. ${game.status === 'live' ? 'Il mazzo è chiuso.' : 'Partita conclusa.'}`
               }
             />
+            {pregame && (
+              <Button
+                label="Costruisci il tuo mazzo"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/deck/[gameId]', params: { gameId: game.id } })}
+              />
+            )}
             {showAll ? (
               <Animated.View
                 key="all"

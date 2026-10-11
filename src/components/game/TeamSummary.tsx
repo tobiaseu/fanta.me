@@ -2,7 +2,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { DeckCard } from '@/components/cards/DeckCard';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
@@ -110,17 +110,7 @@ export function TeamSummary({
 function TakenCard({ event }: { event: FeedEvent }) {
   const rule = ruleById(event.ruleId) as Rule | undefined;
   if (!rule) return null;
-  return (
-    <View style={styles.taken} accessibilityLabel={`${rule.label}, ${event.points} punti`}>
-      <RuleSticker rule={rule} size={40} />
-      <AppText variant="micro" numberOfLines={1} style={styles.takenLabel}>
-        {rule.label}
-      </AppText>
-      <AppText variant="micro" color={event.points >= 0 ? colors.bonus : colors.malus}>
-        {event.points > 0 ? `+${event.points}` : event.points}
-      </AppText>
-    </View>
-  );
+  return <DeckCard rule={rule} style={styles.taken} />;
 }
 
 /** Pop-up "Guarda squadra": si apre da qualsiasi punto della partita con openTeam(teamId). */
@@ -177,15 +167,8 @@ const styles = StyleSheet.create({
   },
   memberHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   cardsScroll: { marginHorizontal: -layout.card, flexGrow: 0 },
-  cards: { gap: space.xs, paddingHorizontal: layout.card },
-  taken: {
-    width: 84,
-    alignItems: 'center',
-    gap: 2,
-    paddingVertical: space.xs,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
+  cards: { gap: space.sm, paddingHorizontal: layout.card, paddingVertical: space.xs },
+  taken: { width: 76 },
   takenLabel: { textAlign: 'center', paddingHorizontal: 4 },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10, 10, 12, 0.86)' },
   anchor: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },

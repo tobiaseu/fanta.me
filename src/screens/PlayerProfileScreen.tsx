@@ -7,6 +7,7 @@ import { PlayerGameSection } from '@/components/game/PlayerGameSection';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import { CollectionSection } from '@/components/profile/CollectionSection';
 import { MyPowersRow } from '@/components/game/MyPowersRow';
+import { RoomCard } from '@/components/rooms/RoomCard';
 import { Icon } from '@/components/icons/Icon';
 import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
@@ -195,21 +196,21 @@ export function PlayerProfileScreen() {
             </AppText>
           ) : (
             shared.map((g) => (
-              <PressableScale
+              <RoomCard
                 key={g.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Apri ${g.name}`}
-                onPress={() => {
+                id={`shared-${g.id}`}
+                emoji={g.emoji}
+                title={g.name}
+                subtitle={`${g.playerIds.length} giocatori`}
+                status={g.status === 'live' ? 'In corso' : g.status === 'waiting' ? 'Pre-partita' : 'Conclusa'}
+                tone={g.status}
+                cta={g.status === 'ended' ? 'Risultati' : 'Apri'}
+                width="100%"
+                onCta={() => {
                   haptics.tap();
                   router.push({ pathname: '/game/[gameId]', params: { gameId: g.id } });
                 }}
-                style={styles.row}>
-                <AppText style={styles.rowEmoji}>{g.emoji}</AppText>
-                <AppText variant="headline" style={styles.flex} numberOfLines={1}>
-                  {g.name}
-                </AppText>
-                <StatusBadge status={g.status} size="sm" />
-              </PressableScale>
+              />
             ))
           )}
         </View>
@@ -337,18 +338,18 @@ function MyFriends({
       />
       {tab === 'rooms' ? (
         rooms.map((g) => (
-          <PressableScale
+          <RoomCard
             key={g.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Apri ${g.name}`}
-            onPress={() => onOpenRoom(g.id)}
-            style={styles.row}>
-            <AppText style={styles.rowEmoji}>{g.emoji}</AppText>
-            <AppText variant="headline" style={styles.flex} numberOfLines={1}>
-              {g.name}
-            </AppText>
-            <StatusBadge status={g.status} size="sm" />
-          </PressableScale>
+            id={`mine-room-${g.id}`}
+            emoji={g.emoji}
+            title={g.name}
+            subtitle={`${g.playerIds.length} giocatori`}
+            status={g.status === 'live' ? 'In corso' : g.status === 'waiting' ? 'Pre-partita' : 'Conclusa'}
+            tone={g.status}
+            cta={g.status === 'ended' ? 'Risultati' : 'Apri'}
+            width="100%"
+            onCta={() => onOpenRoom(g.id)}
+          />
         ))
       ) : lists[tab].list.length === 0 ? (
         <AppText variant="body" color={colors.inkSoft} style={styles.regular}>

@@ -1,18 +1,24 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/ui/AppText';
-import { PressableScale } from '@/components/ui/PressableScale';
+import type { CardRect } from '@/components/cards/PlayCard';
+import { PowerCard } from '@/components/powers/PowerCard';
+import { PowerSheet } from '@/components/powers/PowerSheet';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
 import { powerById } from '@/data/rules';
 import { useGameStore } from '@/store/useGameStore';
-import { colors, layout, radius, space } from '@/theme/tokens';
+import { space } from '@/theme/tokens';
 
-/** Nel profilo: i due fantapoteri scelti, tocca per cambiarli. */
+type Slot = 'main' | 'secondary';
+
+/** Nel profilo: i due fantapoteri scelti, come carte-potere quadrate. Tocca per leggerli, "Cambia" per sceglierli. */
 export function MyPowersRow() {
   const router = useRouter();
   const mine = useGameStore((s) => s.powers[ME.id]);
+  const [open, setOpen] = useState<{ slot: Slot; from?: CardRect }>();
+  const openPower = powerById(open ? mine?.[open.slot] : undefined);
   return (
     <View style={styles.section}>
       <SectionHeader
@@ -24,42 +30,28 @@ export function MyPowersRow() {
         {(['main', 'secondary'] as const).map((slot) => {
           const p = powerById(mine?.[slot]);
           return p ? (
-            <PressableScale
+            <PowerCard
               key={slot}
-              accessibilityRole="button"
-              accessibilityLabel={`${slot === 'main' ? 'Principale' : 'Secondario'}: ${p.label}. Cambia`}
-              onPress={() => router.push('/powers')}
-              style={[styles.tile, slot === 'main' && styles.main]}>
-              <AppText style={styles.emoji}>{p.emoji}</AppText>
-              <View style={styles.flex}>
-                <AppText variant="micro" color={colors.inkSoft}>
-                  {slot === 'main' ? 'Principale' : 'Secondario'}
-                </AppText>
-                <AppText variant="name">{p.label}</AppText>
-              </View>
-            </PressableScale>
+              power={p}
+              role={slot}
+              state={p.hours > 0 ? `${p.hours} ${p.hours === 1 ? 'ora' : 'ore'}` : 'Immediato'}
+              onOpen={(from) => setOpen({ slot, from })}
+            />
           ) : null;
         })}
       </View>
+      <PowerSheet
+        power={openPower}
+        role={open?.slot}
+        from={open?.from}
+        secondary={{ label: 'Cambia potere', onPress: () => router.push('/powers') }}
+        onClose={() => setOpen(undefined)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
-  row: { flexDirection: 'row', gap: space.sm },
-  tile: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: layout.card,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  main: { borderColor: colors.cta },
-  emoji: { fontSize: 28, lineHeight: 34 },
-  flex: { flex: 1 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.xs },
 });

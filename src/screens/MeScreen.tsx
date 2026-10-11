@@ -11,10 +11,11 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { HOME_TAB_SPACE } from '@/components/ui/HomeTabBar';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { RowCard, RowGroup } from '@/components/ui/Cards';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Segmented } from '@/components/ui/Segmented';
-import { TileArt } from '@/components/ui/RoomTile';
+import { TileArt } from '@/components/ui/RoomArt';
+import { RoomCard } from '@/components/rooms/RoomCard';
+import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { TopBar } from '@/components/ui/TopBar';
 import { BADGES, COMMUNITY_CARDS } from '@/data/community';
 import { ME } from '@/data/mock';
@@ -169,6 +170,8 @@ export function MeScreen() {
           </View>
         </View>
 
+        <MyPowersRow />
+
         <View style={styles.section}>
           <SectionHeader
             title="Carte"
@@ -223,17 +226,22 @@ export function MeScreen() {
             title="Statistiche"
             caption={`Posizione e punti in ogni partita${hiddenTag(show.stats) ? ' · nascoste agli altri' : ''}`}
           />
-          <RowGroup>
+          <View style={styles.rooms}>
             {history.map(({ game, place, of, points }) => (
-              <RowCard
+              <RoomCard
                 key={game.id}
+                id={`hist-${game.id}`}
                 emoji={game.emoji}
                 title={game.name}
-                meta={`${place}° su ${of} · ${points > 0 ? '+' : ''}${points} punti${game.status === 'live' ? ' · in corso' : ''}`}
-                onPress={() => router.push({ pathname: '/game/[gameId]', params: { gameId: game.id } })}
+                subtitle={`${place}° su ${of} · ${points > 0 ? '+' : ''}${points} punti`}
+                status={game.status === 'live' ? 'In corso' : game.status === 'waiting' ? 'Pre-partita' : 'Conclusa'}
+                tone={game.status}
+                cta={game.status === 'ended' ? 'Risultati' : 'Apri'}
+                width="100%"
+                onCta={() => router.push({ pathname: '/game/[gameId]', params: { gameId: game.id } })}
               />
             ))}
-          </RowGroup>
+          </View>
         </View>
 
         <PressableScale onPress={() => router.push('/settings')} accessibilityRole="link" style={styles.privacy}>
@@ -297,6 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colors.surfaceMuted,
   },
+  rooms: { gap: space.sm },
   stats: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between', marginTop: space.xs },
   stat: { alignItems: 'center', flex: 1 },
   actions: { alignSelf: 'stretch', marginTop: space.xs },
@@ -318,7 +327,7 @@ const styles = StyleSheet.create({
   badgeLocked: { borderColor: colors.hairline, opacity: 0.6 },
   badgeEmoji: { fontSize: 28, lineHeight: 34 },
   bleed: { marginHorizontal: -layout.gutter, flexGrow: 0 },
-  row: { gap: space.sm, paddingHorizontal: layout.gutter },
+  row: { gap: space.sm, paddingHorizontal: layout.gutter, paddingVertical: space.xs },
   card: { width: 168 },
   privacy: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   regular: { fontWeight: '400' },

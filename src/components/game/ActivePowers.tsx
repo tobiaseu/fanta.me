@@ -4,10 +4,11 @@ import { EmptyNote } from '@/components/ui/EmptyNote';
 import { Shine } from '@/components/ui/Shine';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
+import { PowerArt, PowerKind, POWER_GLOW } from '@/components/powers/PowerCard';
 import { POWER_UPS } from '@/data/rules';
 import { formatHoursLeft } from '@/lib/time';
 import { activeActivations, nameIn, useGameStore } from '@/store/useGameStore';
-import { colors, radius, space } from '@/theme/tokens';
+import { radius, space } from '@/theme/tokens';
 import type { Game } from '@/types/game';
 
 const CARD_W = 150;
@@ -39,22 +40,25 @@ export function ActivePowers({ game, now }: { game: Game; now: number }) {
         return (
           <View
             key={`${a.playerId}-${a.powerId}`}
-            style={styles.chip}
+            style={styles.shell}
             accessibilityLabel={`${power.label} di ${nameIn(game, player)}, finisce tra ${formatHoursLeft(new Date(a.until).getTime() - now)}`}>
-            <Shine width={CARD_W} delay={i * 700} />
-            <AppText style={styles.emoji}>{power.emoji}</AppText>
-            <AppText variant="serifCard" numberOfLines={1}>
-              {power.label}
-            </AppText>
-            <View style={styles.by}>
-              <Avatar player={player} size={16} sticker={false} />
-              <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.flex}>
-                {nameIn(game, player)}
+            <View style={styles.chip}>
+              <PowerArt id={`ap-${a.playerId}-${a.powerId}`} active />
+              <Shine width={CARD_W} delay={i * 700} />
+              <PowerKind />
+              <View style={styles.art}>
+                <AppText style={styles.emoji}>{power.emoji}</AppText>
+              </View>
+              <AppText variant="headline" color="#FFFFFF" numberOfLines={1} style={styles.bold}>
+                {power.label}
               </AppText>
+              <View style={styles.by}>
+                <Avatar player={player} size={16} sticker={false} />
+                <AppText variant="micro" color="rgba(255,255,255,0.8)" numberOfLines={1} style={styles.flex}>
+                  {nameIn(game, player)} · ancora {formatHoursLeft(new Date(a.until).getTime() - now)}
+                </AppText>
+              </View>
             </View>
-            <AppText variant="micro" color={colors.inkSoft}>
-              ancora {formatHoursLeft(new Date(a.until).getTime() - now)}
-            </AppText>
           </View>
         );
       })}
@@ -63,21 +67,13 @@ export function ActivePowers({ game, now }: { game: Game; now: number }) {
 }
 
 const styles = StyleSheet.create({
-  regular: { fontWeight: '400' },
   scroll: { marginHorizontal: -space.md, flexGrow: 0 },
-  row: { gap: space.xs, paddingHorizontal: space.md },
-  chip: {
-    width: CARD_W,
-    minHeight: 150,
-    gap: 4,
-    padding: space.sm,
-    overflow: 'hidden',
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-  },
-  emoji: { fontSize: 40, lineHeight: 48, marginBottom: space.xxs },
+  row: { gap: space.sm, paddingHorizontal: space.md, paddingVertical: space.xs },
+  shell: { width: CARD_W, height: CARD_W, borderRadius: radius.lg, ...({ boxShadow: POWER_GLOW } as object) },
+  chip: { flex: 1, gap: 2, padding: space.sm, overflow: 'hidden', borderRadius: radius.lg },
+  art: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emoji: { fontSize: 40, lineHeight: 48 },
+  bold: { fontWeight: '700' },
   flex: { flex: 1 },
   by: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });

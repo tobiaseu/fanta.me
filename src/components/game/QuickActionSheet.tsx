@@ -8,7 +8,7 @@ import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons/Icon';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { DeckCard } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -146,50 +146,22 @@ function SheetBody({ game, onDone }: { game: Game; onDone: () => void }) {
         />
         <ScrollView style={styles.rulesScroll} contentContainerStyle={styles.rules}>
           {rules.map((r) => {
-            const selected = r.id === ruleId;
-            const isBonus = r.points > 0;
             // Carta trofeo già presa: una volta sola, dal primo che ci arriva
             const holderId = r.trophy ? trophyHolder(events, game.id, r.id) : undefined;
             const holder = players.find((p) => p.id === holderId);
-            const takenAt = holderId
-              ? events.find((e) => e.gameId === game.id && e.ruleId === r.id && e.status === 'confirmed')?.createdAt
-              : undefined;
             return (
-              <Pressable
+              <DeckCard
                 key={r.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected, disabled: !!holder }}
-                disabled={!!holder}
+                rule={r}
+                checked={r.id === ruleId}
+                dimmed={!!holder}
+                note={holder ? `Preso da ${nameIn(game, holder)}` : r.trophy ? 'Trofeo, solo il primo' : undefined}
                 onPress={() => {
+                  if (holder) return;
                   haptics.tap();
                   setRuleId(r.id);
                 }}
-                style={[
-                  styles.rule,
-                  holder && styles.taken,
-                  selected && {
-                    borderColor: isBonus ? colors.bonusBorder : colors.malusBorder,
-                    backgroundColor: isBonus ? colors.bonusSoft : colors.malusSoft,
-                  },
-                ]}>
-                <RuleSticker rule={r} size={44} />
-                <View style={styles.flex}>
-                  <AppText variant="serifCard">
-                    {r.label}
-                    {r.trophy ? ' 🏆' : ''}
-                  </AppText>
-                  <AppText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
-                    {holder
-                      ? `Trofeo già preso da ${nameIn(game, holder)}${takenAt ? `, ${timeAgo(takenAt)}` : ''}`
-                      : r.trophy
-                        ? 'Trofeo: vale solo per il primo'
-                        : r.description}
-                  </AppText>
-                </View>
-                <AppText variant="name" color={isBonus ? colors.bonus : colors.malus}>
-                  {isBonus ? `+${r.points}` : r.points}
-                </AppText>
-              </Pressable>
+              />
             );
           })}
         </ScrollView>
@@ -288,7 +260,7 @@ const styles = StyleSheet.create({
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space.xs + 2, borderRadius: radius.md },
   segmentActive: { backgroundColor: colors.surface },
   rulesScroll: { flexShrink: 1 },
-  rules: { gap: space.xs },
+  rules: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md, paddingBottom: space.sm },
   rule: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,13 +1,4 @@
-import { useEffect } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, {
-  Easing,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import {
   CardArt,
@@ -16,6 +7,7 @@ import {
   TIER_LABEL,
   TierTag,
   cardPaint,
+  signGlow,
   tierOf,
   type CardRect,
 } from '@/components/cards/PlayCard';
@@ -23,7 +15,7 @@ import { Icon, type IconName } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { PressableScale } from '@/components/ui/PressableScale';
+import { ObjectModal, SheetClose } from '@/components/ui/ObjectModal';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
@@ -69,44 +61,23 @@ export function CardSheet({ rule, author, state, primary, secondary, from, onClo
   // La carta più grande che sta nello schermo mantenendo la proporzione
   const cardW = Math.min(360, width - 32, (height - 64) * CARD_RATIO);
   const cardH = cardW / CARD_RATIO;
-  // Apertura "dalla carta": parte dal rettangolo in griglia e arriva al centro
-  const grow = useSharedValue(0);
-  const origin = useSharedValue({ dx: 0, dy: 0, s: 0.6 });
-  useEffect(() => {
-    if (!rule) return;
-    origin.value = from
-      ? { dx: from.x + from.width / 2 - width / 2, dy: from.y + from.height / 2 - height / 2, s: from.width / cardW }
-      : { dx: 0, dy: 40, s: 0.85 };
-    grow.value = 0;
-    grow.value = withSpring(1, { damping: 20, stiffness: 190, mass: 0.9 });
-  }, [rule?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const close = () => {
-    grow.value = withTiming(0, { duration: 240, easing: Easing.inOut(Easing.cubic) }, (done) => {
-      if (done) runOnJS(onClose)();
-    });
-  };
-  const moving = useAnimatedStyle(() => {
-    const t = grow.value;
-    const o = origin.value;
-    return {
-      transform: [{ translateX: o.dx * (1 - t) }, { translateY: o.dy * (1 - t) }, { scale: o.s + (1 - o.s) * t }],
-    };
-  });
-  const dim = useAnimatedStyle(() => ({ opacity: Math.min(1, grow.value) }));
-
   return (
-    <Modal visible={!!rule} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
-      <Animated.View style={[styles.backdrop, dim]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Chiudi la carta" />
-      </Animated.View>
-      {rule && (
-        <View style={styles.center} pointerEvents="box-none">
-          <Animated.View style={[{ width: cardW, height: cardH }, moving]}>
+    <ObjectModal
+      visible={!!rule}
+      resetKey={rule?.id}
+      from={from}
+      width={cardW}
+      height={cardH}
+      closeLabel="Chiudi la carta"
+      onClose={onClose}>
+      {(close) =>
+        rule ? (
+          <View style={[styles.shell, signGlow(rule.points, 'lg')]}>
             <Face rule={rule} author={author} state={state} primary={primary} secondary={secondary} onClose={close} />
-          </Animated.View>
-        </View>
-      )}
-    </Modal>
+          </View>
+        ) : null
+      }
+    </ObjectModal>
   );
 }
 
@@ -142,14 +113,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
           <PointsTag points={rule.points} large />
           <TierTag rule={rule} onDark={dark} large />
         </View>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Chiudi"
-          hitSlop={12}
-          onPress={onClose}
-          style={[styles.close, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.06)' }]}>
-          <Icon name="close" size={16} color={p.ink} />
-        </PressableScale>
+        <SheetClose onPress={onClose} ink={p.ink} onDark={dark} />
       </View>
       <View style={styles.art}>
         <Text style={styles.emoji} allowFontScaling={false}>
@@ -211,12 +175,10 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10, 10, 12, 0.86)' },
-  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.md },
+  shell: { flex: 1, borderRadius: 28 },
   card: { flex: 1, borderRadius: 28, overflow: 'hidden', padding: space.md, gap: space.xs },
   cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
   corner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  close: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   art: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 96, lineHeight: 112, fontFamily: EMOJI_FONT },
   title: { fontSize: 24, lineHeight: 28, fontWeight: '700' },
