@@ -12,6 +12,8 @@ export type NotifLevel = 'all' | 'team' | 'digest';
  * Sessione utente (mock). Fase 2: Supabase Auth con Sign in with Apple / Google.
  * Sul web resta salvata nel browser, così riaprendo la demo si salta il login.
  */
+export type PublicPart = 'badges' | 'stats' | 'created' | 'unlocked' | 'games';
+
 interface SessionState {
   signedIn: boolean;
   method?: SignInMethod;
@@ -24,6 +26,9 @@ interface SessionState {
   liveIntroSeen: string[];
   markLiveIntro: (gameId: string) => void;
   collectionVisibility: Visibility;
+  /** Cosa mostra il profilo pubblico (World e Profilo) */
+  publicShow: Record<PublicPart, boolean>;
+  togglePublic: (part: PublicPart) => void;
   /** Notifiche per tipo: chiamate da votare, inizio/fine partita, richieste d'amicizia */
   notifications: Record<NotificationKind, boolean>;
   toggleNotification: (kind: NotificationKind) => void;
@@ -44,6 +49,14 @@ interface SessionState {
   finishOnboarding: () => void;
   signOut: () => void;
 }
+
+export const DEFAULT_PUBLIC: Record<PublicPart, boolean> = {
+  badges: true,
+  stats: true,
+  created: true,
+  unlocked: true,
+  games: false,
+};
 
 const memory = new Map<string, string>();
 const storage: StateStorage = {
@@ -77,6 +90,11 @@ export const useSessionStore = create<SessionState>()(
       liveIntroSeen: [],
       markLiveIntro: (gameId) => set((s) => ({ liveIntroSeen: [...(s.liveIntroSeen ?? []), gameId] })),
       collectionVisibility: 'private',
+      publicShow: { badges: true, stats: true, created: true, unlocked: true, games: false },
+      togglePublic: (part) =>
+        set((s) => ({
+          publicShow: { ...DEFAULT_PUBLIC, ...s.publicShow, [part]: !(s.publicShow ?? DEFAULT_PUBLIC)[part] },
+        })),
       notifications: { calls: true, phases: true, friends: true },
       toggleNotification: (kind) =>
         set((s) => ({ notifications: { ...s.notifications, [kind]: !s.notifications[kind] } })),

@@ -1,3 +1,6 @@
-import { ExploreScreen } from '@/screens/ExploreScreen';
+import { Redirect } from 'expo-router';
 
-export default ExploreScreen;
+/** Esplora è diventata la pagina World: i vecchi link portano lì. */
+export default function ExploreRedirect() {
+  return <Redirect href="/world" />;
+}

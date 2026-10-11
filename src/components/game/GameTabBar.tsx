@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: space.sm,
     paddingTop: space.lg,
-    experimental_backgroundImage: `linear-gradient(to top, ${colors.background} 30%, rgba(242,242,247,0))`,
+    experimental_backgroundImage: `linear-gradient(to top, ${colors.background} 30%, ${colors.background}00)`,
   },
   bar: {
     height: 72,

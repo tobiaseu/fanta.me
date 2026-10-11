@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
+import { Icon } from '@/components/icons/Icon';
 import { InfoDot } from '@/components/ui/InfoDot';
 import { PressableScale } from './PressableScale';
 
@@ -26,10 +27,11 @@ export function SectionHeader({ title, caption, action, info }: Props) {
         </AppText>
         {info ? <InfoDot topic={info} /> : null}
         {action && (
-          <PressableScale accessibilityRole="link" hitSlop={10} onPress={action.onPress}>
-            <AppText variant="caption" color={colors.live}>
+          <PressableScale accessibilityRole="link" hitSlop={10} onPress={action.onPress} style={styles.link}>
+            <AppText variant="caption" color={colors.inkSoft}>
               {action.label}
             </AppText>
+            <Icon name="chevron-right" size={14} color={colors.inkSoft} strokeWidth={1.6} />
           </PressableScale>
         )}
       </View>
@@ -43,6 +45,7 @@ export function SectionHeader({ title, caption, action, info }: Props) {
 }
 
 const styles = StyleSheet.create({
+  link: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   wrap: { gap: 2 },
   row: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   flex: { flex: 1 },

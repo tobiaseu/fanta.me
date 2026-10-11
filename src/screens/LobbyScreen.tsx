@@ -1,302 +1,363 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
-import { Avatar, AvatarStack } from '@/components/ui/Avatar';
+import { AvatarStack } from '@/components/ui/Avatar';
 import { Wordmark } from '@/components/ui/Brand';
-import { HeroCard, PosterCard, RowCard, RowGroup } from '@/components/ui/Cards';
+import { Button } from '@/components/ui/Button';
+import { HOME_TAB_SPACE } from '@/components/ui/HomeTabBar';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { RoomTile, TileArt, tilePaint, type TileTone } from '@/components/ui/RoomTile';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { COMMUNITY_DECKS } from '@/data/community';
-import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TopBar } from '@/components/ui/TopBar';
+import { COMMUNITY_DECKS } from '@/data/community';
 import { ME } from '@/data/mock';
 import { useNow } from '@/hooks/useNow';
-import { useOpenPlayer } from '@/hooks/useOpenPlayer';
+import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { haptics } from '@/lib/haptics';
 import { computeStandings, gameDay, useGameStore } from '@/store/useGameStore';
 import { useSessionStore } from '@/store/useSessionStore';
-import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
-import type { Game, Player } from '@/types/game';
+import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
+import type { Game } from '@/types/game';
+
+const TONE: Record<Game['status'], TileTone> = { live: 'live', waiting: 'waiting', ended: 'ended' };
 
 /**
- * HOME: solo il saluto e una card grande per rientrare nell'ultima stanza.
- * Sotto, le altre stanze con la stessa card (CTA secondario) e il Libro del Fanta. Crea / Entra con codice restano flottanti.
+ * LOBBY: la casa del giocatore. Dall'alto, in ordine di urgenza:
+ *  1. l'ultima partita vista, con l'unica azione gialla della pagina (Rientra / Vota);
+ *  2. i due ingressi per iniziare: Entra con codice (a sinistra) e Crea partita (a destra);
+ *  3. le altre partite attive, con la stessa card di quelle consigliate ma più informazioni;
+ *  4. il Libro del Fanta;
+ *  5. le partite consigliate dal sistema, in classifica come Apple Games.
  */
 export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   const router = useRouter();
   const now = useNow(30_000);
-  const { games, events, players, friendships } = useGameStore();
+  const { games, events, players } = useGameStore();
   const lastGameId = useSessionStore((s) => s.lastGameId);
-  const openPlayer = useOpenPlayer();
   const playDeck = usePlayDeck();
-  const requests = Object.values(friendships).filter((f) => f === 'received').length;
 
   const myGames = useMemo(() => (forceEmpty ? [] : games), [games, forceEmpty]);
   const last = myGames.find((g) => g.id === lastGameId) ?? myGames.find((g) => g.status !== 'ended');
-  const others = myGames.filter((g) => g.id !== last?.id);
+  // Prima le partite che chiedono qualcosa, le concluse in fondo
+  const order: Record<Game['status'], number> = { live: 0, waiting: 1, ended: 2 };
+  const others = myGames.filter((g) => g.id !== last?.id).sort((a, b) => order[a.status] - order[b.status]);
 
   const openGame = (game: Game) => {
     haptics.tap();
     router.push({ pathname: '/game/[gameId]', params: { gameId: game.id } });
   };
 
-  const infoOf = (last: Game) => {
-    const standings = computeStandings(last, events, players);
+  const infoOf = (g: Game) => {
+    const standings = computeStandings(g, events, players);
     const rank = standings.findIndex((r) => r.player.id === ME.id) + 1;
     const toVote = events.filter(
-      (e) =>
-        e.gameId === last.id && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
+      (e) => e.gameId === g.id && e.status === 'pending' && !e.myVote && e.playerId !== ME.id && e.authorId !== ME.id,
     ).length;
-    const day = gameDay(last, now);
+    const day = gameDay(g, now);
     const line =
-      last.status === 'waiting'
-        ? 'Il mazzo si sta formando: metti le tue carte'
-        : last.status === 'ended'
-          ? 'Partita conclusa: guarda i risultati'
+      g.status === 'waiting'
+        ? 'Il mazzo si sta formando'
+        : g.status === 'ended'
+          ? `Conclusa, sei arrivato ${rank}°`
           : toVote > 0
-            ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
+            ? `${toVote} ${toVote === 1 ? 'chiamata da votare' : 'chiamate da votare'}`
             : `${day.label} ${day.index} di ${day.total}, sei ${rank}°`;
-    return { line, toVote, people: players.filter((p) => last.playerIds.includes(p.id)) };
+    const cta = g.status === 'ended' ? 'Risultati' : toVote > 0 ? `Vota (${toVote})` : 'Apri';
+    return { line, toVote, rank, cta, people: players.filter((p) => g.playerIds.includes(p.id)) };
   };
 
   const resume = last && infoOf(last);
+  const totalToVote = myGames.reduce((n, g) => n + infoOf(g).toVote, 0);
+  const liveCount = myGames.filter((g) => g.status === 'live').length;
+  const status =
+    totalToVote > 0
+      ? `${totalToVote} ${totalToVote === 1 ? 'voto ti aspetta' : 'voti ti aspettano'}`
+      : liveCount
+        ? `${liveCount} ${liveCount === 1 ? 'partita in corso' : 'partite in corso'}`
+        : 'Nessuna partita in corso';
+
+  const suggested = [...COMMUNITY_DECKS].sort((a, b) => b.plays - a.plays).slice(0, 8);
 
   return (
     <View style={styles.screen}>
       <TopBar
         title={<Wordmark />}
-        right={
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="Esplora mazzi e carte della community"
-            hitSlop={8}
-            onPress={() => router.push('/explore')}>
-            <Icon name="compass" size={24} />
-          </PressableScale>
-        }
         left={
           <PressableScale
             accessibilityRole="button"
-            accessibilityLabel={requests ? `Il tuo profilo, ${requests} richieste di amicizia` : 'Il tuo profilo'}
-            onPress={() => openPlayer(ME.id)}
-            hitSlop={8}>
-            <Avatar player={ME} size={32} sticker={false} />
-            {requests > 0 && <View style={styles.dot} />}
+            accessibilityLabel="Impostazioni"
+            hitSlop={8}
+            onPress={() => router.push('/settings')}
+            style={styles.iconBtn}>
+            <Icon name="settings" size={20} />
           </PressableScale>
         }
       />
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: space.xxl * 2 }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: HOME_TAB_SPACE + space.lg }]}>
         <View style={styles.hello}>
-          <AppText variant="serifTitle" style={styles.helloText}>
-            Ciao {ME.name}
+          <AppText variant="serifTitle">Ciao {ME.name}</AppText>
+          <AppText variant="body" color={colors.inkSoft}>
+            {status}
           </AppText>
         </View>
 
         {last && resume ? (
-          <HeroCard
-            emoji={last.emoji}
-            eyebrow={<StatusBadge status={last.status} />}
-            title={last.name}
-            body={resume.line}
-            footer={<AvatarStack players={resume.people} size={32} max={6} />}
+          <FeaturedGame
+            game={last}
+            line={resume.line}
+            people={resume.people}
+            cta={resume.toVote ? 'Vota adesso' : last.status === 'ended' ? 'Guarda i risultati' : 'Rientra'}
             onPress={() => openGame(last)}
-            primary={{ label: resume.toVote ? 'Vota adesso' : 'Rientra', onPress: () => openGame(last) }}
-            tone={resume.toVote ? 'dark' : 'surface'}
-            mood="vote"
           />
         ) : null}
 
-        {/* Stesso punto, due ingressi: creare o entrare con un codice */}
+        {/* Come iniziare: secondaria a sinistra, primaria a destra */}
         <View style={styles.entries}>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="Crea una stanza: da zero o da una partita pronta"
-            onPress={() => router.push('/room/start')}
-            style={styles.entry}>
-            <View style={[styles.plus, !resume && styles.plusPrimary]}>
-              <Icon name="plus" size={22} strokeWidth={2.4} />
-            </View>
-            <AppText variant="headline">Crea una stanza</AppText>
-            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-              Da zero o pronta
-            </AppText>
-          </PressableScale>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="Entra in una stanza con un codice"
+          <EntryTile
+            icon="ticket"
+            title="Entra con codice"
+            note="Te l'ha mandato un amico"
             onPress={() => router.push('/room/join')}
-            style={styles.entry}>
-            <View style={styles.plus}>
-              <Icon name="ticket" size={20} />
-            </View>
-            <AppText variant="headline">Entra con codice</AppText>
-            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-              Te l'ha mandato un amico
-            </AppText>
-          </PressableScale>
+          />
+          <EntryTile
+            icon="plus"
+            title="Crea partita"
+            note="Da zero o da un mazzo"
+            strong
+            onPress={() => router.push('/room/start')}
+          />
         </View>
 
-        <View style={styles.list}>
+        {others.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader title="Le tue partite" caption="Quelle che chiedono qualcosa vengono prima." />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.bleed}
+              contentContainerStyle={styles.row}>
+              {others.map((g) => {
+                const info = infoOf(g);
+                return (
+                  <RoomTile
+                    key={g.id}
+                    id={`mine-${g.id}`}
+                    emoji={g.emoji}
+                    title={g.name}
+                    subtitle={info.line}
+                    tone={TONE[g.status]}
+                    extra={
+                      <View style={styles.extra}>
+                        <AvatarStack players={info.people} size={20} max={4} />
+                      </View>
+                    }
+                    cta={info.cta}
+                    onPress={() => openGame(g)}
+                  />
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel="Il Libro del Fanta: regole, consigli e trucchi"
+          onPress={() => router.push('/rulebook')}
+          pressedScale={0.98}
+          style={styles.book}>
+          <TileArt tone="official" id="book" cx={82} cy={60} />
+          <Text style={styles.bookEmoji} allowFontScaling={false}>
+            📖
+          </Text>
+          <View style={styles.flex}>
+            <AppText variant="micro" color={tilePaint('official').soft}>
+              Come si gioca
+            </AppText>
+            <AppText variant="headline" color={tilePaint('official').ink} style={styles.bold}>
+              Il Libro del Fanta
+            </AppText>
+            <AppText variant="caption" color={tilePaint('official').soft} style={styles.regular}>
+              Regole, consigli e trucchi in 3 minuti
+            </AppText>
+          </View>
+          <Icon name="chevron-right" size={20} color={tilePaint('official').soft} />
+        </PressableScale>
+
+        <View style={styles.section}>
           <SectionHeader
-            title="Partite pronte"
-            caption="Mazzi pubblicati da giocare subito"
-            action={{ label: 'Esplora', onPress: () => router.push('/explore') }}
+            title="Consigliate per te"
+            caption="Le partite più giocate della settimana."
+            action={{ label: 'World', onPress: () => router.navigate('/world') }}
           />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.hScroll}
-            contentContainerStyle={styles.hRow}>
-            {[...COMMUNITY_DECKS]
-              .sort((a, b) => b.plays - a.plays)
-              .slice(0, 8)
-              .map((d) => (
-                <PosterCard
-                  key={d.id}
-                  emoji={d.emoji}
-                  title={d.name}
-                  meta={`${d.occasion} · ${d.ruleIds.length} carte`}
-                  badge={d.season ? 'Di stagione' : undefined}
-                  onPress={() => playDeck(d)}
-                />
-              ))}
+            style={styles.bleed}
+            contentContainerStyle={styles.row}>
+            {suggested.map((d, i) => (
+              <RoomTile
+                key={d.id}
+                id={`sug-${d.id}`}
+                rank={i + 1}
+                emoji={d.emoji}
+                title={d.name}
+                subtitle={`${d.occasion} · ${d.ruleIds.length} carte`}
+                tone={d.official ? 'official' : 'community'}
+                cta="Gioca"
+                onPress={() => playDeck(d)}
+              />
+            ))}
           </ScrollView>
         </View>
-
-        {others.length > 0 && (
-          <View style={styles.list}>
-            <SectionHeader title="Le tue stanze" />
-            <RowGroup>
-              {others.map((g) => (
-                <RowCard
-                  key={g.id}
-                  emoji={g.emoji}
-                  title={g.name}
-                  meta={<StatusBadge status={g.status} />}
-                  accessibilityLabel={`Apri ${g.name}. ${infoOf(g).line}`}
-                  onPress={() => openGame(g)}
-                />
-              ))}
-            </RowGroup>
-          </View>
-        )}
-
-        <RowGroup>
-          {[
-            <RowCard
-              key="book"
-              emoji="📖"
-              title="Il Libro del Fanta"
-              meta="Regole e come si gioca bene"
-              onPress={() => router.push('/rulebook')}
-            />,
-          ]}
-        </RowGroup>
       </ScrollView>
     </View>
   );
 }
 
+/** L'ultima partita vista: larga, con il colore della fase e l'unico bottone giallo della pagina. */
+function FeaturedGame({
+  game,
+  line,
+  people,
+  cta,
+  onPress,
+}: {
+  game: Game;
+  line: string;
+  people: ReturnType<typeof useGameStore.getState>['players'];
+  cta: string;
+  onPress: () => void;
+}) {
+  const tone = TONE[game.status];
+  const p = tilePaint(tone);
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${game.name}. ${line}. ${cta}`}
+      onPress={onPress}
+      pressedScale={0.98}
+      style={[styles.featured, tone === 'ended' && styles.hair]}>
+      <TileArt tone={tone} id={`feat-${game.id}`} cx={78} cy={34} />
+      <View style={styles.featTop}>
+        <View style={styles.flex}>
+          <AppText variant="micro" color={p.soft}>
+            Ultima partita
+          </AppText>
+          <StatusBadge status={game.status} />
+        </View>
+        <Text style={styles.featEmoji} allowFontScaling={false}>
+          {game.emoji}
+        </Text>
+      </View>
+      <View style={styles.featText}>
+        <AppText variant="title" color={p.ink} numberOfLines={2}>
+          {game.name}
+        </AppText>
+        <AppText variant="body" color={p.soft} numberOfLines={1}>
+          {line}
+        </AppText>
+      </View>
+      <View style={styles.featFoot}>
+        <AvatarStack players={people} size={28} max={5} />
+        <Button label={cta} onPress={onPress} style={styles.featBtn} />
+      </View>
+    </PressableScale>
+  );
+}
+
+function EntryTile({
+  icon,
+  title,
+  note,
+  strong,
+  onPress,
+}: {
+  icon: 'plus' | 'ticket';
+  title: string;
+  note: string;
+  strong?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${note}`}
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      style={styles.entry}>
+      <View style={[styles.entryIcon, strong && styles.entryIconStrong]}>
+        <Icon name={icon} size={20} strokeWidth={strong ? 2.2 : 1.6} color={strong ? colors.inkInverse : colors.ink} />
+      </View>
+      <AppText variant="headline">{title}</AppText>
+      <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+        {note}
+      </AppText>
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
-  hello: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  helloText: { flex: 1 },
-  codeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 36,
-    paddingHorizontal: space.sm,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
   screen: { flex: 1, backgroundColor: colors.background },
-  dot: {
-    position: 'absolute',
-    top: -1,
-    right: -1,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.malus,
-    borderWidth: 1,
-    borderColor: colors.surface,
-  },
   content: {
     paddingHorizontal: layout.gutter,
-    paddingTop: layout.section + space.xs,
+    paddingTop: space.lg,
     gap: layout.section,
     width: '100%',
     maxWidth: MAX_APP_WIDTH,
     alignSelf: 'center',
   },
-  resume: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: space.lg,
-    gap: space.xs,
-  },
-  resumeFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm },
-  go: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.cta,
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  open: {
+  hello: { gap: 2, marginBottom: -space.sm },
+  section: { gap: space.sm },
+  bleed: { marginHorizontal: -layout.gutter, flexGrow: 0 },
+  row: { gap: space.sm, paddingHorizontal: layout.gutter },
+  extra: { marginTop: space.xxs },
+  flex: { flex: 1, gap: 2 },
+  regular: { fontWeight: '400' },
+  bold: { fontWeight: '700' },
+  hair: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
+  featured: { borderRadius: radius.xl, overflow: 'hidden', padding: space.lg, gap: space.md, minHeight: 236 },
+  featTop: { flexDirection: 'row', alignItems: 'flex-start' },
+  featEmoji: { fontSize: 64, lineHeight: 74 },
+  featText: { gap: 2, flex: 1, justifyContent: 'flex-end' },
+  featFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  featBtn: { minWidth: 150, height: 48 },
+  entries: { flexDirection: 'row', gap: space.sm },
+  entry: { flex: 1, gap: 2, backgroundColor: colors.surface, borderRadius: radius.lg, padding: layout.card },
+  entryIcon: {
+    marginBottom: space.sm,
+    width: 40,
     height: 40,
-    paddingHorizontal: space.md,
-    borderRadius: radius.pill,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.line,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  list: { gap: space.sm },
-  entries: { flexDirection: 'row', gap: space.sm },
-  entry: {
-    flex: 1,
-    gap: space.xxs,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: layout.card,
-  },
-  create: {
+  entryIconStrong: { backgroundColor: colors.ink, borderColor: colors.ink },
+  book: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
+    overflow: 'hidden',
     padding: layout.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.hairline,
   },
-  plus: {
-    marginBottom: 8,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  plusPrimary: { backgroundColor: colors.cta, borderColor: colors.cta },
-  regular: { fontWeight: '400' },
-  hScroll: { marginHorizontal: -layout.gutter, flexGrow: 0 },
-  hRow: { gap: space.sm, paddingHorizontal: layout.gutter },
-  rows: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    paddingHorizontal: layout.card,
-    paddingVertical: space.sm + 2,
-  },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
-  emoji: { fontSize: 20, lineHeight: 26 },
-  flex: { flex: 1 },
+  bookEmoji: { fontSize: 40, lineHeight: 48 },
 });

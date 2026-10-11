@@ -98,11 +98,14 @@ export function GameHeader({ game }: { game: Game }) {
         <View style={styles.row}>
           <PressableScale
             accessibilityRole="button"
-            accessibilityLabel="Torna alle tue stanze"
+            accessibilityLabel="Esci dalla partita e torna alla Lobby"
             hitSlop={12}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-            style={styles.back}>
-            <Icon name="chevron-left" size={22} strokeWidth={2.2} />
+            onPress={() => {
+              if (router.canDismiss()) router.dismissAll();
+              else router.replace('/');
+            }}
+            style={styles.lobby}>
+            <Icon name="home" size={20} strokeWidth={1.6} />
           </PressableScale>
           <AppText variant="headline" numberOfLines={1} style={styles.title} accessibilityRole="header">
             {game.emoji} {game.name}
@@ -147,6 +150,14 @@ const styles = StyleSheet.create({
   inner: { width: '100%', maxWidth: MAX_APP_WIDTH, alignSelf: 'center', paddingHorizontal: space.md, gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', height: 40 },
   back: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
+  lobby: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   right: { alignItems: 'flex-end' },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },

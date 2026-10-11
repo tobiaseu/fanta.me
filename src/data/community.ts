@@ -239,3 +239,97 @@ COMMUNITY_DECKS.push(
 );
 
 export const OCCASIONS = ['Tutte', 'Vacanza', 'Serata', 'Matrimonio', 'Sport', 'Gita'] as const;
+
+/**
+ * Stanze pubbliche della community: aperte a chi vuole entrare, ordinate per "calore"
+ * (giocatori attivi nelle ultime ore). Fase 2: tabella `public_rooms` con richiesta d'ingresso all'host.
+ */
+export interface CommunityRoom {
+  id: string;
+  name: string;
+  emoji: string;
+  occasion: (typeof OCCASIONS)[number];
+  host: { name: string; handle: string; color: string };
+  deckId: string;
+  players: number;
+  /** Posti liberi */
+  open: number;
+  status: 'live' | 'waiting';
+  /** Chiamate nelle ultime 24 ore: misura quanto è viva */
+  calls24h: number;
+}
+
+export const COMMUNITY_ROOMS: CommunityRoom[] = [
+  {
+    id: 'cr-ibiza',
+    name: 'Ibiza 6 giorni',
+    emoji: '🪩',
+    occasion: 'Vacanza',
+    host: AUTHORS.gio,
+    deckId: 'd-estate',
+    players: 9,
+    open: 3,
+    status: 'live',
+    calls24h: 214,
+  },
+  {
+    id: 'cr-matri',
+    name: 'Matrimonio Ele & Fra',
+    emoji: '💍',
+    occasion: 'Matrimonio',
+    host: AUTHORS.ele,
+    deckId: 'd-wedding',
+    players: 18,
+    open: 6,
+    status: 'waiting',
+    calls24h: 0,
+  },
+  {
+    id: 'cr-calcetto',
+    name: 'Calcetto del giovedì',
+    emoji: '⚽',
+    occasion: 'Sport',
+    host: AUTHORS.pietro,
+    deckId: 'd-estate',
+    players: 10,
+    open: 2,
+    status: 'live',
+    calls24h: 96,
+  },
+  {
+    id: 'cr-gita',
+    name: 'Gita 5ªB a Praga',
+    emoji: '🚌',
+    occasion: 'Gita',
+    host: AUTHORS.team,
+    deckId: 'd-estate',
+    players: 24,
+    open: 4,
+    status: 'live',
+    calls24h: 380,
+  },
+  {
+    id: 'cr-cena',
+    name: 'Cene del venerdì',
+    emoji: '🍕',
+    occasion: 'Serata',
+    host: AUTHORS.pietro,
+    deckId: 'd-wedding',
+    players: 7,
+    open: 5,
+    status: 'waiting',
+    calls24h: 0,
+  },
+];
+
+/** Badge del profilo: si sbloccano giocando, gli altri restano visibili ma spenti. */
+export const BADGES = [
+  { id: 'b-first', emoji: '🎬', label: 'Prima partita', note: 'Hai giocato la tua prima stanza', unlocked: true },
+  { id: 'b-win', emoji: '👑', label: 'Campione', note: 'Hai vinto una stanza', unlocked: true },
+  { id: 'b-creator', emoji: '✍️', label: 'Creatore', note: 'Hai creato 2 carte', unlocked: true },
+  { id: 'b-judge', emoji: '⚖️', label: 'Giudice', note: '50 voti dati', unlocked: true },
+  { id: 'b-trophy', emoji: '🏆', label: 'Collezionista', note: '3 carte trofeo prese', unlocked: true },
+  { id: 'b-host', emoji: '🏠', label: 'Padrone di casa', note: 'Crea 5 stanze', unlocked: false },
+  { id: 'b-viral', emoji: '🔥', label: 'Virale', note: 'Una tua carta in 100 stanze', unlocked: false },
+  { id: 'b-epic', emoji: '🐉', label: 'Leggenda', note: '3 trofei nella stessa partita', unlocked: false },
+] as const;

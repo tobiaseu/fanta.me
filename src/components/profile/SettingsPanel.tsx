@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { sendTestNotification } from '@/lib/webNotifications';
 import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
-import { useSessionStore, type Visibility } from '@/store/useSessionStore';
+import { DEFAULT_PUBLIC, useSessionStore, type PublicPart, type Visibility } from '@/store/useSessionStore';
 import { useUiStore } from '@/store/useUiStore';
 import { Segmented } from '@/components/ui/Segmented';
 import { colors, radius, readThemePref, setThemePref, space, type ThemePref } from '@/theme/tokens';
@@ -22,6 +22,14 @@ const VISIBILITY: { id: Visibility; label: string; note: string }[] = [
  * Impostazioni essenziali, le stesse nel profilo e nella schermata dedicata:
  * notifiche, privacy della bacheca, vibrazione, account (esci ed elimina).
  */
+const PUBLIC_PARTS: { id: PublicPart; label: string; note: string }[] = [
+  { id: 'badges', label: 'Badge', note: 'I traguardi che hai sbloccato' },
+  { id: 'stats', label: 'Statistiche', note: 'Partite, vittorie e fantapunti' },
+  { id: 'created', label: 'Carte create', note: 'Le carte che hai disegnato tu' },
+  { id: 'unlocked', label: 'Carte sbloccate', note: 'Epiche e carte salvate' },
+  { id: 'games', label: 'Partite in corso', note: 'Le stanze in cui stai giocando adesso' },
+];
+
 export function SettingsPanel() {
   const router = useRouter();
   const s = useSessionStore();
@@ -101,7 +109,7 @@ export function SettingsPanel() {
         </View>
       </View>
 
-      <Group title="Chi vede la tua bacheca">
+      <Group title="Chi vede il tuo profilo">
         {VISIBILITY.map((o, i) => {
           const on = o.id === s.collectionVisibility;
           return (
@@ -119,6 +127,19 @@ export function SettingsPanel() {
             </Pressable>
           );
         })}
+      </Group>
+
+      <Group title="Nel tuo profilo pubblico">
+        {PUBLIC_PARTS.map((o, i) => (
+          <Row key={o.id} label={o.label} note={o.note} first={i === 0}>
+            <Switch
+              value={(s.publicShow ?? DEFAULT_PUBLIC)[o.id]}
+              onValueChange={() => s.togglePublic(o.id)}
+              trackColor={{ true: colors.live, false: colors.surfaceMuted }}
+              accessibilityLabel={o.label}
+            />
+          </Row>
+        ))}
       </Group>
 
       <Group title="Gioco">

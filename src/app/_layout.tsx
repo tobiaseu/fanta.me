@@ -50,7 +50,7 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: colors.background },
               animation: 'slide_from_right',
             }}>
-            <Stack.Screen name="index" />
+            <Stack.Screen name="(home)" options={{ animation: 'fade' }} />
             <Stack.Screen name="welcome" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="splash" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="onboarding/hello" options={{ animation: 'fade', gestureEnabled: false }} />
