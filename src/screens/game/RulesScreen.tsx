@@ -1,4 +1,3 @@
-import { DeckExplorer } from '@/components/cards/DeckExplorer';
 import Animated, { FadeIn, FadeOut, LinearTransition, ZoomIn } from 'react-native-reanimated';
 import { useLiveDeck } from '@/hooks/useLiveDeck';
 import { useRouter } from 'expo-router';
@@ -6,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CardSheet } from '@/components/cards/CardSheet';
+import { DeckHand } from '@/components/cards/DeckHand';
 import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
 import { PlayCard, type CardRect } from '@/components/cards/PlayCard';
 import { FinaleSettings } from '@/components/game/FinaleSettings';
@@ -78,7 +78,6 @@ export function RulesScreen() {
     setOpenFrom({ from });
     setSelected(r);
   };
-  const [explore, setExplore] = useState(false);
   const updateSettings = useGameStore((s) => s.updateSettings);
   useLiveDeck(game);
 
@@ -240,7 +239,7 @@ export function RulesScreen() {
           <View style={styles.section}>
             <SectionHeader
               title="Mazzo della partita"
-              action={{ label: showAll ? 'Anteprima' : 'Vedi tutte', onPress: () => setShowAll((v) => !v) }}
+              action={{ label: showAll ? 'A ventaglio' : 'Vedi tutte', onPress: () => setShowAll((v) => !v) }}
               caption={
                 pregame
                   ? `${deck.length} carte finora. Si chiude ${DATE.format(new Date(game.startsAt ?? Date.now()))}.`
@@ -283,27 +282,18 @@ export function RulesScreen() {
                 ))}
               </Animated.View>
             ) : (
-              <Animated.View key="pile" entering={ZoomIn.springify().damping(18)} exiting={FadeOut.duration(120)}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.bleed}
-                  contentContainerStyle={styles.carousel}>
-                  {deck.map((r) => (
-                    <PlayCard
-                      key={r.id}
-                      rule={r}
-                      style={styles.carouselCard}
-                      authorName={players.find((p) => p.id === r.authorId)?.name}
-                      cta={
-                        game.status === 'live'
-                          ? { label: 'Chiama', icon: 'plus', onPress: () => openQuickAction(r.id) }
-                          : undefined
-                      }
-                      onOpen={openCard(r)}
-                    />
-                  ))}
-                </ScrollView>
+              <Animated.View key="hand" entering={FadeIn.duration(200)} exiting={FadeOut.duration(120)}>
+                <DeckHand
+                  deck={deck}
+                  authorName={(r) => players.find((p) => p.id === r.authorId)?.name}
+                  cta={(r) =>
+                    game.status === 'live'
+                      ? { label: 'Chiama', icon: 'plus', onPress: () => openQuickAction(r.id) }
+                      : undefined
+                  }
+                  status={game.status === 'live' ? undefined : 'Nel mazzo'}
+                  onOpen={(r, from) => openCard(r)(from)}
+                />
               </Animated.View>
             )}
           </View>
@@ -533,7 +523,6 @@ export function RulesScreen() {
         from={openFrom.from}
         onClose={() => setSelected(undefined)}
       />
-      <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />
     </ScrollView>
   );
 }
@@ -541,9 +530,6 @@ export function RulesScreen() {
 const styles = StyleSheet.create({
   playersTab: { gap: 40 },
   cell: { width: '47.5%' },
-  bleed: { marginHorizontal: -layout.gutter },
-  carousel: { paddingHorizontal: layout.gutter, gap: space.sm },
-  carouselCard: { width: 168 },
   halfSlot: { width: '47.5%' },
   slot: { width: '22%' },
   full: { width: '100%' },

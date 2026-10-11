@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
-import { CardArt, cardPaint, signGlow } from '@/components/cards/PlayCard';
+import { CardArt, cardPaint, cardShadow } from '@/components/cards/PlayCard';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { colors, radius, space } from '@/theme/tokens';
@@ -58,8 +58,8 @@ export function DeckCard({ rule, dimmed, checked, addable, note, onPress, onLong
       onLongPress={onLongPress}
       pressedScale={0.94}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
-      <View style={[styles.shell, !bare && signGlow(rule.points, 'sm')]}>
-        <View style={[styles.cardFill, light && styles.cardLight]}>
+      <View style={[styles.shell, !bare && cardShadow('sm')]}>
+        <View style={[styles.cardFill, light && styles.cardLight, rule.trophy && styles.trophyEdge]}>
           <CardArt rule={rule} id={`d-${rule.id}`} />
           <Text style={[styles.emoji, !bare && styles.emojiWithName]} allowFontScaling={false}>
             {rule.emoji}
@@ -143,7 +143,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
+  /** Carta trofeo (unica): filo d'oro sul bordo */
+  trophyEdge: { borderWidth: 2, borderColor: '#E8B53A' },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
   emoji: { fontSize: 44, lineHeight: 54, fontFamily: EMOJI_FONT },
   emojiWithName: { marginBottom: space.md },
   // Il nome è attaccato al fondo della carta, come l'etichetta delle carte da collezione

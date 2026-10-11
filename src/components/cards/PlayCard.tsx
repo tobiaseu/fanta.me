@@ -33,9 +33,10 @@ export function tierOf(rule: Rule): Tier {
 export const TIER_LABEL: Record<Tier, string> = { normal: 'Normale', rare: 'Rara', epic: 'Epica' };
 
 /**
- * Una carta dice due cose con due segnali diversi:
- *  - il CORPO dice la rarità: normale = neutro (bianco o grafite), rara = arancio, epica = viola notte;
- *  - l'OMBRA dice il segno: verde se è un bonus, rossa se è un malus (sempre, a ogni rarità).
+ * Una carta dice due cose con due segnali diversi, uguali in chiaro e in scuro:
+ *  - il FONDO è sempre bianco, così una carta non si confonde mai con stanze, poteri o sfondo;
+ *  - il COLORE DIETRO L'IMMAGINE dice la rarità: giallo chiaro = normale, arancio = rara, viola = epica;
+ *  - il TAG in alto dice il segno: Bonus verde o Malus rosso.
  */
 type Paint = {
   top: string;
@@ -45,55 +46,58 @@ type Paint = {
   ring: string;
   ink: string;
   soft: string;
-  /** Testo chiaro sopra (fondo scuro o pieno) */
+  /** Colore pieno della rarità (tag e dettagli) */
+  accent: string;
+  /** Testo sopra il colore della rarità */
+  onAccent: string;
+  /** Testo chiaro sopra (sempre falso: le carte sono bianche) */
   inverse: boolean;
 };
 
-const WHITE_INK = { ink: '#FFFFFF', soft: 'rgba(255,255,255,0.8)', inverse: true };
+const WHITE_CARD = {
+  top: '#FFFFFF',
+  bottom: '#F3F3F6',
+  ink: '#0B0B0D',
+  soft: 'rgba(0,0,0,0.55)',
+  inverse: false,
+};
 
-/** Normale: neutra, con un velo giallo Fanta.me dietro l'immagine. In tema scuro diventa grafite. */
-const NORMAL: Paint = isDark
-  ? { top: '#2E2E33', bottom: '#17171A', glow: colors.cta, glowOpacity: 0.26, ring: '#FFFFFF', ...WHITE_INK }
-  : {
-      top: '#FFFFFF',
-      bottom: '#ECECF1',
-      glow: colors.cta,
-      glowOpacity: 0.7,
-      ring: '#000000',
-      ink: '#0B0B0D',
-      soft: 'rgba(0,0,0,0.55)',
-      inverse: false,
-    };
+export const TIER_COLOR: Record<Tier, string> = { normal: '#FFD84D', rare: '#FF8A2B', epic: '#8B5CF6' };
 
-/** Ombra di bonus (verde) e malus (rosso): è il segno della carta, visibile anche su arancio e viola. */
-const SHADOW = isDark
-  ? { bonus: 'rgba(52, 199, 89, 0.55)', malus: 'rgba(255, 69, 58, 0.55)' }
-  : { bonus: 'rgba(11, 130, 0, 0.42)', malus: 'rgba(217, 45, 32, 0.42)' };
-
-export type GlowSize = 'sm' | 'md' | 'lg';
-const GLOW: Record<GlowSize, string> = { sm: '0 4px 10px', md: '0 8px 20px', lg: '0 14px 36px' };
-
-/** Ombra colorata secondo il segno dei punti. Va su un contenitore SENZA overflow hidden. */
-export function signGlow(points: number, size: GlowSize = 'md'): ViewStyle {
-  return { boxShadow: `${GLOW[size]} ${points > 0 ? SHADOW.bonus : SHADOW.malus}` } as ViewStyle;
-}
-
+const NORMAL: Paint = {
+  ...WHITE_CARD,
+  glow: '#FFD84D',
+  glowOpacity: 0.85,
+  ring: '#E0A800',
+  accent: '#FFE382',
+  onAccent: '#5C4300',
+};
 const RARE: Paint = {
-  top: '#FFB45C',
-  bottom: '#F0662E',
-  glow: '#FFFFFF',
-  glowOpacity: 0.45,
-  ring: '#FFFFFF',
-  ...WHITE_INK,
+  ...WHITE_CARD,
+  glow: '#FF8A2B',
+  glowOpacity: 0.8,
+  ring: '#F0662E',
+  accent: '#FF8A2B',
+  onAccent: '#FFFFFF',
 };
 const EPIC: Paint = {
-  top: '#7B4DE3',
-  bottom: '#2A1472',
-  glow: '#D9C2FF',
-  glowOpacity: 0.55,
-  ring: '#FFD27A',
-  ...WHITE_INK,
+  ...WHITE_CARD,
+  glow: '#8B5CF6',
+  glowOpacity: 0.8,
+  ring: '#6D3FE0',
+  accent: '#7B4DE3',
+  onAccent: '#FFFFFF',
 };
+
+export type GlowSize = 'sm' | 'md' | 'lg';
+const SHADOW: Record<GlowSize, string> = isDark
+  ? { sm: '0 2px 6px rgba(0,0,0,0.5)', md: '0 6px 16px rgba(0,0,0,0.5)', lg: '0 14px 36px rgba(0,0,0,0.6)' }
+  : { sm: '0 2px 6px rgba(0,0,0,0.08)', md: '0 6px 16px rgba(0,0,0,0.10)', lg: '0 14px 36px rgba(0,0,0,0.16)' };
+
+/** Ombra neutra della carta (nessun colore: il segno lo dice il tag). Va su un contenitore SENZA overflow hidden. */
+export function cardShadow(size: GlowSize = 'md'): ViewStyle {
+  return { boxShadow: SHADOW[size] } as ViewStyle;
+}
 
 export function cardPaint(rule: Rule): Paint {
   const tier = tierOf(rule);
@@ -151,17 +155,10 @@ export function CardArt({ rule, id }: { rule: Rule; id: string }) {
       </Defs>
       <Rect x="0" y="0" width="100" height="140" fill={`url(#g-${id})`} />
       <Circle cx="50" cy="50" r="40" fill={`url(#h-${id})`} />
-      <Circle cx="50" cy="50" r="28" stroke={p.ring} strokeOpacity="0.12" strokeWidth="0.4" fill="none" />
-      <Circle cx="50" cy="50" r="42" stroke={p.ring} strokeOpacity="0.08" strokeWidth="0.4" fill="none" />
+      <Circle cx="50" cy="50" r="28" stroke={p.ring} strokeOpacity="0.35" strokeWidth="0.5" fill="none" />
+      <Circle cx="50" cy="50" r="42" stroke={p.ring} strokeOpacity="0.18" strokeWidth="0.4" fill="none" />
       {STARS.map(([x, y, r], i) => (
-        <Circle
-          key={i}
-          cx={x}
-          cy={y}
-          r={r}
-          fill={p.inverse ? '#FFFFFF' : p.ring}
-          fillOpacity={p.inverse ? 0.5 : 0.18}
-        />
+        <Circle key={i} cx={x} cy={y} r={r} fill={p.ring} fillOpacity={0.35} />
       ))}
     </Svg>
   );
@@ -180,19 +177,13 @@ export function PointsTag({ points, large }: { points: number; large?: boolean }
   );
 }
 
-export function TierTag({ rule, onDark, large }: { rule: Rule; onDark?: boolean; large?: boolean }) {
+/** Tag della rarità: pieno del colore della rarità, lo stesso che sta dietro l'immagine. */
+export function TierTag({ rule, large }: { rule: Rule; onDark?: boolean; large?: boolean }) {
   const tier = tierOf(rule);
+  const p = cardPaint(rule);
   return (
-    <View
-      style={[
-        styles.tag,
-        large && styles.tagLarge,
-        { backgroundColor: onDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)' },
-      ]}>
-      <AppText
-        variant="micro"
-        color={onDark ? '#FFFFFF' : colors.inkSoft}
-        style={[styles.tagText, large && styles.tagTextLarge]}>
+    <View style={[styles.tag, large && styles.tagLarge, { backgroundColor: p.accent }]}>
+      <AppText variant="micro" color={p.onAccent} style={[styles.tagText, large && styles.tagTextLarge]}>
         {TIER_LABEL[tier]}
         {rule.trophy ? ' · 🏆 Unica' : ''}
       </AppText>
@@ -239,8 +230,8 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
       delayLongPress={350}
       pressedScale={0.96}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
-      <View ref={ref} style={[styles.shell, signGlow(rule.points)]} collapsable={false}>
-        <View style={[styles.card, !dark && styles.cardLight]}>
+      <View ref={ref} style={[styles.shell, cardShadow()]} collapsable={false}>
+        <View style={[styles.card, styles.cardLight, rule.trophy && styles.trophyEdge]}>
           <CardArt rule={rule} id={`c-${rule.id}`} />
           <View style={styles.top}>
             <PointsTag points={rule.points} />
@@ -282,11 +273,7 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
               </PressableScale>
             ) : status ? (
               <View style={[styles.cta, styles.ctaDone]}>
-                <AppText
-                  variant="micro"
-                  color={dark ? '#FFFFFF' : colors.inkSoft}
-                  style={styles.ctaText}
-                  numberOfLines={1}>
+                <AppText variant="micro" color={p.soft} style={styles.ctaText} numberOfLines={1}>
                   {status}
                 </AppText>
               </View>
@@ -303,7 +290,9 @@ const styles = StyleSheet.create({
   dimmed: { opacity: 0.4 },
   shell: { width: '100%', aspectRatio: PLAY_RATIO, borderRadius: radius.lg },
   card: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', padding: space.sm },
-  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
+  /** Carta trofeo (unica): filo d'oro sul bordo */
+  trophyEdge: { borderWidth: 2, borderColor: '#E8B53A' },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   points: { alignSelf: 'flex-start', height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: 'center' },
   pointsLarge: { height: 30, paddingHorizontal: space.sm, borderRadius: 15 },

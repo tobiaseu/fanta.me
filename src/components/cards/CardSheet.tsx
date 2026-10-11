@@ -7,7 +7,7 @@ import {
   TIER_LABEL,
   TierTag,
   cardPaint,
-  signGlow,
+  cardShadow,
   tierOf,
   type CardRect,
 } from '@/components/cards/PlayCard';
@@ -72,7 +72,7 @@ export function CardSheet({ rule, author, state, primary, secondary, from, onClo
       onClose={onClose}>
       {(close) =>
         rule ? (
-          <View style={[styles.shell, signGlow(rule.points, 'lg')]}>
+          <View style={[styles.shell, cardShadow('lg')]}>
             <Face rule={rule} author={author} state={state} primary={primary} secondary={secondary} onClose={close} />
           </View>
         ) : null
@@ -106,7 +106,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
   const right = primary ?? secondary;
 
   return (
-    <View style={[styles.card, !dark && styles.cardLight]}>
+    <View style={[styles.card, !dark && styles.cardLight, rule.trophy && styles.trophyEdge]}>
       <CardArt rule={rule} id={`s-${rule.id}`} />
       <View style={styles.corner}>
         <View style={styles.tagsRow}>
@@ -129,7 +129,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
             <Avatar player={author} size={20} sticker={false} />
           ) : (
             <View style={[styles.mark, { backgroundColor: rule.epic ? '#B48CFF' : colors.cta }]}>
-              <AppText variant="micro" color={colors.ink} style={styles.markText}>
+              <AppText variant="micro" color="#0B0B0D" style={styles.markText}>
                 {rule.epic ? '★' : 'f'}
               </AppText>
             </View>
@@ -156,7 +156,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
           label={left.label}
           icon={left.icon}
           variant="secondary"
-          onDark={dark}
+          onLight
           onPress={run(left, leftKeepsOpen)}
           style={[styles.btn, styles.flex]}
         />
@@ -164,7 +164,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
           <Button
             label={right.label}
             variant={primary ? 'primary' : 'secondary'}
-            onDark={dark}
+            onLight
             onPress={run(right)}
             style={[styles.btn, styles.flex]}
           />
@@ -177,7 +177,9 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
 const styles = StyleSheet.create({
   shell: { flex: 1, borderRadius: 28 },
   card: { flex: 1, borderRadius: 28, overflow: 'hidden', padding: space.md, gap: space.xs },
-  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
+  /** Carta trofeo (unica): filo d'oro sul bordo */
+  trophyEdge: { borderWidth: 2, borderColor: '#E8B53A' },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
   corner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   art: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 96, lineHeight: 112, fontFamily: EMOJI_FONT },

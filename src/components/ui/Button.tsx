@@ -20,6 +20,8 @@ interface Props {
   icon?: IconName;
   /** Su foto o fondo scuro: secondario e terziario in bianco */
   onDark?: boolean;
+  /** Sopra una superficie sempre bianca (le carte), in qualsiasi tema */
+  onLight?: boolean;
 }
 
 /**
@@ -28,8 +30,16 @@ interface Props {
  * secondary = trasparente con bordo grigio scuro sottile,
  * tertiary = solo testo, stesso colore del secondario.
  */
-export function Button({ label, onPress, variant = 'primary', disabled, style, icon, onDark }: Props) {
-  const tint = disabled ? colors.inkMuted : variant === 'primary' ? colors.ctaInk : onDark ? '#FFFFFF' : colors.ink;
+export function Button({ label, onPress, variant = 'primary', disabled, style, icon, onDark, onLight }: Props) {
+  const tint = disabled
+    ? colors.inkMuted
+    : variant === 'primary'
+      ? colors.ctaInk
+      : onDark
+        ? '#FFFFFF'
+        : onLight
+          ? '#0B0B0D'
+          : colors.ink;
   return (
     <PressableScale
       accessibilityRole="button"
@@ -43,6 +53,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, style, i
         styles.base,
         styles[variant],
         onDark && variant === 'secondary' && styles.secondaryDark,
+        onLight && variant === 'secondary' && styles.secondaryLight,
         disabled && styles.disabled,
         style,
       ]}>
@@ -67,6 +78,7 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: colors.cta },
   secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.line },
   secondaryDark: { borderColor: 'rgba(255, 255, 255, 0.45)' },
+  secondaryLight: { borderColor: 'rgba(0, 0, 0, 0.18)' },
   tertiary: { backgroundColor: 'transparent', height: 44 },
   disabled: { backgroundColor: colors.surfaceMuted, borderColor: colors.surfaceMuted },
 });

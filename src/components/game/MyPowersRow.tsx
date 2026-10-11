@@ -13,7 +13,7 @@ import { space } from '@/theme/tokens';
 
 type Slot = 'main' | 'secondary';
 
-/** Nel profilo: i due fantapoteri scelti, come carte-potere quadrate. Tocca per leggerli, "Cambia" per sceglierli. */
+/** Nel profilo: i due fantapoteri scelti, come carte-potere (cornice oro, argento, ghiaccio o olografica). Tocca per leggerli, "Cambia" per sceglierli. */
 export function MyPowersRow() {
   const router = useRouter();
   const mine = useGameStore((s) => s.powers[ME.id]);

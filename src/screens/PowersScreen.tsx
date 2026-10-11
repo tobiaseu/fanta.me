@@ -24,7 +24,7 @@ const SLOTS = [
 type Slot = 'main' | 'secondary';
 
 /**
- * I tuoi fantapoteri: tutti i poteri come carte-potere quadrate. Quelli scelti portano il loro ruolo.
+ * I tuoi fantapoteri: tutti i poteri come carte-potere (cornice oro, argento, ghiaccio o olografica). Quelli scelti portano il loro ruolo.
  * Tocca un potere: si apre, e da lì lo scegli come principale (giallo, a destra) o secondario (a sinistra).
  */
 export function PowersScreen() {
