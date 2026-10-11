@@ -86,7 +86,7 @@ export function cardSubtitle(rule: Rule, authorName?: string) {
 export function cardSignature(rule: Rule, authorName?: string) {
   const when = rule.createdAt ? DAY.format(new Date(rule.createdAt)) : undefined;
   const who = rule.epic
-    ? 'Vinta'
+    ? (rule.prize ?? 'Vinta')
     : rule.authorId === 'community'
       ? 'Creata dalla community'
       : rule.authorId

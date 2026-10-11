@@ -17,7 +17,6 @@ import {
   TierTag,
   cardPaint,
   cardSignature,
-  cardSubtitle,
   tierOf,
   type CardRect,
 } from '@/components/cards/PlayCard';
@@ -160,7 +159,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
           {rule.label}
         </AppText>
         <AppText variant="caption" color={p.soft} style={styles.regular} numberOfLines={1}>
-          {cardSubtitle(rule, author?.name)}
+          {cardSignature(rule, author?.name)}
         </AppText>
       </View>
       <AppText variant="body" color={p.ink} numberOfLines={4} style={styles.desc}>
@@ -193,11 +192,6 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
             style={[styles.btn, styles.flex]}
           />
         ) : null}
-      </View>
-      <View style={[styles.signature, { borderTopColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)' }]}>
-        <AppText variant="micro" color={p.soft} numberOfLines={1} style={styles.regular}>
-          {cardSignature(rule, author?.name)}
-        </AppText>
       </View>
     </View>
   );
