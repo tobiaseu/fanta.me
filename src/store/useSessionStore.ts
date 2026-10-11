@@ -5,6 +5,8 @@ export type SignInMethod = 'apple' | 'google' | 'email';
 /** Chi vede trofei, scudi e carte nel profilo: si parte da privato */
 export type Visibility = 'private' | 'friends' | 'everyone';
 export type NotificationKind = 'calls' | 'phases' | 'friends';
+/** Quante notifiche ricevere da una stanza: tutto, solo la mia squadra, un riassunto al giorno */
+export type NotifLevel = 'all' | 'team' | 'digest';
 
 /**
  * Sessione utente (mock). Fase 2: Supabase Auth con Sign in with Apple / Google.
@@ -25,6 +27,16 @@ interface SessionState {
   /** Notifiche per tipo: chiamate da votare, inizio/fine partita, richieste d'amicizia */
   notifications: Record<NotificationKind, boolean>;
   toggleNotification: (kind: NotificationKind) => void;
+  /** Livello di default per le stanze nuove, e quello scelto per singola stanza */
+  notifLevel: NotifLevel;
+  setNotifLevel: (l: NotifLevel) => void;
+  roomNotif: Record<string, NotifLevel>;
+  setRoomNotif: (gameId: string, l: NotifLevel | undefined) => void;
+  /** Silenzioso di notte (23–8) e ora del riassunto */
+  quietNight: boolean;
+  setQuietNight: (on: boolean) => void;
+  digestHour: number;
+  setDigestHour: (h: number) => void;
   hapticsOn: boolean;
   setHaptics: (on: boolean) => void;
   setCollectionVisibility: (v: Visibility) => void;
@@ -68,6 +80,20 @@ export const useSessionStore = create<SessionState>()(
       notifications: { calls: true, phases: true, friends: true },
       toggleNotification: (kind) =>
         set((s) => ({ notifications: { ...s.notifications, [kind]: !s.notifications[kind] } })),
+      notifLevel: 'team',
+      setNotifLevel: (notifLevel) => set({ notifLevel }),
+      roomNotif: {},
+      setRoomNotif: (gameId, l) =>
+        set((s) => {
+          const roomNotif = { ...(s.roomNotif ?? {}) };
+          if (l) roomNotif[gameId] = l;
+          else delete roomNotif[gameId];
+          return { roomNotif };
+        }),
+      quietNight: true,
+      setQuietNight: (quietNight) => set({ quietNight }),
+      digestHour: 22,
+      setDigestHour: (digestHour) => set({ digestHour }),
       hapticsOn: true,
       setHaptics: (hapticsOn) => set({ hapticsOn }),
       setCollectionVisibility: (collectionVisibility) => set({ collectionVisibility }),

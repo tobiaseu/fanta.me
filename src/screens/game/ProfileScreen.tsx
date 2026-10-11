@@ -10,7 +10,10 @@ import { Avatar } from '@/components/ui/Avatar';
 import { CoinIcon } from '@/components/ui/Brand';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { NOTIF_LEVELS, NotifLevelPicker } from '@/components/profile/NotifLevelPicker';
 import { ME } from '@/data/mock';
+import { useSessionStore } from '@/store/useSessionStore';
+import { useUiStore } from '@/store/useUiStore';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { computeStandings, computeTeamStandings, nameIn, useGameStore } from '@/store/useGameStore';
@@ -19,6 +22,10 @@ import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 /** Profilo in partita: nickname di stanza, posizione della squadra e individuale, formazione della squadra, fantapoteri e diario. */
 export function ProfileScreen() {
   const game = useCurrentGame();
+  const defaultLevel = useSessionStore((s) => s.notifLevel);
+  const roomLevel = useSessionStore((s) => (game ? s.roomNotif?.[game.id] : undefined));
+  const setRoomNotif = useSessionStore((s) => s.setRoomNotif);
+  const showToast = useUiStore((s) => s.showToast);
   const events = useGameStore((s) => s.events);
   const players = useGameStore((s) => s.players);
   const openPlayer = useOpenPlayer();
@@ -114,6 +121,17 @@ export function ProfileScreen() {
             </PressableScale>
           ))}
       </View>
+      <View style={styles.notif}>
+        <SectionHeader title="Notifiche di questa stanza" />
+        <NotifLevelPicker
+          value={roomLevel ?? defaultLevel}
+          inherited={defaultLevel}
+          onChange={(l) => {
+            setRoomNotif(game.id, l === defaultLevel ? undefined : l);
+            showToast({ text: `Notifiche di ${game.name}: ${NOTIF_LEVELS.find((x) => x.id === l)?.label}` });
+          }}
+        />
+      </View>
       <PressableScale accessibilityRole="button" onPress={() => openPlayer(ME.id)} hitSlop={8} style={styles.link}>
         <AppText variant="caption">Carriera, bacheca e amici</AppText>
       </PressableScale>
@@ -136,6 +154,7 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
 
 const styles = StyleSheet.create({
   flex1: { flex: 1 },
+  notif: { gap: space.sm },
   nickRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
