@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { NotifLevelPicker } from '@/components/profile/NotifLevelPicker';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { sendTestNotification } from '@/lib/webNotifications';
 import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
 import { useSessionStore, type Visibility } from '@/store/useSessionStore';
@@ -39,6 +40,15 @@ export function SettingsPanel() {
           Valgono per le stanze nuove. Ogni stanza si può cambiare dal suo Profilo.
         </AppText>
         <NotifLevelPicker value={s.notifLevel} onChange={s.setNotifLevel} />
+        <Button
+          label="Prova una notifica"
+          icon="bell"
+          variant="secondary"
+          onPress={async () => {
+            const problem = await sendTestNotification();
+            showToast({ text: problem ?? 'Arriva tra 5 secondi: blocca il telefono per vederla anche sul Watch' });
+          }}
+        />
         <View style={styles.card}>
           <Row label="Silenzioso di notte" note="Niente notifiche dalle 23 alle 8" first>
             <Switch

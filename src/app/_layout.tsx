@@ -10,7 +10,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PlayerMenu } from '@/components/ui/PlayerMenu';
 import { ToastHost } from '@/components/ui/ToastHost';
+import { setupWebApp } from '@/lib/webNotifications';
 import { colors, MAX_APP_WIDTH } from '@/theme/tokens';
+
+setupWebApp();
 
 /**
  * Root navigator: uno Stack che separa i due mondi.
