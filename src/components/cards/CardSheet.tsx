@@ -2,7 +2,7 @@ import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { cardTone } from '@/components/cards/DeckCard';
-import { Icon } from '@/components/icons/Icon';
+import { Icon, type IconName } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -19,12 +19,19 @@ const EMOJI_FONT = Platform.select({
   default: undefined,
 });
 
+type SheetAction = { label: string; onPress: () => void; icon?: IconName };
+
+/** Dove sta la carta e cosa si può fare: una riga sola, sempre nello stesso punto. */
+export type CardState = { text: string; tone?: 'neutral' | 'ok' | 'locked' };
+
 interface Props {
   rule?: Rule;
   author?: Player;
-  /** Riga di stato sotto la carta (es. "Nel mazzo", "2 su 3 mi piace") */
-  status?: string;
-  action?: { label: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'tertiary'; disabled?: boolean };
+  state?: CardState;
+  /** L'azione che fa avanzare il gioco (gialla). Se non c'è, la riga di stato dice perché. */
+  primary?: SheetAction;
+  /** Un'alternativa, bordata. Mai due gialli. */
+  secondary?: SheetAction;
   onClose: () => void;
 }
 
@@ -33,10 +40,7 @@ interface Props {
  * X in alto a destra e chiusura anche toccando fuori.
  * Sotto: l'azione della schermata e "Salva nelle mie carte" per le partite future.
  */
-export function CardSheet({ rule, author, status, action, onClose }: Props) {
-  const saved = useGameStore((s) => (rule ? s.savedRuleIds.includes(rule.id) : false));
-  const toggleSaved = useGameStore((s) => s.toggleSaved);
-  const showToast = useUiStore((s) => s.showToast);
+export function CardSheet({ rule, author, state, primary, secondary, onClose }: Props) {
   const tone = rule ? cardTone(rule) : undefined;
   const cat = rule && RULE_CATEGORIES.find((c) => c.id === rule.categoryId);
 
@@ -46,13 +50,6 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
       {rule && tone && (
         <View style={styles.center} pointerEvents="box-none">
           <Animated.View entering={ZoomIn.springify().damping(16)} style={styles.stack}>
-            {status ? (
-              <View style={styles.status}>
-                <AppText variant="caption" color={colors.inkInverse} style={styles.centerText}>
-                  {status}
-                </AppText>
-              </View>
-            ) : null}
             <View style={[styles.card, { borderColor: tone.edge }]}>
               <PressableScale
                 accessibilityRole="button"
@@ -84,39 +81,56 @@ export function CardSheet({ rule, author, status, action, onClose }: Props) {
                 </AppText>
               </View>
               <View style={styles.tags}>
-                <Tag label={rule.authorId ? `Carta di ${author?.name ?? 'un amico'}` : `${cat?.emoji} ${cat?.label}`} />
+                <Tag
+                  label={
+                    rule.authorId === 'community'
+                      ? 'Community'
+                      : rule.authorId
+                        ? `Carta di ${author?.name ?? 'un amico'}`
+                        : `${cat?.emoji} ${cat?.label}`
+                  }
+                />
                 <Tag label={rule.trophy ? '🏆 Solo il primo' : 'Cumulabile'} gold={rule.trophy} />
               </View>
             </View>
 
-            {/* Subito sotto la carta: l'azione della schermata (gialla) e, accanto, salvare per dopo */}
-            <View style={styles.actions}>
-              {action && (
-                <Button
-                  label={action.label}
-                  variant={action.variant ?? 'primary'}
-                  disabled={action.disabled}
-                  onDark
-                  style={styles.flex}
-                  onPress={() => {
-                    action.onPress();
-                    onClose();
-                  }}
-                />
-              )}
+            {/* Sotto la carta, sempre in quest'ordine: stato, azione principale, alternativa */}
+            {state ? (
+              <View style={styles.state} accessibilityRole="text">
+                {state.tone && state.tone !== 'neutral' ? (
+                  <Icon
+                    name={state.tone === 'locked' ? 'lock' : 'check'}
+                    size={14}
+                    color={state.tone === 'ok' ? colors.bonusBright : 'rgba(255,255,255,0.75)'}
+                  />
+                ) : null}
+                <AppText variant="caption" color="rgba(255,255,255,0.85)" style={styles.stateText}>
+                  {state.text}
+                </AppText>
+              </View>
+            ) : null}
+            {primary && (
               <Button
-                label={saved ? 'Salvata' : 'Salva'}
-                icon={saved ? 'check' : 'plus'}
-                variant="secondary"
-                onDark
-                style={action ? undefined : styles.flex}
+                label={primary.label}
+                icon={primary.icon}
                 onPress={() => {
-                  haptics.tap();
-                  const now = toggleSaved(rule.id);
-                  showToast({ text: now ? `${rule.label} salvata nelle tue carte` : 'Tolta dalle tue carte' });
+                  primary.onPress();
+                  onClose();
                 }}
               />
-            </View>
+            )}
+            {secondary && (
+              <Button
+                label={secondary.label}
+                icon={secondary.icon}
+                variant="secondary"
+                onDark
+                onPress={() => {
+                  secondary.onPress();
+                  onClose();
+                }}
+              />
+            )}
           </Animated.View>
         </View>
       )}
@@ -143,10 +157,11 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   tagGold: { borderColor: '#D4A017' },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.55)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10, 10, 12, 0.86)' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.lg },
   stack: { width: '100%', maxWidth: 320, gap: space.sm },
-  actions: { flexDirection: 'row', gap: space.sm },
+  state: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.sm },
+  stateText: { textAlign: 'center', flexShrink: 1 },
   flex: { flex: 1 },
   card: {
     width: '100%',

@@ -23,6 +23,7 @@ export function PlayerCard({
   dimmed,
   note,
   onPress,
+  onLongPress,
   style,
 }: {
   player: Player;
@@ -32,6 +33,7 @@ export function PlayerCard({
   dimmed?: boolean;
   note?: string;
   onPress?: () => void;
+  onLongPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
@@ -39,6 +41,7 @@ export function PlayerCard({
       accessibilityRole="button"
       accessibilityLabel={`${name}${points !== undefined ? `, ${points} punti` : ''}${note ? `, ${note}` : ''}`}
       onPress={onPress}
+      onLongPress={onLongPress}
       pressedScale={0.94}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
       <View style={styles.card}>

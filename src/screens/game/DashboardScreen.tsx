@@ -26,6 +26,7 @@ import { haptics } from '@/lib/haptics';
 import { teamColor } from '@/lib/teams';
 import {
   cardOfDay,
+  inFinale,
   computeStandings,
   computeTeamStandings,
   gameDay,
@@ -116,6 +117,7 @@ export function DashboardScreen() {
             body: `Ne hai messe ${mineProposed} su ${perPlayer}: scegli le tue prima del via.`,
             primary: { label: 'Apri il mazzo', onPress: openDeck },
             tone: 'dark',
+            mood: 'deck',
           }
         : {
             emoji: '✅',
@@ -131,7 +133,8 @@ export function DashboardScreen() {
             title: 'Rivincita?',
             body: 'Stessa gente, stanza nuova. Il mazzo resta nella tua collezione.',
             primary: { label: 'Crea la rivincita', onPress: () => router.push('/room/start') },
-            secondary: { label: 'Classifica', onPress: () => goTo('leaderboard') },
+            tone: 'dark',
+            mood: 'rematch',
           }
         : toVote > 0
           ? {
@@ -140,16 +143,29 @@ export function DashboardScreen() {
               title: `${toVote} ${toVote === 1 ? 'chiamata da votare' : 'chiamate da votare'}`,
               body: `Bastano ${votesNeeded(game)} sì e il punto è ufficiale.`,
               primary: { label: 'Vota nel Live', onPress: () => goTo('live') },
-              secondary: { label: 'Chiama', onPress: () => openQuickAction() },
+              tone: 'dark',
+              mood: 'vote',
             }
-          : {
-              emoji: '📺',
-              eyebrow: 'Sei in pari',
-              title: 'Hai visto qualcosa?',
-              body: 'Nessun voto in sospeso. Se succede qualcosa, chiamalo.',
-              primary: { label: 'Chiama un punto', onPress: () => openQuickAction() },
-              secondary: { label: 'Live', onPress: () => goTo('live') },
-            };
+          : inFinale(game, now)
+            ? {
+                emoji: '⏳',
+                eyebrow: 'Finale',
+                title: 'Ultime ore di partita',
+                body: hidden
+                  ? 'Classifica nascosta: ogni punto può ribaltare tutto.'
+                  : 'Le ultime chiamate decidono il podio.',
+                primary: { label: 'Chiama un punto', onPress: () => openQuickAction() },
+                tone: 'dark',
+                mood: 'finale',
+              }
+            : {
+                emoji: '📺',
+                eyebrow: 'Sei in pari',
+                title: 'Hai visto qualcosa?',
+                body: 'Nessun voto in sospeso. Se succede qualcosa, chiamalo.',
+                primary: { label: 'Chiama un punto', onPress: () => openQuickAction() },
+                secondary: { label: 'Live', onPress: () => goTo('live') },
+              };
 
   return (
     <PullToRefresh style={styles.screen} contentContainerStyle={styles.content} onRefresh={refresh} pulse={refreshTick}>

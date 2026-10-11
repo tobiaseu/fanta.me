@@ -6,6 +6,7 @@ import { Button } from './Button';
 import { PressableScale } from './PressableScale';
 
 import { Icon } from '@/components/icons/Icon';
+import { AbstractArt, type ArtMood } from './AbstractArt';
 import { colors, layout, radius, space } from '@/theme/tokens';
 
 /**
@@ -32,6 +33,7 @@ export function HeroCard({
   footer,
   onPress,
   tone = 'surface',
+  mood = 'neutral',
 }: {
   emoji: string;
   eyebrow?: ReactNode;
@@ -43,10 +45,13 @@ export function HeroCard({
   footer?: ReactNode;
   onPress?: () => void;
   tone?: 'surface' | 'proposal' | 'dark';
+  /** Card scura: colore della grafica astratta in base al tipo di azione */
+  mood?: ArtMood;
 }) {
   const dark = tone === 'dark';
   const content = (
     <>
+      {dark && <AbstractArt mood={mood} />}
       <View style={styles.heroTop}>
         <View style={[styles.heroArt, dark && styles.heroArtDark]}>
           <AppText style={styles.heroEmoji}>{emoji}</AppText>
@@ -205,7 +210,7 @@ const styles = StyleSheet.create({
   regular: { fontWeight: '400' },
   surface: { backgroundColor: colors.surface },
   proposal: { backgroundColor: colors.proposal },
-  dark: { backgroundColor: '#111114' },
+  dark: { backgroundColor: '#0E0E11', overflow: 'hidden' },
   heroArtDark: { backgroundColor: 'rgba(255,255,255,0.1)' },
   hero: {
     backgroundColor: colors.surface,

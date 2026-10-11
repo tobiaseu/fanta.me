@@ -60,7 +60,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           : toVote > 0
             ? `${toVote} ${toVote === 1 ? 'chiamata aspetta' : 'chiamate aspettano'} il tuo voto`
             : `${day.label} ${day.index} di ${day.total}, sei ${rank}°`;
-    return { line, people: players.filter((p) => last.playerIds.includes(p.id)) };
+    return { line, toVote, people: players.filter((p) => last.playerIds.includes(p.id)) };
   };
 
   const resume = last && infoOf(last);
@@ -104,7 +104,9 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
             body={resume.line}
             footer={<AvatarStack players={resume.people} size={32} max={6} />}
             onPress={() => openGame(last)}
-            primary={{ label: 'Rientra', onPress: () => openGame(last) }}
+            primary={{ label: resume.toVote ? 'Vota adesso' : 'Rientra', onPress: () => openGame(last) }}
+            tone={resume.toVote ? 'dark' : 'surface'}
+            mood="vote"
           />
         ) : null}
 

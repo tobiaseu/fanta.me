@@ -1,6 +1,8 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { PlayerCard } from '@/components/cards/PlayerCard';
+import { PlayerSheet } from '@/components/cards/PlayerSheet';
+import { useState } from 'react';
 import { EmptySlot } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyNote } from '@/components/ui/EmptyNote';
@@ -27,6 +29,7 @@ export function TeamsBuilder({ game }: { game: Game }) {
   const showToast = useUiStore((s) => s.showToast);
   const openPlayer = useOpenPlayer();
   const pregame = game.status === 'waiting';
+  const [open, setOpen] = useState<Player>();
   const size = teamSize(game);
   const byId = (id: string) => players.find((p) => p.id === id);
   const points = new Map(computeStandings(game, events, players).map((r) => [r.player.id, r.points]));
@@ -68,8 +71,43 @@ export function TeamsBuilder({ game }: { game: Game }) {
     });
   };
 
+  // Tocco = apri la carta (si vede cosa si può fare); pressione lunga = azione rapida
+  const sheetOf = (p: Player) => {
+    const team = game.teams!.find((t) => t.memberIds.includes(p.id));
+    if (p.id === ME.id) return { state: { text: `Sei tu · ${team?.name ?? 'senza squadra'}` } };
+    if (!pregame) return { state: { text: team ? `In ${team.name} · ${points.get(p.id) ?? 0} punti` : '' } };
+    if (team && team.id === mine?.id)
+      return {
+        state: { text: `Nella tua squadra · ${mine.memberIds.length} di ${size}`, tone: 'ok' as const },
+        secondary: { label: 'Lascialo libero', onPress: () => toggle(p) },
+      };
+    if (team) return { state: { text: `Già in ${team.name}`, tone: 'locked' as const } };
+    if (mine && mine.memberIds.length >= size)
+      return {
+        state: { text: `La tua squadra è piena (${size} di ${size}): lascia un compagno`, tone: 'locked' as const },
+      };
+    return {
+      state: {
+        text: `Libero · ti manca${size - (mine?.memberIds.length ?? 0) > 1 ? 'no' : ''} ${size - (mine?.memberIds.length ?? 0)} in squadra`,
+      },
+      primary: { label: `Prendi in ${mine?.name ?? 'squadra'}`, onPress: () => toggle(p) },
+    };
+  };
+  const quick = (p: Player) =>
+    pregame && p.id !== ME.id && !game.teams!.some((t) => t.id !== mine?.id && t.memberIds.includes(p.id))
+      ? () => toggle(p)
+      : undefined;
+
   return (
     <>
+      <PlayerSheet
+        player={open}
+        name={open ? (open.id === ME.id ? 'Tu' : nameIn(game, open)) : ''}
+        handle={open?.handle}
+        {...(open ? sheetOf(open) : {})}
+        onProfile={open ? () => openPlayer(open.id) : undefined}
+        onClose={() => setOpen(undefined)}
+      />
       <View style={styles.section}>
         <SectionHeader
           title="Squadre"
@@ -110,7 +148,7 @@ export function TeamsBuilder({ game }: { game: Game }) {
                         name={id === ME.id ? 'Tu' : nameIn(game, p)}
                         points={pregame ? undefined : (points.get(id) ?? 0)}
                         style={styles.mini}
-                        onPress={() => openPlayer(id)}
+                        onPress={() => setOpen(p)}
                       />
                     ) : null;
                   })}
@@ -129,7 +167,7 @@ export function TeamsBuilder({ game }: { game: Game }) {
         <View style={styles.section}>
           <SectionHeader
             title={`La tua squadra: ${mine.name}`}
-            caption={`${mine.memberIds.length} di ${size}. Tocca un compagno per lasciarlo.`}
+            caption={`${mine.memberIds.length} di ${size}. Tocca per aprire, tieni premuto per lasciarlo.`}
           />
           <View style={styles.slots}>
             {mine.memberIds.map((id) => {
@@ -139,8 +177,8 @@ export function TeamsBuilder({ game }: { game: Game }) {
                   key={id}
                   player={p}
                   name={id === ME.id ? 'Tu' : nameIn(game, p)}
-                  note={id === ME.id ? undefined : 'Lascia'}
-                  onPress={() => (id === ME.id ? openPlayer(id) : toggle(p))}
+                  onPress={() => setOpen(p)}
+                  onLongPress={quick(p)}
                 />
               ) : null;
             })}
@@ -157,11 +195,17 @@ export function TeamsBuilder({ game }: { game: Game }) {
 
       {pregame && (
         <View style={styles.section}>
-          <SectionHeader title="Giocatori liberi" caption="Tocca una carta per prenderlo in squadra." />
+          <SectionHeader title="Giocatori liberi" caption="Tocca per aprire, tieni premuto per prenderlo al volo." />
           {free.length ? (
             <View style={styles.grid}>
               {free.map((p) => (
-                <PlayerCard key={p.id} player={p} name={nameIn(game, p)} onPress={() => toggle(p)} />
+                <PlayerCard
+                  key={p.id}
+                  player={p}
+                  name={nameIn(game, p)}
+                  onPress={() => setOpen(p)}
+                  onLongPress={quick(p)}
+                />
               ))}
             </View>
           ) : (

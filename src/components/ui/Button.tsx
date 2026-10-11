@@ -39,7 +39,13 @@ export function Button({ label, onPress, variant = 'primary', disabled, style, i
         haptics.press();
         onPress();
       }}
-      style={[styles.base, styles[variant], disabled && styles.disabled, style]}>
+      style={[
+        styles.base,
+        styles[variant],
+        onDark && variant === 'secondary' && styles.secondaryDark,
+        disabled && styles.disabled,
+        style,
+      ]}>
       {icon && <Icon name={icon} size={20} color={tint} />}
       <AppText variant="headline" color={tint}>
         {label}
@@ -60,6 +66,7 @@ const styles = StyleSheet.create({
   },
   primary: { backgroundColor: colors.cta },
   secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.line },
+  secondaryDark: { borderColor: 'rgba(255, 255, 255, 0.45)' },
   tertiary: { backgroundColor: 'transparent', height: 44 },
   disabled: { backgroundColor: colors.surfaceMuted, borderColor: colors.surfaceMuted },
 });

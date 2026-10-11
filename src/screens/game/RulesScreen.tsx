@@ -121,46 +121,52 @@ export function RulesScreen() {
     });
   };
 
-  // Cosa dice e cosa permette la carta aperta, in base alla fase
-  const sheet = (() => {
+  // Scheda carta: una riga di stato (dove sta, perché non si può) + al massimo un giallo e un'alternativa
+  const sheet = ((): Omit<React.ComponentProps<typeof CardSheet>, 'rule' | 'onClose'> => {
     if (!selected) return {};
     const inDeck = game.ruleIds.includes(selected.id);
     const proposal = proposals.find((p) => p.ruleId === selected.id);
-    const myCard = pregame && proposal?.authorId === ME.id;
-    if (myCard)
+    if (pregame && proposal?.authorId === ME.id)
       return {
-        status: 'È una delle tue carte nel mazzo',
-        action: { label: 'Togli dal mazzo', variant: 'secondary' as const, onPress: () => drop(selected) },
+        state: { text: `Nel mazzo · una delle tue ${perPlayer} carte`, tone: 'ok' },
+        secondary: { label: 'Togli dal mazzo', onPress: () => drop(selected) },
       };
     if (inDeck && game.status === 'live')
       return {
-        status: 'Nel mazzo della partita',
-        action: { label: 'Chiama questa carta', onPress: () => openQuickAction(selected.id) },
+        state: { text: 'Nel mazzo della partita', tone: 'ok' },
+        primary: { label: 'Chiama questa carta', icon: 'plus', onPress: () => openQuickAction(selected.id) },
       };
-    if (inDeck) return { status: proposal ? 'Nel mazzo, portata da un amico' : 'Nel mazzo della partita' };
+    if (inDeck)
+      return {
+        state: { text: proposal ? 'Nel mazzo · portata da un amico' : 'Nel mazzo · carta base del gioco', tone: 'ok' },
+      };
     if (!pregame)
-      return { status: game.status === 'live' ? 'Il mazzo è chiuso: la partita è già iniziata.' : 'Partita conclusa.' };
+      return {
+        state: {
+          text: game.status === 'live' ? 'Fuori dal mazzo: la partita è iniziata' : 'Partita conclusa',
+          tone: 'locked',
+        },
+      };
     if (proposal) {
       const liked = proposal.likes.includes(ME.id);
+      const like = () => {
+        haptics.tap();
+        toggleLike(proposal.id);
+      };
       return {
-        status: `${proposal.likes.length} su ${needed} la vogliono nel mazzo`,
-        action: {
-          label: liked ? 'Togli il mi piace' : 'La voglio nel mazzo',
-          variant: liked ? ('secondary' as const) : ('primary' as const),
-          onPress: () => {
-            haptics.tap();
-            toggleLike(proposal.id);
-          },
-        },
+        state: { text: `Proposta: ${proposal.likes.length} su ${needed} la vogliono` },
+        ...(liked
+          ? { secondary: { label: 'Non la voglio più', onPress: like } }
+          : { primary: { label: 'La voglio nel mazzo', onPress: like } }),
       };
     }
     const full = myCards.length >= perPlayer;
-    return {
-      status: full
-        ? `Hai già ${perPlayer} carte nel mazzo: togline una per fare posto`
-        : `Ti restano ${perPlayer - myCards.length} caselle su ${perPlayer}`,
-      action: { label: full ? 'Caselle piene' : 'Metti nel mazzo', disabled: full, onPress: () => pick(selected) },
-    };
+    return full
+      ? { state: { text: `Le tue ${perPlayer} caselle sono piene: togline una per fare posto`, tone: 'locked' } }
+      : {
+          state: { text: `Ti restano ${perPlayer - myCards.length} caselle su ${perPlayer}` },
+          primary: { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(selected) },
+        };
   })();
 
   return (
@@ -444,8 +450,7 @@ export function RulesScreen() {
       <CardSheet
         rule={selected}
         author={players.find((p) => p.id === selected?.authorId)}
-        status={sheet.status}
-        action={sheet.action}
+        {...sheet}
         onClose={() => setSelected(undefined)}
       />
       <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />

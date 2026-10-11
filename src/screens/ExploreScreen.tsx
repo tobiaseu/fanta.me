@@ -35,6 +35,7 @@ export function ExploreScreen() {
   const [selected, setSelected] = useState<Rule>();
   const liked = useGameStore((s) => s.likedCommunity);
   const saved = useGameStore((s) => s.savedRuleIds);
+  const toggleSaved = useGameStore((s) => s.toggleSaved);
   const toggleLike = useGameStore((s) => s.toggleCommunityLike);
   const customRules = useGameStore((s) => s.customRules);
   const published = useGameStore((s) => s.publishedRuleIds);
@@ -192,33 +193,50 @@ export function ExploreScreen() {
 
       <CardSheet
         rule={selected}
-        status={
-          community
-            ? `di @${community.author.handle} · giocata in ${fmt(community.plays)} stanze`
-            : isMine
-              ? published.includes(selected!.id)
-                ? 'Pubblicata nella community'
-                : 'Visibile solo a te e alle tue stanze'
-              : undefined
-        }
-        action={
-          community
-            ? {
+        {...(community
+          ? {
+              state: saved.includes(community.rule.id)
+                ? { text: `Nella tua collezione · di @${community.author.handle}`, tone: 'ok' as const }
+                : { text: `di @${community.author.handle} · giocata in ${fmt(community.plays)} stanze` },
+              primary: saved.includes(community.rule.id)
+                ? undefined
+                : {
+                    label: 'Salva nella collezione',
+                    icon: 'plus' as const,
+                    onPress: () => {
+                      toggleSaved(community.rule.id);
+                      showToast({ text: `${community.rule.label} è nella tua collezione` });
+                    },
+                  },
+              secondary: {
                 label: liked.includes(community.rule.id) ? 'Ti piace' : 'Mi piace',
-                variant: liked.includes(community.rule.id) ? 'secondary' : 'primary',
+                icon: liked.includes(community.rule.id) ? ('check' as const) : undefined,
                 onPress: () => toggleLike(community.rule.id),
-              }
-            : isMine && selected
+              },
+            }
+          : isMine && selected
+            ? published.includes(selected.id)
               ? {
-                  label: published.includes(selected.id) ? 'Ritira dalla community' : 'Pubblica nella community',
-                  variant: published.includes(selected.id) ? 'secondary' : 'primary',
-                  onPress: () => {
-                    const on = togglePublish(selected.id);
-                    showToast({ text: on ? `${selected.label} è nella community` : 'Carta ritirata' });
+                  state: { text: 'Pubblicata nella community', tone: 'ok' as const },
+                  secondary: {
+                    label: 'Ritira dalla community',
+                    onPress: () => {
+                      togglePublish(selected.id);
+                      showToast({ text: 'Carta ritirata' });
+                    },
                   },
                 }
-              : undefined
-        }
+              : {
+                  state: { text: 'Visibile solo a te e alle tue stanze' },
+                  primary: {
+                    label: 'Pubblica nella community',
+                    onPress: () => {
+                      togglePublish(selected.id);
+                      showToast({ text: `${selected.label} è nella community` });
+                    },
+                  },
+                }
+            : {})}
         onClose={() => setSelected(undefined)}
       />
     </View>
