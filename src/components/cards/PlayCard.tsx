@@ -7,7 +7,7 @@ import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { RULE_CATEGORIES } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, isDark, radius, space } from '@/theme/tokens';
 import type { Rule } from '@/types/game';
 
 const EMOJI_FONT = Platform.select({
@@ -36,41 +36,74 @@ export const TIER_LABEL: Record<Tier, string> = { normal: 'Normale', rare: 'Rara
  * Il colore dice solo la rarità:
  * normale = bianco con un bagliore giallo Fanta.me, rara = arancio pieno, epica = notte con aura viola e oro.
  */
-const PAINT: Record<
-  Tier,
-  { top: string; bottom: string; glow: string; glowOpacity: number; ring: string; ink: string; soft: string }
-> = {
-  normal: {
-    top: '#FFFFFF',
-    bottom: '#ECECF1',
-    glow: colors.cta,
-    glowOpacity: 0.85,
-    ring: '#000000',
-    ink: colors.ink,
-    soft: colors.inkSoft,
-  },
-  rare: {
-    top: '#FFB45C',
-    bottom: '#F0662E',
-    glow: '#FFFFFF',
-    glowOpacity: 0.45,
-    ring: '#FFFFFF',
-    ink: '#FFFFFF',
-    soft: 'rgba(255,255,255,0.85)',
-  },
-  epic: {
-    top: '#2A1F4E',
-    bottom: '#0E0E11',
-    glow: '#B48CFF',
-    glowOpacity: 0.7,
-    ring: '#FFD27A',
-    ink: '#FFFFFF',
-    soft: 'rgba(255,255,255,0.75)',
-  },
+type Paint = {
+  top: string;
+  bottom: string;
+  glow: string;
+  glowOpacity: number;
+  ring: string;
+  ink: string;
+  soft: string;
+  /** Testo chiaro sopra (fondo scuro o pieno) */
+  inverse: boolean;
 };
 
-export function cardPaint(rule: Rule) {
-  return PAINT[tierOf(rule)];
+const WHITE_INK = { ink: '#FFFFFF', soft: 'rgba(255,255,255,0.8)', inverse: true };
+
+/**
+ * Normale: verde tenue se è un bonus, rosso tenue se è un malus, con il bagliore giallo Fanta.me.
+ * In tema scuro gli stessi toni diventano notturni. Rara e epica sono uguali nei due temi.
+ */
+const NORMAL: Record<'bonus' | 'malus', Paint> = isDark
+  ? {
+      bonus: { top: '#16301F', bottom: '#0D1A12', glow: colors.cta, glowOpacity: 0.32, ring: '#FFFFFF', ...WHITE_INK },
+      malus: { top: '#33191A', bottom: '#1C0E0F', glow: colors.cta, glowOpacity: 0.32, ring: '#FFFFFF', ...WHITE_INK },
+    }
+  : {
+      bonus: {
+        top: '#F2FBEF',
+        bottom: '#D9F2D2',
+        glow: colors.cta,
+        glowOpacity: 0.8,
+        ring: '#0B8200',
+        ink: '#0F1A10',
+        soft: 'rgba(15,26,16,0.6)',
+        inverse: false,
+      },
+      malus: {
+        top: '#FFF3F2',
+        bottom: '#FBDCD9',
+        glow: colors.cta,
+        glowOpacity: 0.8,
+        ring: '#D92D20',
+        ink: '#1F0F0E',
+        soft: 'rgba(31,15,14,0.6)',
+        inverse: false,
+      },
+    };
+
+const RARE: Paint = {
+  top: '#FFB45C',
+  bottom: '#F0662E',
+  glow: '#FFFFFF',
+  glowOpacity: 0.45,
+  ring: '#FFFFFF',
+  ...WHITE_INK,
+};
+const EPIC: Paint = {
+  top: '#2A1F4E',
+  bottom: '#0E0E11',
+  glow: '#B48CFF',
+  glowOpacity: 0.7,
+  ring: '#FFD27A',
+  ...WHITE_INK,
+};
+
+export function cardPaint(rule: Rule): Paint {
+  const tier = tierOf(rule);
+  if (tier === 'epic') return EPIC;
+  if (tier === 'rare') return RARE;
+  return NORMAL[rule.points > 0 ? 'bonus' : 'malus'];
 }
 
 const DAY = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -95,6 +128,16 @@ export function cardSignature(rule: Rule, authorName?: string) {
   return when ? `${who} · ${when}` : who;
 }
 
+/** Pulviscolo di luce, sempre negli stessi punti: dà atmosfera senza aggiungere informazioni. */
+const STARS: [number, number, number][] = [
+  [18, 22, 0.6],
+  [82, 30, 0.45],
+  [74, 78, 0.7],
+  [24, 70, 0.4],
+  [60, 14, 0.35],
+  [88, 60, 0.3],
+];
+
 /** Fondo della carta: gradiente della rarità, bagliore dietro l'immagine e due anelli sottili. */
 export function CardArt({ rule, id }: { rule: Rule; id: string }) {
   const p = cardPaint(rule);
@@ -114,6 +157,16 @@ export function CardArt({ rule, id }: { rule: Rule; id: string }) {
       <Circle cx="50" cy="50" r="40" fill={`url(#h-${id})`} />
       <Circle cx="50" cy="50" r="28" stroke={p.ring} strokeOpacity="0.12" strokeWidth="0.4" fill="none" />
       <Circle cx="50" cy="50" r="42" stroke={p.ring} strokeOpacity="0.08" strokeWidth="0.4" fill="none" />
+      {STARS.map(([x, y, r], i) => (
+        <Circle
+          key={i}
+          cx={x}
+          cy={y}
+          r={r}
+          fill={p.inverse ? '#FFFFFF' : p.ring}
+          fillOpacity={p.inverse ? 0.5 : 0.18}
+        />
+      ))}
     </Svg>
   );
 }
@@ -175,7 +228,7 @@ interface Props {
 export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLongPress, style }: Props) {
   const ref = useRef<View>(null);
   const p = cardPaint(rule);
-  const dark = tierOf(rule) !== 'normal';
+  const dark = p.inverse;
   const open = () => {
     const node = ref.current;
     if (!node?.measureInWindow) return onOpen();
@@ -223,13 +276,10 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
                   name={cta.icon}
                   size={13}
                   strokeWidth={2.6}
-                  color={cta.done ? (dark ? '#FFFFFF' : colors.ink) : dark ? colors.ink : '#FFFFFF'}
+                  color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'}
                 />
               )}
-              <AppText
-                variant="micro"
-                color={cta.done ? (dark ? '#FFFFFF' : colors.ink) : dark ? colors.ink : '#FFFFFF'}
-                style={styles.ctaText}>
+              <AppText variant="micro" color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'} style={styles.ctaText}>
                 {cta.label}
               </AppText>
             </PressableScale>
@@ -254,7 +304,7 @@ const styles = StyleSheet.create({
   wrap: { width: '47.5%' },
   dimmed: { opacity: 0.4 },
   card: { width: '100%', aspectRatio: PLAY_RATIO, borderRadius: radius.lg, overflow: 'hidden', padding: space.sm },
-  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.14)' },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   points: { alignSelf: 'flex-start', height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: 'center' },
   pointsLarge: { height: 30, paddingHorizontal: space.sm, borderRadius: 15 },
@@ -285,7 +335,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: space.xs,
   },
-  ctaOnLight: { backgroundColor: colors.ink },
+  ctaOnLight: { backgroundColor: '#0B0B0D' },
   ctaOnDark: { backgroundColor: '#FFFFFF' },
   ctaDone: { backgroundColor: 'rgba(127,127,127,0.18)' },
   ctaText: { fontSize: 12, lineHeight: 14, fontWeight: '700' },

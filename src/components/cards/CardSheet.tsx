@@ -112,7 +112,7 @@ export function CardSheet({ rule, author, state, primary, secondary, from, onClo
 
 function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 'rule'> & { rule: Rule }) {
   const p = cardPaint(rule);
-  const dark = tierOf(rule) !== 'normal';
+  const dark = p.inverse;
   const saved = useGameStore((s) => s.savedRuleIds.includes(rule.id));
   const toggleSaved = useGameStore((s) => s.toggleSaved);
   const showToast = useUiStore((s) => s.showToast);
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10, 10, 12, 0.86)' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', padding: space.md },
   card: { flex: 1, borderRadius: 28, overflow: 'hidden', padding: space.md, gap: space.xs },
-  cardLight: { backgroundColor: '#FFFFFF' },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
   corner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   close: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   art: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center' },

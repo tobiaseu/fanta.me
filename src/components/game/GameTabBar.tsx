@@ -11,7 +11,7 @@ import { ME } from '@/data/mock';
 import { haptics } from '@/lib/haptics';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useUiStore } from '@/store/useUiStore';
-import { colors, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
+import { colors, MAX_APP_WIDTH, radius, shadow, space, isDark } from '@/theme/tokens';
 
 const TABS: Record<string, { label: string; icon?: IconName }> = {
   index: { label: 'Dashboard', icon: 'home' },
@@ -144,8 +144,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.xs,
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: Platform.OS === 'web' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.94)',
+    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.9)',
+    backgroundColor: isDark
+      ? 'rgba(28,28,31,0.82)'
+      : Platform.OS === 'web'
+        ? 'rgba(255,255,255,0.7)'
+        : 'rgba(255,255,255,0.94)',
     ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(18px)' } as object) : {}),
     ...shadow.floating,
   },

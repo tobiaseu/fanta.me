@@ -1,3 +1,5 @@
+import { PowersPanel } from '@/components/game/PowersPanel';
+import { ME } from '@/data/mock';
 import { Fragment, useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
@@ -69,7 +71,9 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
   return (
     <>
       <View style={styles.section}>
-        <AppText variant="headline">{hideCards ? 'Fantapoteri' : `Formazione · ${game.name}`}</AppText>
+        {!(hideCards && player.id === ME.id) && (
+          <AppText variant="headline">{hideCards ? 'Fantapoteri' : `Formazione · ${game.name}`}</AppText>
+        )}
         {hideCards ? null : cards.length ? (
           <View style={styles.grid}>
             {cards.map(({ rule, shade }) => (
@@ -86,7 +90,8 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
             Nessuna carta messa nel mazzo.
           </AppText>
         )}
-        {game.settings?.powers !== false && powers && (
+        {game.settings?.powers !== false && player.id === ME.id && <PowersPanel game={game} now={now} />}
+        {game.settings?.powers !== false && powers && player.id !== ME.id && (
           <View style={styles.powers}>
             {(['main', 'secondary'] as const).map((slot) => {
               const power = powerById(powers[slot]);

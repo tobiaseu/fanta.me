@@ -9,7 +9,8 @@ import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
 import { useSessionStore, type Visibility } from '@/store/useSessionStore';
 import { useUiStore } from '@/store/useUiStore';
-import { colors, radius, space } from '@/theme/tokens';
+import { Segmented } from '@/components/ui/Segmented';
+import { colors, radius, readThemePref, setThemePref, space, type ThemePref } from '@/theme/tokens';
 
 const VISIBILITY: { id: Visibility; label: string; note: string }[] = [
   { id: 'private', label: 'Solo tu', note: 'Nessuno vede trofei, scudi e carte' },
@@ -34,6 +35,21 @@ export function SettingsPanel() {
 
   return (
     <View style={styles.wrap}>
+      <View style={styles.group}>
+        <AppText variant="headline">Aspetto</AppText>
+        <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+          Sistema segue il tuo telefono.
+        </AppText>
+        <Segmented
+          value={readThemePref()}
+          options={[
+            { id: 'system', label: 'Sistema' },
+            { id: 'light', label: 'Chiaro' },
+            { id: 'dark', label: 'Scuro' },
+          ]}
+          onChange={(v) => setThemePref(v as ThemePref)}
+        />
+      </View>
       <View style={styles.group}>
         <AppText variant="headline">Notifiche</AppText>
         <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>

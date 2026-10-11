@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -10,7 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { formatHoursLeft } from '@/lib/time';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
-import { colors, layout, radius, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 import type { Game } from '@/types/game';
 
 /** I miei due fantapoteri nella partita: attivabili una volta, con il tempo che resta. */
@@ -48,33 +49,52 @@ export function PowersPanel({ game, now }: { game: Game; now: number }) {
                 ? 'Tocca per attivare'
                 : 'Pronto';
           const canUse = live && !used && !locked;
+          const activeNow = !!used && left > 60_000;
           return (
-            <PressableScale
-              key={slot}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canUse }}
-              accessibilityLabel={`${p.label}: ${p.description} ${state}`}
-              disabled={!canUse}
-              onPress={() => {
-                haptics.bonus();
-                if (activatePower(game.id, slot))
-                  showToast({ text: `${p.emoji} ${p.label} attivato. ${p.description}` });
-              }}
-              style={[
-                styles.tile,
-                slot === 'main' && styles.main,
-                used && left > 60_000 && styles.active,
-                (locked || (used && left <= 60_000)) && styles.spent,
-              ]}>
-              <AppText variant="micro" color={colors.inkSoft}>
-                {slot === 'main' ? 'Principale' : 'Secondario'}
+            <View key={slot} style={[styles.card, (locked || (used && !activeNow)) && styles.spent]}>
+              <PowerArt id={`pw-${slot}`} active={activeNow} />
+              <View style={styles.tagRow}>
+                <View style={[styles.tag, slot === 'main' && styles.tagMain]}>
+                  <AppText variant="micro" color={slot === 'main' ? '#0B0B0D' : '#FFFFFF'} style={styles.bold}>
+                    {slot === 'main' ? 'Principale' : 'Secondario'}
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.art}>
+                <AppText style={styles.emoji}>{p.emoji}</AppText>
+              </View>
+              <AppText variant="headline" color="#FFFFFF" style={styles.title} numberOfLines={1}>
+                {p.label}
               </AppText>
-              <AppText style={styles.emoji}>{p.emoji}</AppText>
-              <AppText variant="name">{p.label}</AppText>
-              <AppText variant="caption" color={used && left > 60_000 ? colors.live : colors.inkSoft}>
-                {state}
+              <AppText variant="micro" color="rgba(255,255,255,0.75)" numberOfLines={2} style={styles.regular}>
+                {p.description}
               </AppText>
-            </PressableScale>
+              {canUse ? (
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={`Attiva ${p.label}`}
+                  onPress={() => {
+                    haptics.bonus();
+                    if (activatePower(game.id, slot))
+                      showToast({ text: `${p.emoji} ${p.label} attivato. ${p.description}` });
+                  }}
+                  style={[styles.cta, slot === 'main' ? styles.ctaOn : styles.ctaAlt]}>
+                  <AppText variant="micro" color="#0B0B0D" style={styles.bold}>
+                    Attiva
+                  </AppText>
+                </PressableScale>
+              ) : (
+                <View style={styles.cta}>
+                  <AppText
+                    variant="micro"
+                    color={activeNow ? '#7CE38B' : 'rgba(255,255,255,0.8)'}
+                    style={styles.bold}
+                    numberOfLines={1}>
+                    {state}
+                  </AppText>
+                </View>
+              )}
+            </View>
           );
         })}
       </View>
@@ -82,20 +102,56 @@ export function PowersPanel({ game, now }: { game: Game; now: number }) {
   );
 }
 
+/** Fondo dei fantapoteri: notte con il bagliore giallo Fanta.me, verde quando il potere è attivo. */
+function PowerArt({ id, active }: { id: string; active?: boolean }) {
+  const glow = active ? '#34C759' : colors.cta;
+  return (
+    <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 140" preserveAspectRatio="none">
+      <Defs>
+        <LinearGradient id={`pg-${id}`} x1="0" y1="0" x2="0.3" y2="1">
+          <Stop offset="0" stopColor="#1E1E24" />
+          <Stop offset="1" stopColor="#0B0B0D" />
+        </LinearGradient>
+        <RadialGradient id={`ph-${id}`} cx="50" cy="52" r="40" gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor={glow} stopOpacity={0.45} />
+          <Stop offset="1" stopColor={glow} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Rect x="0" y="0" width="100" height="140" fill={`url(#pg-${id})`} />
+      <Circle cx="50" cy="52" r="40" fill={`url(#ph-${id})`} />
+      <Circle cx="50" cy="52" r="28" stroke="#FFFFFF" strokeOpacity="0.1" strokeWidth="0.4" fill="none" />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   section: { gap: space.sm },
   row: { flexDirection: 'row', gap: space.sm },
-  tile: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: layout.card,
-    gap: 2,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  main: { borderColor: colors.cta },
-  active: { borderColor: colors.live, backgroundColor: 'rgba(11, 130, 0, 0.06)' },
+  card: { flex: 1, aspectRatio: 63 / 88, borderRadius: radius.lg, overflow: 'hidden', padding: space.sm, gap: 2 },
   spent: { opacity: 0.5 },
-  emoji: { fontSize: 32, lineHeight: 40, marginVertical: space.xxs },
+  tagRow: { flexDirection: 'row' },
+  tag: {
+    height: 22,
+    paddingHorizontal: 8,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+  },
+  tagMain: { backgroundColor: colors.cta },
+  art: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emoji: { fontSize: 52, lineHeight: 62 },
+  title: { fontSize: 16, lineHeight: 19, fontWeight: '700' },
+  cta: {
+    marginTop: space.xs,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: space.xs,
+  },
+  ctaOn: { backgroundColor: colors.cta },
+  ctaAlt: { backgroundColor: '#FFFFFF' },
+  bold: { fontWeight: '700' },
+  regular: { fontWeight: '400', fontSize: 11, lineHeight: 14 },
 });

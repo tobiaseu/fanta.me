@@ -1,5 +1,4 @@
 import { DeckExplorer } from '@/components/cards/DeckExplorer';
-import { DeckPile } from '@/components/cards/DeckPile';
 import Animated, { FadeIn, FadeOut, LinearTransition, ZoomIn } from 'react-native-reanimated';
 import { useLiveDeck } from '@/hooks/useLiveDeck';
 import { useRouter } from 'expo-router';
@@ -277,7 +276,26 @@ export function RulesScreen() {
               </Animated.View>
             ) : (
               <Animated.View key="pile" entering={ZoomIn.springify().damping(18)} exiting={FadeOut.duration(120)}>
-                <DeckPile deck={deck} height={96} onOpen={() => setShowAll(true)} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.bleed}
+                  contentContainerStyle={styles.carousel}>
+                  {deck.map((r) => (
+                    <PlayCard
+                      key={r.id}
+                      rule={r}
+                      style={styles.carouselCard}
+                      authorName={players.find((p) => p.id === r.authorId)?.name}
+                      cta={
+                        game.status === 'live'
+                          ? { label: 'Chiama', icon: 'plus', onPress: () => openQuickAction(r.id) }
+                          : undefined
+                      }
+                      onOpen={openCard(r)}
+                    />
+                  ))}
+                </ScrollView>
               </Animated.View>
             )}
           </View>
@@ -515,6 +533,9 @@ export function RulesScreen() {
 const styles = StyleSheet.create({
   playersTab: { gap: 40 },
   cell: { width: '47.5%' },
+  bleed: { marginHorizontal: -layout.gutter },
+  carousel: { paddingHorizontal: layout.gutter, gap: space.sm },
+  carouselCard: { width: 168 },
   halfSlot: { width: '47.5%' },
   slot: { width: '22%' },
   full: { width: '100%' },

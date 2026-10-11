@@ -11,7 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PlayerMenu } from '@/components/ui/PlayerMenu';
 import { ToastHost } from '@/components/ui/ToastHost';
 import { setupWebApp } from '@/lib/webNotifications';
-import { colors, MAX_APP_WIDTH } from '@/theme/tokens';
+import { colors, MAX_APP_WIDTH, isDark } from '@/theme/tokens';
 
 setupWebApp();
 
@@ -42,7 +42,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <View style={styles.frame}>
           <Stack
             screenOptions={{
@@ -82,7 +82,7 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Platform.OS === 'web' ? '#E4E4EC' : colors.background },
+  root: { flex: 1, backgroundColor: Platform.OS === 'web' ? (isDark ? '#000000' : '#E4E4EC') : colors.background },
   // Sul web l'app vive in una colonna "telefono" centrata, così il portfolio la mostra come un'app.
   frame: {
     flex: 1,

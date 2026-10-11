@@ -2,14 +2,15 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
+import { CardGlow } from '@/components/ui/ActionRow';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { colors, radius, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
 
 /** Fondo delle carte giocatore: azzurro tenue, per distinguerle a colpo d'occhio dalle carte del mazzo. */
-export const PLAYER_CARD_TINT = '#EAF2FF';
-export const PLAYER_CARD_EDGE = '#2F7BEA';
+export const PLAYER_CARD_TINT = colors.surface;
+export const PLAYER_CARD_EDGE = colors.ink;
 
 /**
  * Carta giocatore: stessa forma delle carte del mazzo, ma azzurra.
@@ -45,13 +46,14 @@ export function PlayerCard({
       pressedScale={0.94}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
       <View style={styles.card}>
+        <CardGlow id={`pc-${player.id}`} cy={56} />
         <Avatar player={player} size={46} sticker={false} />
-        <AppText variant="serifCard" numberOfLines={1} style={styles.name}>
+        <AppText variant="micro" numberOfLines={1} style={styles.name}>
           {name}
         </AppText>
         {points !== undefined && (
           <View style={styles.gem}>
-            <AppText variant="micro" color={PLAYER_CARD_EDGE} style={styles.gemText}>
+            <AppText variant="micro" color={colors.inkInverse} style={styles.gemText}>
               {points} pt
             </AppText>
           </View>
@@ -76,17 +78,18 @@ const styles = StyleSheet.create({
   dimmed: { opacity: 0.38 },
   card: {
     width: '100%',
-    aspectRatio: 0.78,
+    aspectRatio: 63 / 88,
     borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: PLAYER_CARD_EDGE,
-    backgroundColor: PLAYER_CARD_TINT,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.xs,
     paddingHorizontal: 4,
   },
-  name: { fontSize: 13, lineHeight: 15, textAlign: 'center' },
+  name: { fontSize: 13, lineHeight: 16, fontWeight: '700', textAlign: 'center' },
   gem: {
     position: 'absolute',
     top: 3,
@@ -94,9 +97,7 @@ const styles = StyleSheet.create({
     height: 20,
     paddingHorizontal: 5,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: PLAYER_CARD_EDGE,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.ink,
     justifyContent: 'center',
   },
   gemText: { fontSize: 11, lineHeight: 13, fontWeight: '700' },

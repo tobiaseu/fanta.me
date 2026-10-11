@@ -6,7 +6,7 @@
  * (gap dell'Auto Layout), raggi e tipografia. I componenti non usano mai valori
  * "magici", così il passaggio Figma → codice resta 1:1.
  */
-import { Platform } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 
 export const colors = {
   // Superfici
@@ -131,3 +131,64 @@ export const shadow = {
 
 /** Larghezza massima del "telefono" quando l'app gira sul web. */
 export const MAX_APP_WIDTH = 440;
+
+/* ---------- Tema chiaro / scuro ---------- */
+
+export type ThemePref = 'system' | 'light' | 'dark';
+const THEME_KEY = 'fanta-theme';
+
+/** Scelta salvata: Sistema (segue il telefono), Chiaro o Scuro. */
+export function readThemePref(): ThemePref {
+  try {
+    const v = typeof localStorage !== 'undefined' ? localStorage.getItem(THEME_KEY) : null;
+    return v === 'light' || v === 'dark' ? v : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+/** Cambia tema: i token si leggono all'avvio, quindi l'app si ricarica (sul web in un attimo). */
+export function setThemePref(pref: ThemePref) {
+  try {
+    localStorage.setItem(THEME_KEY, pref);
+  } catch {}
+  if (Platform.OS === 'web' && typeof window !== 'undefined') window.location.reload();
+}
+
+function systemDark() {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.matchMedia)
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return Appearance.getColorScheme() === 'dark';
+}
+
+const pref = readThemePref();
+/** Tema attivo per questa sessione. */
+export const isDark = pref === 'dark' || (pref === 'system' && systemDark());
+
+/**
+ * Palette scura: stessi ruoli, valori invertiti. Il giallo CTA resta giallo con testo nero,
+ * verde e rosso si schiariscono un po' per restare leggibili sul nero.
+ */
+const DARK: Partial<Record<keyof typeof colors, string>> = {
+  background: '#0B0B0D',
+  surface: '#1C1C1F',
+  surfaceMuted: '#2A2A2E',
+  proposal: '#22252F',
+  placeholder: '#3A3A3E',
+  hairline: 'rgba(255, 255, 255, 0.10)',
+  line: '#8E8E93',
+  ink: '#FFFFFF',
+  inkSoft: '#A1A1A6',
+  inkMuted: 'rgba(255, 255, 255, 0.5)',
+  inkFaint: '#6E6E73',
+  inkInverse: '#000000',
+  live: '#34C759',
+  liveInk: '#34C759',
+  liveSoft: 'rgba(52, 199, 89, 0.22)',
+  liveStrip: 'rgba(52, 199, 89, 0.22)',
+  bonus: '#30B94D',
+  malus: '#FF453A',
+  ended: 'rgba(255, 255, 255, 0.10)',
+  ctaSoft: 'rgba(255, 227, 130, 0.16)',
+};
+if (isDark) Object.assign(colors as Record<string, string>, DARK);

@@ -48,7 +48,7 @@ interface Props {
  */
 export function DeckCard({ rule, dimmed, checked, addable, note, onPress, onLongPress, style, bare }: Props) {
   const paint = cardPaint(rule);
-  const light = tierOf(rule) === 'normal';
+  const light = !paint.inverse;
   const bonus = rule.points > 0;
   return (
     <PressableScale
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.14)' },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline },
   emoji: { fontSize: 44, lineHeight: 54, fontFamily: EMOJI_FONT },
   emojiWithName: { marginBottom: space.md },
   // Il nome è attaccato al fondo della carta, come l'etichetta delle carte da collezione

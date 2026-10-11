@@ -29,7 +29,7 @@ interface Props {
  * tertiary = solo testo, stesso colore del secondario.
  */
 export function Button({ label, onPress, variant = 'primary', disabled, style, icon, onDark }: Props) {
-  const tint = disabled ? colors.inkMuted : onDark && variant !== 'primary' ? '#FFFFFF' : colors.ink;
+  const tint = disabled ? colors.inkMuted : variant === 'primary' ? colors.ctaInk : onDark ? '#FFFFFF' : colors.ink;
   return (
     <PressableScale
       accessibilityRole="button"
