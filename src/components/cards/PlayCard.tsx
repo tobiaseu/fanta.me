@@ -131,11 +131,19 @@ export function PointsTag({ points, large }: { points: number; large?: boolean }
   );
 }
 
-export function TierTag({ rule, onDark }: { rule: Rule; onDark?: boolean }) {
+export function TierTag({ rule, onDark, large }: { rule: Rule; onDark?: boolean; large?: boolean }) {
   const tier = tierOf(rule);
   return (
-    <View style={[styles.tag, { backgroundColor: onDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)' }]}>
-      <AppText variant="micro" color={onDark ? '#FFFFFF' : colors.inkSoft} style={styles.tagText}>
+    <View
+      style={[
+        styles.tag,
+        large && styles.tagLarge,
+        { backgroundColor: onDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)' },
+      ]}>
+      <AppText
+        variant="micro"
+        color={onDark ? '#FFFFFF' : colors.inkSoft}
+        style={[styles.tagText, large && styles.tagTextLarge]}>
         {TIER_LABEL[tier]}
         {rule.trophy ? ' · 🏆 Unica' : ''}
       </AppText>
@@ -263,6 +271,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   tagText: { fontSize: 10, lineHeight: 12, fontWeight: '600' },
+  tagLarge: { height: 28, paddingHorizontal: 12, borderRadius: 14 },
+  tagTextLarge: { fontSize: 14, lineHeight: 17, fontWeight: '700' },
   title: { fontSize: 16, lineHeight: 19, fontWeight: '700' },
   subtitle: { fontSize: 11, lineHeight: 13 },
   cta: {

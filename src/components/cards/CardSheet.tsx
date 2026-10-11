@@ -16,18 +16,18 @@ import {
   TIER_LABEL,
   TierTag,
   cardPaint,
-  cardSignature,
   tierOf,
   type CardRect,
 } from '@/components/cards/PlayCard';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { haptics } from '@/lib/haptics';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
-import { space } from '@/theme/tokens';
+import { colors, space } from '@/theme/tokens';
 import type { Player, Rule } from '@/types/game';
 
 const EMOJI_FONT = Platform.select({
@@ -138,7 +138,10 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
     <View style={[styles.card, !dark && styles.cardLight]}>
       <CardArt rule={rule} id={`s-${rule.id}`} />
       <View style={styles.corner}>
-        <PointsTag points={rule.points} large />
+        <View style={styles.tagsRow}>
+          <PointsTag points={rule.points} large />
+          <TierTag rule={rule} onDark={dark} large />
+        </View>
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel="Chiudi"
@@ -153,19 +156,29 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
           {rule.emoji}
         </Text>
       </View>
-      <TierTag rule={rule} onDark={dark} />
-      <View>
+      <View style={styles.titleBlock}>
         <AppText variant="headline" color={p.ink} style={styles.title} numberOfLines={2}>
           {rule.label}
         </AppText>
-        <AppText variant="caption" color={p.soft} style={styles.regular} numberOfLines={1}>
-          {cardSignature(rule, author?.name)}
-        </AppText>
+        <View style={styles.creator}>
+          {author ? (
+            <Avatar player={author} size={20} sticker={false} />
+          ) : (
+            <View style={[styles.mark, { backgroundColor: rule.epic ? '#B48CFF' : colors.cta }]}>
+              <AppText variant="micro" color={colors.ink} style={styles.markText}>
+                {rule.epic ? '★' : 'f'}
+              </AppText>
+            </View>
+          )}
+          <AppText variant="caption" color={p.soft} style={styles.flexText} numberOfLines={1}>
+            {creatorName(rule, author?.name)}
+          </AppText>
+        </View>
       </View>
       <AppText variant="body" color={p.ink} numberOfLines={4} style={styles.desc}>
         {rule.description}
       </AppText>
-      {state?.text ? (
+      {state?.text && !primary && !secondary ? (
         <View style={styles.stateRow}>
           {state.tone === 'locked' && <Icon name="lock" size={12} color={p.soft} />}
           {state.tone === 'ok' && <Icon name="check" size={12} color={p.soft} />}
@@ -208,6 +221,12 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 96, lineHeight: 112, fontFamily: EMOJI_FONT },
   title: { fontSize: 24, lineHeight: 28, fontWeight: '700' },
   desc: { fontSize: 14, lineHeight: 19 },
+  titleBlock: { gap: 4 },
+  tagsRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  creator: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  mark: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  markText: { fontWeight: '800' },
+  flexText: { flexShrink: 1, fontWeight: '500' },
   stateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stateText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: space.xs, marginTop: space.xxs },
@@ -216,3 +235,11 @@ const styles = StyleSheet.create({
   signature: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.xs, marginTop: 2 },
   regular: { fontWeight: '400' },
 });
+
+/** Solo il nome di chi l'ha creata (o vinta): niente ripetizioni. */
+function creatorName(rule: Rule, name?: string) {
+  if (rule.epic) return rule.prize ?? 'Carta vinta';
+  if (rule.authorId === 'community') return 'Community';
+  if (rule.authorId) return name ?? 'Un amico';
+  return 'Fanta.me';
+}
