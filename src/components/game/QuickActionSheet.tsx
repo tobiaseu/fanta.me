@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   flex1: { flex: 1 },
   regular: { fontWeight: '400' },
   taken: { opacity: 0.4 },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.3)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10, 10, 12, 0.86)' },
   anchor: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
   sheet: {
     width: '100%',

@@ -61,6 +61,12 @@ export interface Rule {
    * Le altre sono cumulabili: valgono ogni volta che succede.
    */
   trophy?: boolean;
+  /** Carta epica: vinta (fine partita o premi speciali), non si crea */
+  epic?: boolean;
+  /** Per le epiche: come è stata vinta */
+  prize?: string;
+  /** Data di creazione (ISO), mostrata in fondo alla carta aperta */
+  createdAt?: string;
 }
 
 /**

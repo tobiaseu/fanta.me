@@ -4,6 +4,7 @@ import Animated, { FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from './AppText';
 import { Avatar } from './Avatar';
+import { ActionRow } from './ActionRow';
 import { Button } from './Button';
 
 import { haptics } from '@/lib/haptics';
@@ -57,8 +58,14 @@ export function PlayerMenu() {
             </AppText>
           </View>
         </View>
-        {menu.gameId && <Button label="Guarda formazione" variant="primary" onPress={() => go('formazione')} />}
-        <Button label="Guarda profilo" variant={menu.gameId ? 'secondary' : 'primary'} onPress={() => go()} />
+        {menu.gameId ? (
+          <ActionRow
+            secondary={{ label: 'Profilo', onPress: () => go() }}
+            primary={{ label: 'Formazione', onPress: () => go('formazione') }}
+          />
+        ) : (
+          <Button label="Guarda profilo" onPress={() => go()} />
+        )}
         {status === 'none' && (
           <Button
             label="Chiedi l'amicizia"
@@ -91,7 +98,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(10,10,12,0.86)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: space.lg,
@@ -100,8 +107,8 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 320,
-    backgroundColor: colors.background,
-    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderRadius: 28,
     padding: space.md,
     gap: space.sm,
   },

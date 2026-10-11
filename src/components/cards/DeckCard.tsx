@@ -1,6 +1,7 @@
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
+import { CardArt, cardPaint, tierOf } from '@/components/cards/PlayCard';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { colors, radius, space } from '@/theme/tokens';
@@ -46,40 +47,34 @@ interface Props {
  * goccia con i punti in alto a sinistra (come l'elisir), emoji 3D al centro e nome sotto.
  */
 export function DeckCard({ rule, dimmed, checked, addable, note, onPress, onLongPress, style, bare }: Props) {
-  const tone = cardTone(rule);
+  const paint = cardPaint(rule);
+  const light = tierOf(rule) === 'normal';
+  const bonus = rule.points > 0;
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={`${rule.label}${rule.trophy ? ', carta trofeo' : ''}, ${rule.points > 0 ? '+' : ''}${rule.points} punti${rule.authorId ? ', carta personale' : ''}${note ? `, ${note}` : ''}`}
+      accessibilityLabel={`${rule.label}, ${bonus ? '+' : ''}${rule.points} punti${note ? `, ${note}` : ''}`}
       onPress={onPress}
       onLongPress={onLongPress}
       pressedScale={0.94}
       style={[styles.wrap, dimmed && styles.dimmed, style]}>
-      <View
-        style={[
-          styles.card,
-          { borderColor: rule.trophy ? TROPHY_GOLD : tone.edge, backgroundColor: colors.surface },
-          rule.trophy && styles.trophyCard,
-        ]}>
+      <View style={[styles.card, light && styles.cardLight]}>
+        <CardArt rule={rule} id={`d-${rule.id}`} />
         <Text style={[styles.emoji, !bare && styles.emojiWithName]} allowFontScaling={false}>
           {rule.emoji}
         </Text>
         {!bare && (
           <AppText
-            variant="serifCard"
+            variant="micro"
+            color={paint.ink}
             numberOfLines={2}
             style={[styles.inName, longestWord(rule.label) > 9 && styles.inNameSmall]}>
             {rule.label}
           </AppText>
         )}
-        {rule.trophy && (
-          <View style={styles.trophyBadge} accessibilityLabel="Carta trofeo">
-            <Text style={styles.trophyEmoji}>🏆</Text>
-          </View>
-        )}
-        <View style={[styles.gem, { borderColor: tone.gem }]}>
-          <AppText variant="micro" color={tone.gem} style={styles.gemText}>
-            {rule.points > 0 ? `+${rule.points}` : rule.points}
+        <View style={[styles.gem, { backgroundColor: bonus ? colors.bonus : colors.malus }]}>
+          <AppText variant="micro" color="#FFFFFF" style={styles.gemText}>
+            {bonus ? `+${rule.points}` : rule.points}
           </AppText>
         </View>
         {checked && (
@@ -140,11 +135,11 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 63 / 88,
     borderRadius: radius.sm,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.14)' },
   emoji: { fontSize: 44, lineHeight: 54, fontFamily: EMOJI_FONT },
   emojiWithName: { marginBottom: space.md },
   // Il nome è attaccato al fondo della carta, come l'etichetta delle carte da collezione
@@ -153,8 +148,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 7,
-    fontSize: 13,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '700',
     textAlign: 'center',
     paddingHorizontal: 6,
   },
@@ -169,8 +165,6 @@ const styles = StyleSheet.create({
     height: 20,
     paddingHorizontal: 4,
     borderRadius: 10,
-    borderWidth: 1,
-    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },

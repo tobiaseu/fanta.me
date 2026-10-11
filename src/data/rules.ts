@@ -224,6 +224,51 @@ export const CUSTOM_RULES: Rule[] = [
 
 /** Carte personali gratis per ogni giocatore. */
 export const FREE_CUSTOM_SLOTS = 5;
+/** Con Premium: 30 carte personalizzabili e fino a 3 mazzi */
+export const PREMIUM_CUSTOM_SLOTS = 30;
+export const PREMIUM_DECKS = 3;
+/** Ogni giocatore ha un mazzo personale da 20 carte */
+export const DECK_SIZE = 20;
+
+/** Le 15 carte base del gioco: tutti partono da qui. */
+export const BASE_RULES = RULES.slice(0, 15);
+
+// Le carte create hanno sempre una data, mostrata in fondo alla carta aperta
+CUSTOM_RULES.forEach((r, i) => {
+  r.createdAt ??= new Date(2026, 8, 12 + i * 4).toISOString();
+});
+
+// Le altre 5 carte sono create dalla community: rare, con autore e data
+RULES.slice(15).forEach((r, i) => {
+  r.authorId = 'community';
+  r.createdAt = new Date(2026, 8, 3 + i * 6).toISOString();
+});
+
+/** Carte epiche: si vincono a fine partita o con premi speciali. */
+export const EPIC_RULES: Rule[] = [
+  {
+    id: 'e-champion',
+    categoryId: 'social',
+    label: 'Il Campione',
+    description: 'Ha vinto una stanza intera. Una volta a partita può raddoppiare i punti di una carta chiamata.',
+    points: 30,
+    emoji: '👑',
+    epic: true,
+    prize: 'Vittoria a Sardegna 25',
+    createdAt: new Date(2026, 7, 28).toISOString(),
+  },
+  {
+    id: 'e-legend',
+    categoryId: 'chaos',
+    label: 'La Leggenda',
+    description: 'Tre carte trofeo nella stessa partita. Il gruppo ne parlerà per anni.',
+    points: 25,
+    emoji: '🐉',
+    epic: true,
+    prize: 'Premio speciale: 3 trofei',
+    createdAt: new Date(2026, 8, 20).toISOString(),
+  },
+];
 
 export const POWER_UPS: PowerUp[] = [
   {
@@ -281,4 +326,5 @@ export const POWER_UPS: PowerUp[] = [
 
 export const powerById = (id?: string) => POWER_UPS.find((p) => p.id === id);
 
-export const ruleById = (id: string) => RULES.find((r) => r.id === id) ?? CUSTOM_RULES.find((r) => r.id === id);
+export const ruleById = (id: string) =>
+  RULES.find((r) => r.id === id) ?? CUSTOM_RULES.find((r) => r.id === id) ?? EPIC_RULES.find((r) => r.id === id);

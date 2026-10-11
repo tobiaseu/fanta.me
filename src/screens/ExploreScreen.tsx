@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { CardSheet } from '@/components/cards/CardSheet';
+import { PlayCard } from '@/components/cards/PlayCard';
 import { DeckCard } from '@/components/cards/DeckCard';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
@@ -147,16 +148,22 @@ export function ExploreScreen() {
               />
               <View style={styles.grid}>
                 {cards.map((c) => (
-                  <DeckCard
+                  <PlayCard
                     key={c.rule.id}
                     rule={c.rule}
-                    checked={saved.includes(c.rule.id)}
-                    note={
+                    cta={
                       saved.includes(c.rule.id)
-                        ? 'Già tua'
-                        : `@${c.author.handle} · ♥ ${fmt(c.likes + (liked.includes(c.rule.id) ? 1 : 0))}`
+                        ? { label: 'Salvata', icon: 'check', done: true, onPress: () => toggleSaved(c.rule.id) }
+                        : {
+                            label: 'Salva',
+                            icon: 'plus',
+                            onPress: () => {
+                              toggleSaved(c.rule.id);
+                              showToast({ text: `${c.rule.label} è nella tua collezione` });
+                            },
+                          }
                     }
-                    onPress={() => setSelected(c.rule)}
+                    onOpen={() => setSelected(c.rule)}
                   />
                 ))}
               </View>
@@ -170,12 +177,16 @@ export function ExploreScreen() {
               {mine.length ? (
                 <View style={styles.grid}>
                   {mine.map((r) => (
-                    <DeckCard
+                    <PlayCard
                       key={r.id}
                       rule={r}
-                      checked={published.includes(r.id)}
-                      note={published.includes(r.id) ? 'Pubblicata' : 'Solo tua'}
-                      onPress={() => setSelected(r)}
+                      authorName="te"
+                      cta={
+                        published.includes(r.id)
+                          ? { label: 'Pubblicata', icon: 'check', done: true, onPress: () => togglePublish(r.id) }
+                          : { label: 'Pubblica', onPress: () => togglePublish(r.id) }
+                      }
+                      onOpen={() => setSelected(r)}
                     />
                   ))}
                 </View>
@@ -198,17 +209,7 @@ export function ExploreScreen() {
               state: saved.includes(community.rule.id)
                 ? { text: `Nella tua collezione · di @${community.author.handle}`, tone: 'ok' as const }
                 : { text: `di @${community.author.handle} · giocata in ${fmt(community.plays)} stanze` },
-              primary: saved.includes(community.rule.id)
-                ? undefined
-                : {
-                    label: 'Salva nella collezione',
-                    icon: 'plus' as const,
-                    onPress: () => {
-                      toggleSaved(community.rule.id);
-                      showToast({ text: `${community.rule.label} è nella tua collezione` });
-                    },
-                  },
-              secondary: {
+              primary: {
                 label: liked.includes(community.rule.id) ? 'Ti piace' : 'Mi piace',
                 icon: liked.includes(community.rule.id) ? ('check' as const) : undefined,
                 onPress: () => toggleLike(community.rule.id),
@@ -219,7 +220,7 @@ export function ExploreScreen() {
               ? {
                   state: { text: 'Pubblicata nella community', tone: 'ok' as const },
                   secondary: {
-                    label: 'Ritira dalla community',
+                    label: 'Ritira',
                     onPress: () => {
                       togglePublish(selected.id);
                       showToast({ text: 'Carta ritirata' });
@@ -229,7 +230,7 @@ export function ExploreScreen() {
               : {
                   state: { text: 'Visibile solo a te e alle tue stanze' },
                   primary: {
-                    label: 'Pubblica nella community',
+                    label: 'Pubblica',
                     onPress: () => {
                       togglePublish(selected.id);
                       showToast({ text: `${selected.label} è nella community` });
@@ -291,7 +292,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   deckCards: { gap: space.xs },
   mini: { width: 84 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.lg },
   like: {
     flexDirection: 'row',
     alignItems: 'center',

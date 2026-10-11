@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { ACTIVATIONS, FEED, FRIENDSHIPS, GAMES, ME, PLAYERS, POWERS, PROPOSALS } from '@/data/mock';
-import { CUSTOM_RULES, FREE_CUSTOM_SLOTS, POWER_UPS, RULES, ruleById } from '@/data/rules';
+import { CUSTOM_RULES, FREE_CUSTOM_SLOTS, PREMIUM_CUSTOM_SLOTS, POWER_UPS, RULES, ruleById } from '@/data/rules';
 import type {
   CardProposal,
   FeedEvent,
@@ -399,7 +399,7 @@ export const proposalsNeeded = (game: Game) => Math.floor(game.playerIds.length 
 
 /** Carte personali disponibili: 5 gratis, +5 con il pass, +5 nelle stanze Premium. */
 export const customSlots = (extraSlots: number, game?: Game) =>
-  FREE_CUSTOM_SLOTS + extraSlots + (game?.premium ? 5 : 0);
+  game?.premium ? PREMIUM_CUSTOM_SLOTS : FREE_CUSTOM_SLOTS + extraSlots;
 
 export const activeActivations = (activations: PowerActivation[], gameId: string, now: number) =>
   activations.filter((a) => a.gameId === gameId && new Date(a.until).getTime() > now);

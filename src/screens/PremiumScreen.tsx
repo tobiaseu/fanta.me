@@ -22,10 +22,14 @@ const PLANS: Record<Plan, { title: string; price: string; when: string; perks: s
     perks: ['+5 carte personali per te', 'Restano nella tua collezione', 'Valgono in tutte le stanze'],
   },
   room: {
-    title: 'Stanza Premium',
+    title: 'Premium',
     price: '4,99 €',
     when: 'per questa stanza',
-    perks: ['10 carte personali per ogni giocatore', 'Poteri speciali Ladro 🦝 e Jolly 🃏', 'Paga uno, giocano tutti'],
+    perks: [
+      '30 carte personalizzabili invece di 5',
+      'Fino a 3 mazzi da 20 carte',
+      'Poteri speciali Ladro 🦝 e Jolly 🃏',
+    ],
   },
 };
 

@@ -3,7 +3,7 @@ import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { ActionRow, CardGlow } from '@/components/ui/ActionRow';
 import { haptics } from '@/lib/haptics';
 import { useSessionStore } from '@/store/useSessionStore';
 import { colors, MAX_APP_WIDTH, space } from '@/theme/tokens';
@@ -24,9 +24,12 @@ export function LiveIntro({ game }: { game: Game }) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={() => go(false)}>
       <Animated.View entering={FadeIn.duration(250)} style={styles.backdrop}>
         <View style={styles.card}>
-          <Animated.Text entering={ZoomIn.springify().damping(8)} style={styles.emoji}>
-            🎬
-          </Animated.Text>
+          <CardGlow id="live-intro" cy={48} />
+          <View style={styles.art}>
+            <Animated.Text entering={ZoomIn.springify().damping(8)} style={styles.emoji}>
+              🎬
+            </Animated.Text>
+          </View>
           <AppText variant="serifTitle" style={styles.center}>
             Si gioca!
           </AppText>
@@ -34,8 +37,10 @@ export function LiveIntro({ game }: { game: Game }) {
             {game.name} è partita. Da adesso tutto succede in Live, il tasto al centro: le chiamate da votare, i punti e
             il + per chiamarne uno.
           </AppText>
-          <Button label="Vai al Live" onPress={() => go(true)} />
-          <Button label="Dopo" variant="tertiary" onPress={() => go(false)} />
+          <ActionRow
+            secondary={{ label: 'Dopo', onPress: () => go(false) }}
+            primary={{ label: 'Vai al Live', onPress: () => go(true) }}
+          />
         </View>
       </Animated.View>
     </Modal>
@@ -45,20 +50,23 @@ export function LiveIntro({ game }: { game: Game }) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(10,10,12,0.86)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: space.lg,
   },
   card: {
     width: '100%',
-    maxWidth: MAX_APP_WIDTH - space.xl,
+    maxWidth: Math.min(340, MAX_APP_WIDTH - space.xl),
+    aspectRatio: 63 / 88,
     backgroundColor: colors.surface,
     borderRadius: 28,
+    overflow: 'hidden',
     padding: space.lg,
     gap: space.sm,
   },
-  emoji: { fontSize: 64, lineHeight: 76, textAlign: 'center' },
+  art: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emoji: { fontSize: 96, lineHeight: 112, textAlign: 'center' },
   center: { textAlign: 'center' },
   regular: { fontWeight: '400' },
 });

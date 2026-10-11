@@ -22,7 +22,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ME } from '@/data/mock';
-import { powerById, RULES, ruleById } from '@/data/rules';
+import { BASE_RULES, DECK_SIZE, EPIC_RULES, powerById, ruleById } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
@@ -37,7 +37,7 @@ import {
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import { DEFAULT_SETTINGS, type Rule } from '@/types/game';
 
-type Tab = 'base' | 'mine';
+type Tab = 'base' | 'mine' | 'epic';
 
 const DATE = new Intl.DateTimeFormat('it-IT', {
   weekday: 'long',
@@ -73,13 +73,11 @@ export function RulesScreen() {
   const events = useGameStore((s) => s.events);
   const captains = useGameStore((s) => s.captains);
   const [selected, setSelected] = useState<Rule>();
-  const [openFrom, setOpenFrom] = useState<{ from?: CardRect; back?: boolean }>({});
-  const openCard =
-    (r: Rule, back = false) =>
-    (from?: CardRect) => {
-      setOpenFrom({ from, back });
-      setSelected(r);
-    };
+  const [openFrom, setOpenFrom] = useState<{ from?: CardRect }>({});
+  const openCard = (r: Rule) => (from?: CardRect) => {
+    setOpenFrom({ from });
+    setSelected(r);
+  };
   const [explore, setExplore] = useState(false);
   const updateSettings = useGameStore((s) => s.updateSettings);
   useLiveDeck(game);
@@ -143,7 +141,7 @@ export function RulesScreen() {
     if (inDeck && game.status === 'live')
       return {
         state: { text: 'Nel mazzo della partita', tone: 'ok' },
-        primary: { label: 'Chiama questa carta', icon: 'plus', onPress: () => openQuickAction(selected.id) },
+        primary: { label: 'Chiama', icon: 'plus', onPress: () => openQuickAction(selected.id) },
       };
     if (inDeck)
       return {
@@ -165,8 +163,8 @@ export function RulesScreen() {
       return {
         state: { text: `Proposta: ${proposal.likes.length} su ${needed} la vogliono` },
         ...(liked
-          ? { secondary: { label: 'Non la voglio più', onPress: like } }
-          : { primary: { label: 'La voglio nel mazzo', onPress: like } }),
+          ? { secondary: { label: 'Non la voglio', onPress: like } }
+          : { primary: { label: 'La voglio', onPress: like } }),
       };
     }
     const full = myCards.length >= perPlayer;
@@ -273,7 +271,6 @@ export function RulesScreen() {
                       }
                       status={game.status === 'live' ? undefined : 'Nel mazzo'}
                       onOpen={openCard(r)}
-                      onInfo={openCard(r, true)}
                     />
                   </Animated.View>
                 ))}
@@ -341,7 +338,6 @@ export function RulesScreen() {
                         onPress: () => toggleLike(p.id),
                       }}
                       onOpen={openCard(r)}
-                      onInfo={openCard(r, true)}
                     />
                   ) : null;
                 })}
@@ -354,72 +350,75 @@ export function RulesScreen() {
               title="La tua collezione"
               caption={
                 pregame
-                  ? 'Tocca la carta per aprirla, "i" per salvarla o condividerla.'
+                  ? `Il tuo mazzo personale ha ${DECK_SIZE} carte: 15 base, quelle che crei (rare) e quelle che vinci (epiche).`
                   : tab === 'base'
-                    ? 'Le 20 carte del gioco. Quelle accese sono nel mazzo.'
+                    ? 'Le 15 carte base. Quelle accese sono nel mazzo.'
                     : `${mine.length} di ${slots} carte personali.`
               }
             />
             <Segmented
               value={tab}
               options={[
-                { id: 'base', label: `Base ${RULES.length}` },
-                { id: 'mine', label: `Personali ${mine.length}/${slots}` },
+                { id: 'base', label: `Base ${BASE_RULES.length}` },
+                { id: 'mine', label: `Create ${mine.length}/${slots}` },
+                { id: 'epic', label: `Epiche ${EPIC_RULES.length}` },
               ]}
               onChange={setTab}
             />
             <View style={styles.grid}>
-              {tab === 'base'
-                ? // Tutte le 20 sempre visibili: quelle già nel mazzo con la spunta, le altre con il +.
-                  // Come su iPhone: tocco = apri la carta, pressione lunga = azione rapida (metti nel mazzo).
-                  RULES.map((r) => {
-                    const inDeck = game.ruleIds.includes(r.id);
-                    const minePick = proposals.some((p) => p.ruleId === r.id && p.authorId === ME.id);
-                    return (
-                      <PlayCard
-                        key={r.id}
-                        rule={r}
-                        dimmed={!pregame && !inDeck}
-                        cta={
-                          pregame && !inDeck
-                            ? { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(r) }
-                            : pregame && minePick
-                              ? { label: 'Nel mazzo', icon: 'check', done: true, onPress: () => drop(r) }
-                              : undefined
-                        }
-                        status={inDeck ? 'Nel mazzo' : pregame ? undefined : 'Fuori dal mazzo'}
-                        onOpen={openCard(r)}
-                        onInfo={openCard(r, true)}
-                        onLongPress={pregame && !inDeck ? () => pick(r) : undefined}
-                      />
-                    );
-                  })
-                : [
-                    ...mine.map((r) => {
+              {tab === 'epic'
+                ? EPIC_RULES.map((r) => (
+                    <PlayCard key={r.id} rule={r} status="Vinta, sempre tua" onOpen={openCard(r)} />
+                  ))
+                : tab === 'base'
+                  ? // Tutte le 20 sempre visibili: quelle già nel mazzo con la spunta, le altre con il +.
+                    // Come su iPhone: tocco = apri la carta, pressione lunga = azione rapida (metti nel mazzo).
+                    BASE_RULES.map((r) => {
                       const inDeck = game.ruleIds.includes(r.id);
+                      const minePick = proposals.some((p) => p.ruleId === r.id && p.authorId === ME.id);
                       return (
                         <PlayCard
                           key={r.id}
                           rule={r}
-                          authorName="te"
+                          dimmed={!pregame && !inDeck}
                           cta={
-                            pregame
-                              ? inDeck
+                            pregame && !inDeck
+                              ? { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(r) }
+                              : pregame && minePick
                                 ? { label: 'Nel mazzo', icon: 'check', done: true, onPress: () => drop(r) }
-                                : { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(r) }
-                              : undefined
+                                : undefined
                           }
-                          status={pregame ? undefined : inDeck ? 'Nel mazzo' : 'Fuori dal mazzo'}
+                          status={inDeck ? 'Nel mazzo' : pregame ? undefined : 'Fuori dal mazzo'}
                           onOpen={openCard(r)}
-                          onInfo={openCard(r, true)}
+                          onLongPress={pregame && !inDeck ? () => pick(r) : undefined}
                         />
                       );
-                    }),
-                    ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (
-                      <EmptySlot key={`empty-${i}`} onPress={createCard} style={styles.halfSlot} />
-                    )),
-                    <EmptySlot key="locked" locked onPress={openPremium} style={styles.halfSlot} />,
-                  ]}
+                    })
+                  : [
+                      ...mine.map((r) => {
+                        const inDeck = game.ruleIds.includes(r.id);
+                        return (
+                          <PlayCard
+                            key={r.id}
+                            rule={r}
+                            authorName="te"
+                            cta={
+                              pregame
+                                ? inDeck
+                                  ? { label: 'Nel mazzo', icon: 'check', done: true, onPress: () => drop(r) }
+                                  : { label: 'Metti nel mazzo', icon: 'plus', onPress: () => pick(r) }
+                                : undefined
+                            }
+                            status={pregame ? undefined : inDeck ? 'Nel mazzo' : 'Fuori dal mazzo'}
+                            onOpen={openCard(r)}
+                          />
+                        );
+                      }),
+                      ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (
+                        <EmptySlot key={`empty-${i}`} onPress={createCard} style={styles.halfSlot} />
+                      )),
+                      <EmptySlot key="locked" locked onPress={openPremium} style={styles.halfSlot} />,
+                    ]}
             </View>
           </View>
 
@@ -489,10 +488,10 @@ export function RulesScreen() {
                 <AppText style={styles.premiumEmoji}>👑</AppText>
                 <View style={styles.flex}>
                   <AppText variant="name" color={colors.inkInverse}>
-                    Rendi la stanza Premium
+                    Passa a Premium
                   </AppText>
                   <AppText variant="caption" color="rgba(255,255,255,0.7)" style={styles.regular}>
-                    10 carte personali a testa e i poteri speciali Ladro e Jolly.
+                    30 carte da creare, fino a 3 mazzi e i poteri speciali Ladro e Jolly.
                   </AppText>
                 </View>
               </PressableScale>
@@ -506,7 +505,6 @@ export function RulesScreen() {
         author={players.find((p) => p.id === selected?.authorId)}
         {...sheet}
         from={openFrom.from}
-        startOnBack={openFrom.back}
         onClose={() => setSelected(undefined)}
       />
       <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />
