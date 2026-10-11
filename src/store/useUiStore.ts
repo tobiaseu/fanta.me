@@ -13,6 +13,9 @@ interface UiState {
   /** Apre "Chiama un punto", con una carta già scelta se arriva da una carta */
   openQuickAction: (ruleId?: string) => void;
   quickRuleId?: string;
+  /** Squadra aperta nel pop-up "Guarda squadra" */
+  teamSheetId?: string;
+  openTeam: (teamId?: string) => void;
   closeQuickAction: () => void;
   toast?: Toast;
   showToast: (toast: Omit<Toast, 'id'>) => void;
@@ -28,6 +31,7 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set) => ({
   quickActionOpen: false,
+  openTeam: (teamSheetId) => set({ teamSheetId }),
   openQuickAction: (ruleId) => set({ quickActionOpen: true, quickRuleId: ruleId }),
   closeQuickAction: () => set({ quickActionOpen: false, quickRuleId: undefined }),
   toast: undefined,

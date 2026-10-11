@@ -11,6 +11,8 @@ import { DeckCard, EmptySlot } from '@/components/cards/DeckCard';
 import { FinaleSettings } from '@/components/game/FinaleSettings';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { PowersPanel } from '@/components/game/PowersPanel';
+import { TeamFormation } from '@/components/game/TeamFormation';
+import { TeamSummary } from '@/components/game/TeamSummary';
 import { TeamsBuilder } from '@/components/game/TeamsBuilder';
 import { Segmented } from '@/components/ui/Segmented';
 import { useUiStore } from '@/store/useUiStore';
@@ -23,7 +25,14 @@ import { powerById, RULES, ruleById } from '@/data/rules';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { confirmAction } from '@/lib/confirm';
 import { haptics } from '@/lib/haptics';
-import { customSlots, nameIn, proposalsNeeded, useGameStore, votesNeeded } from '@/store/useGameStore';
+import {
+  computeTeamStandings,
+  customSlots,
+  nameIn,
+  proposalsNeeded,
+  useGameStore,
+  votesNeeded,
+} from '@/store/useGameStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import { DEFAULT_SETTINGS, type Rule } from '@/types/game';
 
@@ -58,6 +67,9 @@ export function RulesScreen() {
   const withdrawCard = useGameStore((s) => s.withdrawCard);
   const showToast = useUiStore((s) => s.showToast);
   const openQuickAction = useUiStore((s) => s.openQuickAction);
+  const openTeam = useUiStore((s) => s.openTeam);
+  const events = useGameStore((s) => s.events);
+  const captains = useGameStore((s) => s.captains);
   const [selected, setSelected] = useState<Rule>();
   const [explore, setExplore] = useState(false);
   const updateSettings = useGameStore((s) => s.updateSettings);
@@ -163,10 +175,53 @@ export function RulesScreen() {
       />
 
       {division === 'players' ? (
-        <View style={styles.playersTab}>
-          <TeamsBuilder game={game} />
-          <PowersPanel game={game} now={Date.now()} />
-        </View>
+        pregame || !game.teams?.length ? (
+          <View style={styles.playersTab}>
+            <TeamsBuilder game={game} />
+            <PowersPanel game={game} now={Date.now()} />
+          </View>
+        ) : (
+          // Partita avviata: prima la mia squadra (come nel Profilo), poi il riassunto degli avversari
+          <View style={styles.playersTab}>
+            {(() => {
+              const rows = computeTeamStandings(game, events, players, captains, Date.now());
+              const myTeam = game.teams.find((t) => t.memberIds.includes(ME.id));
+              const place = (id: string) => rows.findIndex((r) => r.team.id === id) + 1;
+              return (
+                <>
+                  {myTeam && (
+                    <TeamFormation
+                      game={game}
+                      team={myTeam}
+                      mine
+                      place={place(myTeam.id)}
+                      points={rows.find((r) => r.team.id === myTeam.id)?.points}
+                    />
+                  )}
+                  <View style={styles.section}>
+                    <SectionHeader
+                      title="Le altre squadre"
+                      caption="Punti di squadra, di ogni giocatore e carte prese."
+                    />
+                    {game.teams
+                      .filter((t) => t.id !== myTeam?.id)
+                      .sort((a, b) => place(a.id) - place(b.id))
+                      .map((t) => (
+                        <TeamSummary
+                          key={t.id}
+                          game={game}
+                          team={t}
+                          place={place(t.id)}
+                          onOpen={() => openTeam(t.id)}
+                        />
+                      ))}
+                  </View>
+                  <PowersPanel game={game} now={Date.now()} />
+                </>
+              );
+            })()}
+          </View>
+        )
       ) : (
         <>
           <View style={styles.section}>
@@ -257,7 +312,7 @@ export function RulesScreen() {
               title="La tua collezione"
               caption={
                 pregame
-                  ? 'Le carte che puoi ancora portare. Toccane una per leggerla e metterla nel mazzo.'
+                  ? 'Tocca per leggere, tieni premuto per metterla nel mazzo.'
                   : tab === 'base'
                     ? 'Le 20 carte del gioco. Quelle accese sono nel mazzo.'
                     : `${mine.length} di ${slots} carte personali.`
@@ -273,16 +328,22 @@ export function RulesScreen() {
             />
             <View style={styles.grid}>
               {tab === 'base'
-                ? RULES.filter((r) => !pregame || !game.ruleIds.includes(r.id)).map((r) => (
-                    <DeckCard
-                      key={r.id}
-                      rule={r}
-                      addable={pregame}
-                      checked={!pregame && game.ruleIds.includes(r.id)}
-                      dimmed={!pregame && !game.ruleIds.includes(r.id)}
-                      onPress={() => setSelected(r)}
-                    />
-                  ))
+                ? // Tutte le 20 sempre visibili: quelle già nel mazzo con la spunta, le altre con il +.
+                  // Come su iPhone: tocco = apri la carta, pressione lunga = azione rapida (metti nel mazzo).
+                  RULES.map((r) => {
+                    const inDeck = game.ruleIds.includes(r.id);
+                    return (
+                      <DeckCard
+                        key={r.id}
+                        rule={r}
+                        addable={pregame && !inDeck}
+                        checked={inDeck}
+                        dimmed={!pregame && !inDeck}
+                        onPress={() => setSelected(r)}
+                        onLongPress={pregame && !inDeck ? () => pick(r) : undefined}
+                      />
+                    );
+                  })
                 : [
                     ...mine.map((r) => (
                       <DeckCard
@@ -291,6 +352,7 @@ export function RulesScreen() {
                         checked={game.ruleIds.includes(r.id)}
                         addable={pregame && !game.ruleIds.includes(r.id)}
                         onPress={() => setSelected(r)}
+                        onLongPress={pregame ? () => (game.ruleIds.includes(r.id) ? drop(r) : pick(r)) : undefined}
                       />
                     )),
                     ...Array.from({ length: Math.max(0, slots - mine.length) }, (_, i) => (

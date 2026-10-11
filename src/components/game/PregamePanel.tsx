@@ -14,7 +14,7 @@ import { DEFAULT_SETTINGS, type Game } from '@/types/game';
 import { PressableScale } from '@/components/ui/PressableScale';
 
 /** Dashboard del pre-partita: il mazzo che si sta formando, chi c'è, e (per chi l'ha creata) "Avvia". */
-export function PregamePanel({ game }: { game: Game }) {
+export function PregamePanel({ game, onInvite }: { game: Game; onInvite: () => void }) {
   const players = useGameStore((s) => s.players);
   const startGame = useGameStore((s) => s.startGame);
   const showToast = useUiStore((s) => s.showToast);
@@ -23,11 +23,21 @@ export function PregamePanel({ game }: { game: Game }) {
 
   return (
     <>
+      {/* Il codice, con accanto l'unica azione per far entrare gli altri */}
+      <View style={styles.codeCard}>
+        <View style={styles.flex}>
+          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
+            Codice per entrare
+          </AppText>
+          <AppText variant="title" style={styles.code} selectable>
+            {inviteCode(game)}
+          </AppText>
+        </View>
+        <Button label="Invita" variant="secondary" icon="people" onPress={onInvite} />
+      </View>
+
       <View style={styles.section}>
-        <SectionHeader
-          title="Chi c'è"
-          caption={`${people.length} giocatori. Codice per entrare: ${inviteCode(game)}`}
-        />
+        <SectionHeader title="Chi c'è" caption={`${people.length} giocatori`} />
         <View style={styles.card}>
           <AvatarStack players={people} size={40} max={6} />
           <AppText variant="body" color={colors.inkSoft} style={styles.flex} numberOfLines={2}>
@@ -59,6 +69,15 @@ export function PregamePanel({ game }: { game: Game }) {
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
+  codeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: layout.card,
+  },
+  code: { letterSpacing: 3 },
   deckCard: {
     flexDirection: 'row',
     alignItems: 'center',

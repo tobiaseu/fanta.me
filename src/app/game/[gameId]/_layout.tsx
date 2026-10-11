@@ -7,6 +7,7 @@ import { LiveIntro } from '@/components/game/LiveIntro';
 import { GameHeader } from '@/components/game/GameHeader';
 import { SwipePager } from '@/components/game/SwipePager';
 import { GameTabBar } from '@/components/game/GameTabBar';
+import { TeamSheet } from '@/components/game/TeamSummary';
 import { QuickActionSheet } from '@/components/game/QuickActionSheet';
 import { CurrentGameProvider } from '@/hooks/useCurrentGame';
 import { useGame } from '@/store/useGameStore';
@@ -48,6 +49,7 @@ export default function GameLayout() {
           <Tabs.Screen name="feed" options={{ title: 'Cronaca' }} />
         </Tabs>
         <QuickActionSheet game={game} />
+        <TeamSheet game={game} />
         <LiveIntro game={game} />
       </View>
     </CurrentGameProvider>

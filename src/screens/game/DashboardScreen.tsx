@@ -53,6 +53,7 @@ export function DashboardScreen() {
   const captains = useGameStore((s) => s.captains);
   const setCaptain = useGameStore((s) => s.setCaptain);
   const openQuickAction = useUiStore((s) => s.openQuickAction);
+  const openTeam = useUiStore((s) => s.openTeam);
   const showToast = useUiStore((s) => s.showToast);
   const openPlayer = useOpenPlayer();
   const simulateCall = useGameStore((s) => s.simulateCall);
@@ -114,15 +115,14 @@ export function DashboardScreen() {
             title: 'Metti le tue carte nel mazzo',
             body: `Ne hai messe ${mineProposed} su ${perPlayer}: scegli le tue prima del via.`,
             primary: { label: 'Apri il mazzo', onPress: openDeck },
-            secondary: { label: 'Invita', onPress: invite },
+            tone: 'dark',
           }
         : {
-            emoji: '💌',
+            emoji: '✅',
             eyebrow: 'Prima di iniziare',
             title: 'Le tue carte ci sono',
-            body: 'Più amici, più punti da chiamare. Manda il codice a chi manca.',
-            primary: { label: 'Invita amici', onPress: invite },
-            secondary: { label: 'Il mazzo', onPress: openDeck },
+            body: 'Ora tocca agli altri. Si parte quando scade il conto alla rovescia.',
+            primary: { label: 'Apri il mazzo', onPress: openDeck },
           }
       : game.status === 'ended'
         ? {
@@ -157,7 +157,7 @@ export function DashboardScreen() {
 
       {game.status === 'waiting' && (
         <>
-          <PregamePanel game={game} />
+          <PregamePanel game={game} onInvite={invite} />
         </>
       )}
 
@@ -190,7 +190,13 @@ export function DashboardScreen() {
             <View style={styles.podium}>
               {[top[1], top[0], top[2]].map((r, k) =>
                 r ? (
-                  <View key={r.id} style={styles.podiumCol}>
+                  <PressableScale
+                    key={r.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${r.name}, ${r.points} punti`}
+                    disabled={!game.teams?.length}
+                    onPress={() => openTeam(r.id)}
+                    style={styles.podiumCol}>
                     <View style={[styles.podiumDot, { backgroundColor: r.color }]} />
                     <AppText variant="name" numberOfLines={1} style={styles.center}>
                       {r.name}
@@ -201,7 +207,7 @@ export function DashboardScreen() {
                     <View style={[styles.block, { height: k === 1 ? 72 : k === 0 ? 52 : 36 }]}>
                       <AppText variant="headline">{k === 1 ? 1 : k === 0 ? 2 : 3}</AppText>
                     </View>
-                  </View>
+                  </PressableScale>
                 ) : null,
               )}
             </View>

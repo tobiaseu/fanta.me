@@ -1,7 +1,14 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { LinearTransition } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { ActivePowers } from '@/components/game/ActivePowers';
 import { FeedItem } from '@/components/game/FeedItem';
@@ -77,6 +84,7 @@ export function LiveScreen() {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <View style={styles.waiting}>
+          <FloatingEmoji emoji="⏱️" />
           <AppText variant="serifHeading" style={styles.center}>
             Si parte tra poco
           </AppText>
@@ -237,9 +245,12 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   waiting: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: layout.card,
-    gap: space.md,
+    borderRadius: radius.xl,
+    paddingHorizontal: layout.card,
+    paddingVertical: space.xxl,
+    minHeight: 460,
+    justifyContent: 'center',
+    gap: space.lg,
     alignItems: 'center',
   },
   center: { textAlign: 'center' },
@@ -319,3 +330,21 @@ function SlimRow({
     </PressableScale>
   );
 }
+
+/** Emoji che galleggia piano su e giù (e oscilla un poco): dà vita all'attesa. */
+function FloatingEmoji({ emoji }: { emoji: string }) {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withRepeat(withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }), -1, true);
+  }, [t]);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: -10 * t.value }, { rotate: `${-6 + 12 * t.value}deg` }],
+  }));
+  return (
+    <Animated.Text style={[floatStyles.emoji, style]} accessibilityElementsHidden>
+      {emoji}
+    </Animated.Text>
+  );
+}
+
+const floatStyles = StyleSheet.create({ emoji: { fontSize: 72, lineHeight: 86 } });

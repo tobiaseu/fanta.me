@@ -42,27 +42,28 @@ export function HeroCard({
   /** Es. avatar dei giocatori, tra il testo e i bottoni */
   footer?: ReactNode;
   onPress?: () => void;
-  tone?: 'surface' | 'proposal';
+  tone?: 'surface' | 'proposal' | 'dark';
 }) {
+  const dark = tone === 'dark';
   const content = (
     <>
       <View style={styles.heroTop}>
-        <View style={styles.heroArt}>
+        <View style={[styles.heroArt, dark && styles.heroArtDark]}>
           <AppText style={styles.heroEmoji}>{emoji}</AppText>
         </View>
         <View style={styles.flex}>
           {typeof eyebrow === 'string' ? (
-            <AppText variant="micro" color={colors.inkSoft}>
+            <AppText variant="micro" color={dark ? 'rgba(255,255,255,0.6)' : colors.inkSoft}>
               {eyebrow}
             </AppText>
           ) : (
             eyebrow
           )}
-          <AppText variant="title" numberOfLines={2}>
+          <AppText variant="title" numberOfLines={2} color={dark ? colors.inkInverse : undefined}>
             {title}
           </AppText>
           {body ? (
-            <AppText variant="body" color={colors.inkSoft} numberOfLines={2}>
+            <AppText variant="body" color={dark ? 'rgba(255,255,255,0.7)' : colors.inkSoft} numberOfLines={2}>
               {body}
             </AppText>
           ) : null}
@@ -76,6 +77,7 @@ export function HeroCard({
             <Button
               label={secondary.label}
               variant="secondary"
+              onDark={dark}
               onPress={secondary.onPress}
               style={primary ? undefined : styles.flex}
             />
@@ -84,7 +86,7 @@ export function HeroCard({
       )}
     </>
   );
-  const style = [styles.hero, tone === 'proposal' && styles.proposal];
+  const style = [styles.hero, tone === 'proposal' && styles.proposal, dark && styles.dark];
   return onPress ? (
     <PressableScale accessibilityRole="button" onPress={onPress} pressedScale={0.98} style={style}>
       {content}
@@ -203,6 +205,8 @@ const styles = StyleSheet.create({
   regular: { fontWeight: '400' },
   surface: { backgroundColor: colors.surface },
   proposal: { backgroundColor: colors.proposal },
+  dark: { backgroundColor: '#111114' },
+  heroArtDark: { backgroundColor: 'rgba(255,255,255,0.1)' },
   hero: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,

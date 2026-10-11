@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   optionOn: { borderColor: colors.ink },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: layout.card, gap: 2 },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  chips: { flexDirection: 'row', gap: space.xs, marginTop: space.sm },
+  chips: { marginTop: space.sm },
   chip: {
     minWidth: 48,
     height: 36,
