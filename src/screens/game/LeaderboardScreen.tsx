@@ -8,7 +8,9 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
-import { CoinIcon, TrendArrow } from '@/components/ui/Brand';
+import { Score, TrendArrow } from '@/components/ui/Brand';
+import { TeamAvatar } from '@/components/ui/TeamAvatar';
+import { Icon } from '@/components/icons/Icon';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
@@ -22,7 +24,7 @@ import {
   standingsHidden,
   useGameStore,
 } from '@/store/useGameStore';
-import { teamColor } from '@/lib/teams';
+import { playerTeamLine, teamByline, teamColor } from '@/lib/teams';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Player } from '@/types/game';
 
@@ -112,17 +114,20 @@ export function LeaderboardScreen() {
             game.teams?.length
               ? 'Prima le squadre, poi la classifica individuale'
               : 'La classifica di tutti i giocatori',
-            'Tutta la partita oppure solo oggi',
+            'Tutta la partita o solo oggi, dal filtro in alto a destra',
             'Chi sale e chi scende, punto dopo punto',
           ]}
         />
         {game.teams?.map((t) => (
           <View key={t.id} style={styles.lockedTeam}>
-            <View style={[styles.lockedDot, { backgroundColor: teamColor(game, t.id) }]} />
-            <AppText variant="name" style={styles.flex1}>
-              {t.name}
-            </AppText>
-            <AppText variant="caption" color={colors.inkSoft}>
+            <TeamAvatar game={game} teamId={t.id} size={40} />
+            <View style={styles.flex1}>
+              <AppText variant="name">{t.name}</AppText>
+              <AppText variant="micro" color={colors.inkSoft} style={styles.regular}>
+                {teamByline(game, t, players)}
+              </AppText>
+            </View>
+            <AppText variant="caption" color={colors.inkSoft} style={styles.lockedMembers}>
               {t.memberIds
                 .map((id) => players.find((p) => p.id === id))
                 .filter((p): p is NonNullable<typeof p> => !!p)
@@ -160,28 +165,34 @@ export function LeaderboardScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {game.teams?.length ? (
-        <Segmented
-          value={mode}
-          onChange={setMode}
-          options={[
-            { id: 'teams', label: 'Squadre' },
-            { id: 'players', label: 'Individuale' },
-          ]}
+      <View style={styles.toolbar}>
+        {game.teams?.length ? (
+          <View style={styles.flex1}>
+            <Segmented
+              value={mode}
+              onChange={setMode}
+              options={[
+                { id: 'teams', label: 'Squadre' },
+                { id: 'players', label: 'Individuale' },
+              ]}
+            />
+          </View>
+        ) : (
+          <AppText variant="title" style={styles.flex1}>
+            Classifica
+          </AppText>
+        )}
+        <PeriodFilter
+          value={period}
+          today={`Oggi, ${gameDay(game, Date.now()).label.toLowerCase()} ${gameDay(game, Date.now()).index}`}
+          onChange={setPeriod}
         />
-      ) : null}
-
-      <Segmented
-        value={period}
-        onChange={setPeriod}
-        options={[
-          { id: 'all', label: 'Tutta la partita' },
-          {
-            id: 'today',
-            label: `Oggi, ${gameDay(game, Date.now()).label.toLowerCase()} ${gameDay(game, Date.now()).index}`,
-          },
-        ]}
-      />
+      </View>
+      {period === 'today' && (
+        <AppText variant="caption" color={colors.inkSoft} style={styles.periodNote}>
+          Solo i punti di oggi, {gameDay(game, Date.now()).label.toLowerCase()} {gameDay(game, Date.now()).index}.
+        </AppText>
+      )}
 
       {showPodium && (
         <View style={styles.podium}>
@@ -201,14 +212,17 @@ export function LeaderboardScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={row.isTeam ? `${row.name}: vedi i singoli giocatori` : `Profilo di ${row.name}`}
                   style={styles.podiumHead}>
-                  <Avatar player={row.lead} size={slot === 1 ? 76 : 62} shape="square" sticker={false} />
+                  {row.isTeam ? (
+                    <TeamAvatar game={game} teamId={row.id} size={slot === 1 ? 76 : 62} />
+                  ) : (
+                    <Avatar player={row.lead} size={slot === 1 ? 76 : 62} sticker={false} />
+                  )}
                   <AppText variant="headline" numberOfLines={1} style={styles.center}>
                     {row.name}
                   </AppText>
                   {row.members.length > 0 && <AvatarStack players={row.members} size={22} />}
                   <View style={styles.coinPill}>
-                    <CoinIcon />
-                    <AppText variant="headline">{row.points}</AppText>
+                    <Score value={row.points} />
                   </View>
                 </PressableScale>
                 <View style={[styles.pedestal, { height: slot === 1 ? 128 : slot === 2 ? 100 : 76 }]}>
@@ -240,23 +254,25 @@ export function LeaderboardScreen() {
               <AppText variant="cardTitle" color={colors.inkFaint} style={styles.rank}>
                 {row.place}
               </AppText>
-              <Avatar player={row.lead} size={48} shape="square" sticker={false} />
+              {row.isTeam ? (
+                <TeamAvatar game={game} teamId={row.id} size={48} />
+              ) : (
+                <Avatar player={row.lead} size={48} sticker={false} />
+              )}
               <View style={styles.flex}>
                 <AppText variant="headline" numberOfLines={1}>
                   {row.name}
                   {isMe ? ' (tu)' : ''}
                 </AppText>
-                {row.members.length > 0 && <AvatarStack players={row.members} size={20} />}
-                {!row.isTeam && 'handle' in row.lead && row.lead.handle ? (
-                  <AppText variant="micro" color={colors.inkFaint}>
-                    @{row.lead.handle}
-                  </AppText>
-                ) : null}
+                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
+                  {row.isTeam
+                    ? teamByline(game, { ownerId: game.teams?.find((t) => t.id === row.id)?.ownerId ?? '' }, players)
+                    : (playerTeamLine(game, row.id) ?? `@${row.lead.handle}`)}
+                </AppText>
               </View>
               {row.trend !== 0 && <TrendArrow up={row.trend > 0} />}
               <View style={styles.coinRow}>
-                <CoinIcon />
-                <AppText variant="headline">{row.points}</AppText>
+                <Score value={row.points} />
               </View>
             </PressableScale>
           );
@@ -266,7 +282,81 @@ export function LeaderboardScreen() {
   );
 }
 
+/** Filtro piccolo in alto a destra: tutta la partita (predefinito) o solo oggi. */
+function PeriodFilter({ value, today, onChange }: { value: Period; today: string; onChange: (p: Period) => void }) {
+  const [open, setOpen] = useState(false);
+  const options: { id: Period; label: string }[] = [
+    { id: 'all', label: 'Tutta la partita' },
+    { id: 'today', label: today },
+  ];
+  return (
+    <View style={styles.filterWrap}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={`Filtro: ${value === 'all' ? 'tutta la partita' : 'solo oggi'}. Cambia`}
+        accessibilityState={{ expanded: open }}
+        onPress={() => {
+          haptics.tap();
+          setOpen((o) => !o);
+        }}
+        style={[styles.filter, value === 'today' && styles.filterOn]}>
+        <Icon name="calendar" size={15} strokeWidth={2.2} color={value === 'today' ? colors.ctaInk : colors.ink} />
+        <AppText variant="caption" color={value === 'today' ? colors.ctaInk : colors.ink}>
+          {value === 'all' ? 'Tutta' : 'Oggi'}
+        </AppText>
+      </PressableScale>
+      {open && (
+        <Animated.View entering={FadeInUp.duration(160)} style={styles.menu}>
+          {options.map((o, i) => (
+            <Pressable
+              key={o.id}
+              accessibilityRole="menuitem"
+              accessibilityState={{ selected: value === o.id }}
+              onPress={() => {
+                haptics.tap();
+                onChange(o.id);
+                setOpen(false);
+              }}
+              style={[styles.menuItem, i > 0 && styles.menuDivider]}>
+              <AppText variant="name" style={styles.flex1}>
+                {o.label}
+              </AppText>
+              {value === o.id && <Icon name="check" size={16} strokeWidth={2.6} color={colors.ink} />}
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  toolbar: { flexDirection: 'row', alignItems: 'center', gap: space.sm, zIndex: 10 },
+  periodNote: { fontWeight: '400', marginTop: -space.md },
+  regular: { fontWeight: '400' },
+  filterWrap: { zIndex: 10 },
+  filter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 36,
+    paddingHorizontal: space.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+  },
+  filterOn: { backgroundColor: colors.cta },
+  menu: {
+    position: 'absolute',
+    top: 42,
+    right: 0,
+    width: 230,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.md,
+    ...({ boxShadow: '0 12px 32px rgba(0,0,0,0.18)' } as object),
+  },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
+  menuDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
   lockedTeam: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -275,7 +365,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.md,
   },
-  lockedDot: { width: 10, height: 10, borderRadius: 5 },
+  lockedMembers: { maxWidth: '40%', textAlign: 'right' },
   flex1: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {

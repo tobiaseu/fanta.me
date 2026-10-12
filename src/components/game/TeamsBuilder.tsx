@@ -1,5 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Score } from '@/components/ui/Brand';
+import { TeamAvatar } from '@/components/ui/TeamAvatar';
 import { PlayerCard } from '@/components/cards/PlayerCard';
 import { PlayerSheet } from '@/components/cards/PlayerSheet';
 import { useState } from 'react';
@@ -123,20 +125,25 @@ export function TeamsBuilder({ game }: { game: Game }) {
             return (
               <View key={t.id} style={[styles.team, t.id === mine?.id && styles.teamMine]}>
                 <View style={styles.teamHead}>
-                  <View style={[styles.dot, { backgroundColor: teamColor(game, t.id) }]} />
+                  <TeamAvatar game={game} teamId={t.id} size={32} />
                   <AppText variant="name" style={styles.flex} numberOfLines={1}>
                     {t.name}
                   </AppText>
-                  <AppText variant="caption" color={colors.inkSoft}>
-                    {pregame
-                      ? t.memberIds.length < size
+                  {pregame ? (
+                    <AppText variant="caption" color={colors.inkSoft}>
+                      {t.memberIds.length < size
                         ? `${t.memberIds.length}/${size} · sta scegliendo`
-                        : `${size}/${size} · pronta`
-                      : `${place}ª · ${stand?.points ?? 0} pt`}
-                  </AppText>
+                        : `${size}/${size} · pronta`}
+                    </AppText>
+                  ) : (
+                    <Score value={stand?.points ?? 0} size="sm" />
+                  )}
                 </View>
                 <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-                  di {t.ownerId === ME.id ? 'te' : owner ? nameIn(game, owner) : '?'}
+                  {t.ownerId === ME.id
+                    ? 'Creata e allenata da te'
+                    : `Creata e allenata da ${owner ? nameIn(game, owner) : '?'}`}
+                  {!pregame && place ? ` · ${place}ª` : ''}
                 </AppText>
                 <View style={styles.teamCards}>
                   {t.memberIds.map((id) => {

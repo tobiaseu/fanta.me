@@ -58,7 +58,7 @@ export function HeroCard({
           ) : (
             eyebrow
           )}
-          <AppText variant="title" numberOfLines={2} color={dark ? colors.inkInverse : undefined}>
+          <AppText variant="title" numberOfLines={2} color={dark ? '#FFFFFF' : undefined}>
             {title}
           </AppText>
           {body ? (

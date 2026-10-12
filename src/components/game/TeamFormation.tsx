@@ -1,5 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
+import { teamByline } from '@/lib/teams';
+import { Score } from '@/components/ui/Brand';
+import { TeamAvatar } from '@/components/ui/TeamAvatar';
 import { DeckCard } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
@@ -41,15 +44,17 @@ export function TeamFormation({
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <View style={[styles.dot, { backgroundColor: teamColor(game, team.id) }]} />
-        <AppText variant="title" style={styles.flex}>
-          {team.name}
-        </AppText>
-        {place ? (
-          <AppText variant="headline" color={colors.inkSoft}>
-            {place}ª · {points ?? 0} pt
+        <TeamAvatar game={game} teamId={team.id} size={44} />
+        <View style={styles.flex}>
+          <AppText variant="title" numberOfLines={1}>
+            {team.name}
           </AppText>
-        ) : null}
+          <AppText variant="caption" color={colors.inkSoft} style={styles.regular} numberOfLines={1}>
+            {teamByline(game, team, players)}
+            {place ? ` · ${place}ª` : ''}
+          </AppText>
+        </View>
+        {place ? <Score value={points ?? 0} /> : null}
       </View>
       {mine && (
         <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>

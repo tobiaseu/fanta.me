@@ -11,7 +11,9 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { ruleById } from '@/data/rules';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
-import { teamColor } from '@/lib/teams';
+import { teamByline } from '@/lib/teams';
+import { Score } from '@/components/ui/Brand';
+import { TeamAvatar } from '@/components/ui/TeamAvatar';
 import { nameIn, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
@@ -50,23 +52,20 @@ export function TeamSummary({
   onOpen?: () => void;
 }) {
   const { members, total } = useTeamBreakdown(game, team);
+  const players = useGameStore((s) => s.players);
   const openPlayer = useOpenPlayer();
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <View style={[styles.dot, { backgroundColor: teamColor(game, team.id) }]} />
+        <TeamAvatar game={game} teamId={team.id} size={44} />
         <View style={styles.flex}>
           <AppText variant="headline">{team.name}</AppText>
-          {place ? (
-            <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-              {place}° in classifica
-            </AppText>
-          ) : null}
+          <AppText variant="caption" color={colors.inkSoft} style={styles.regular} numberOfLines={1}>
+            {teamByline(game, team, players)}
+            {place ? ` · ${place}ª` : ''}
+          </AppText>
         </View>
-        <AppText variant="number">{total}</AppText>
-        <AppText variant="caption" color={colors.inkSoft}>
-          pt
-        </AppText>
+        <Score value={total} size="lg" />
       </View>
 
       {members.map((m) => (
@@ -80,9 +79,7 @@ export function TeamSummary({
             <AppText variant="name" style={styles.flex}>
               {nameIn(game, m.player)}
             </AppText>
-            <AppText variant="name" color={m.points >= 0 ? colors.bonus : colors.malus}>
-              {m.points > 0 ? `+${m.points}` : m.points}
-            </AppText>
+            <Score value={m.points} signed size="sm" />
           </PressableScale>
           {m.events.length ? (
             <ScrollView

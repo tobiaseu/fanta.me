@@ -37,13 +37,6 @@ export function PregamePanel({ game, onInvite }: { game: Game; onInvite: () => v
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="Chi c'è" caption={`${people.length} giocatori`} />
-        <View style={styles.card}>
-          <AvatarStack players={people} size={40} max={6} />
-          <AppText variant="body" color={colors.inkSoft} style={styles.flex} numberOfLines={2}>
-            {people.map((p) => (p.id === ME.id ? 'Tu' : nameIn(game, p))).join(', ')}
-          </AppText>
-        </View>
         {game.ownerId === ME.id && (
           <Button
             label="Avvia la partita adesso"

@@ -17,7 +17,7 @@ import { StoriesRow } from '@/components/game/StoriesRow';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { PointCard } from '@/components/game/PointCard';
+import { PointLog } from '@/components/game/PointLog';
 import { Countdown } from '@/components/game/Countdown';
 import { Button } from '@/components/ui/Button';
 import { EmptyNote } from '@/components/ui/EmptyNote';
@@ -53,7 +53,6 @@ export function LiveScreen() {
   const proposals = useGameStore((s) => s.proposals);
   const simulateCall = useGameStore((s) => s.simulateCall);
   const refreshTick = useUiStore((s) => s.refreshTick);
-  const [view, setView] = useState<'list' | 'photo'>('list');
 
   const { calls, feed } = useMemo(() => {
     const mine = events.filter((e) => e.gameId === game?.id);
@@ -166,65 +165,12 @@ export function LiveScreen() {
           </View>
         )}
         <View style={styles.section}>
-          <View style={styles.headRow}>
-            <View style={styles.flex}>
-              <SectionHeader
-                title={live ? 'Tutti i punti' : 'Com’è andata'}
-                caption={`${feed.filter((e) => e.status === 'confirmed').length} confermati, dal più recente.`}
-              />
-            </View>
-            <View style={styles.toggle} accessibilityRole="tablist">
-              {(['list', 'photo'] as const).map((v) => (
-                <PressableScale
-                  key={v}
-                  accessibilityRole="tab"
-                  accessibilityLabel={v === 'list' ? 'Vista a lista' : 'Vista con le foto'}
-                  accessibilityState={{ selected: view === v }}
-                  onPress={() => {
-                    haptics.tap();
-                    setView(v);
-                  }}
-                  style={[styles.toggleBtn, view === v && styles.toggleOn]}>
-                  <Icon
-                    name={v === 'list' ? 'list' : 'camera'}
-                    size={18}
-                    color={view === v ? colors.ink : colors.inkSoft}
-                  />
-                </PressableScale>
-              ))}
-            </View>
-          </View>
+          <SectionHeader
+            title={live ? 'Tutti i punti' : 'Com’è andata'}
+            caption={`${feed.filter((e) => e.status === 'confirmed').length} confermati, dal più recente. Tocca un punto per vedere la foto.`}
+          />
           {feed.length ? (
-            <View style={view === 'list' ? styles.slimList : styles.list}>
-              {feed.map((e) => {
-                const player = players.find((p) => p.id === e.playerId);
-                return (
-                  <Animated.View key={e.id} layout={LinearTransition.springify()}>
-                    {view === 'list' ? (
-                      <SlimRow
-                        event={e}
-                        name={player ? nameIn(game, player) : ''}
-                        ago={timeAgo(e.createdAt, now)}
-                        need={votesNeeded(game)}
-                        onPress={() => open(e.id)}
-                      />
-                    ) : (
-                      <PointCard
-                        event={e}
-                        player={player}
-                        name={player ? nameIn(game, player) : ''}
-                        author={(() => {
-                          const a = players.find((p) => p.id === e.authorId);
-                          return a ? nameIn(game, a) : undefined;
-                        })()}
-                        now={now}
-                        onPress={() => open(e.id)}
-                      />
-                    )}
-                  </Animated.View>
-                );
-              })}
-            </View>
+            <PointLog game={game} events={feed} />
           ) : (
             <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
           )}
@@ -294,46 +240,6 @@ const styles = StyleSheet.create({
   },
   slimText: { flex: 1, gap: 2 },
 });
-
-/** Vista a lista: card orizzontale snella, solo testo. Chi, quale carta, quanti punti. */
-function SlimRow({
-  event,
-  name,
-  ago,
-  need,
-  onPress,
-}: {
-  event: FeedEvent;
-  name: string;
-  ago: string;
-  need: number;
-  onPress: () => void;
-}) {
-  const rule = ruleById(event.ruleId);
-  const pending = event.status === 'pending';
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={`${name}, ${rule?.label ?? 'Punto'}, ${event.points} punti`}
-      onPress={onPress}
-      pressedScale={0.98}
-      style={[styles.slim, event.status === 'rejected' && styles.rejected]}>
-      <View style={styles.slimText}>
-        <AppText variant="name" numberOfLines={1}>
-          {name}
-        </AppText>
-        <AppText variant="caption" color={colors.inkSoft} numberOfLines={1}>
-          {rule?.label ?? 'Punto'} · {ago}
-          {pending ? ` · ${event.votes.confirm}/${need} voti` : event.status === 'rejected' ? ' · respinto' : ''}
-        </AppText>
-      </View>
-      <AppText variant="headline" color={event.points > 0 ? colors.bonus : colors.malus}>
-        {event.points > 0 ? '+' : ''}
-        {event.points}
-      </AppText>
-    </PressableScale>
-  );
-}
 
 /** Emoji che galleggia piano su e giù (e oscilla un poco): dà vita all'attesa. */
 function FloatingEmoji({ emoji }: { emoji: string }) {

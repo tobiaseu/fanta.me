@@ -1,3 +1,4 @@
+import { PointLog } from '@/components/game/PointLog';
 import { PowersPanel } from '@/components/game/PowersPanel';
 import { ME } from '@/data/mock';
 import { Fragment, useMemo } from 'react';
@@ -67,7 +68,6 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
     };
   }, [proposals, events, activations, game, player.id, now]);
 
-  let running = 0;
   return (
     <>
       <View style={styles.section}>
@@ -124,48 +124,7 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
             Ancora nessun punto ufficiale.
           </AppText>
         ) : (
-          <View style={styles.timeline}>
-            <View style={styles.rail} />
-            {log.map((e) => {
-              running += e.points;
-              const rule = ruleById(e.ruleId);
-              const author = players.find((p) => p.id === e.authorId);
-              return (
-                <Fragment key={e.id}>
-                  <View style={styles.when}>
-                    <View style={styles.dot} />
-                    <AppText variant="micro" color={colors.inkSoft}>
-                      {timeLabel(e.createdAt)}
-                    </AppText>
-                  </View>
-                  <View style={styles.entry}>
-                    <View style={styles.entryHead}>
-                      {rule && <RuleSticker rule={rule} size={48} />}
-                      <View style={styles.flex}>
-                        <AppText variant="serifCard" numberOfLines={1}>
-                          {rule?.label ?? 'Carta'}
-                        </AppText>
-                        <AppText variant="micro" color={colors.inkSoft}>
-                          Totale {running} punti
-                        </AppText>
-                      </View>
-                      <AppText variant="number" color={e.points > 0 ? colors.bonus : colors.malus}>
-                        {e.points > 0 ? `+${e.points}` : e.points}
-                      </AppText>
-                    </View>
-                    {e.review && (
-                      <View style={styles.review}>
-                        {author && <Avatar player={author} size={22} sticker={false} />}
-                        <AppText variant="caption" color={colors.inkSoft} style={styles.reviewText}>
-                          “{e.review}” <AppText variant="caption">{author?.name}</AppText>
-                        </AppText>
-                      </View>
-                    )}
-                  </View>
-                </Fragment>
-              );
-            })}
-          </View>
+          <PointLog game={game} events={log} showPlayer={false} running />
         )}
       </View>
     </>

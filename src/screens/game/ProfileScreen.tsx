@@ -7,7 +7,8 @@ import { TeamFormation } from '@/components/game/TeamFormation';
 import { PlayerGameSection } from '@/components/game/PlayerGameSection';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
-import { CoinIcon } from '@/components/ui/Brand';
+import { Score } from '@/components/ui/Brand';
+import { playerTeamLine } from '@/lib/teams';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { NOTIF_LEVELS, NotifLevelPicker } from '@/components/profile/NotifLevelPicker';
@@ -112,12 +113,11 @@ export function ProfileScreen() {
               <Avatar player={r.player} size={40} sticker={false} />
               <View style={styles.flex}>
                 <AppText variant="name">{nameIn(game, r.player)}</AppText>
-                <AppText variant="body" color={colors.inkMuted}>
-                  @{r.player.handle}
+                <AppText variant="caption" color={colors.inkSoft} style={styles.regular} numberOfLines={1}>
+                  {playerTeamLine(game, r.player.id) ?? `@${r.player.handle}`}
                 </AppText>
               </View>
-              <CoinIcon />
-              <AppText variant="name">{r.points}</AppText>
+              <Score value={r.points} />
             </PressableScale>
           ))}
       </View>

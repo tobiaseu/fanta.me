@@ -1,10 +1,11 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { EmptyNote } from '@/components/ui/EmptyNote';
 import { Shine } from '@/components/ui/Shine';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
-import { PowerArt, PowerKind, POWER_GLOW } from '@/components/powers/PowerCard';
+import { PowerArt, PowerFrame, PowerKind, finishOf, powerGlow } from '@/components/powers/PowerCard';
+import { PLAY_RATIO } from '@/components/cards/PlayCard';
 import { POWER_UPS } from '@/data/rules';
 import { formatHoursLeft } from '@/lib/time';
 import { activeActivations, nameIn, useGameStore } from '@/store/useGameStore';
@@ -40,23 +41,26 @@ export function ActivePowers({ game, now }: { game: Game; now: number }) {
         return (
           <View
             key={`${a.playerId}-${a.powerId}`}
-            style={styles.shell}
+            style={[styles.shell, { boxShadow: powerGlow(power) } as ViewStyle]}
             accessibilityLabel={`${power.label} di ${nameIn(game, player)}, finisce tra ${formatHoursLeft(new Date(a.until).getTime() - now)}`}>
-            <View style={styles.chip}>
-              <PowerArt id={`ap-${a.playerId}-${a.powerId}`} active />
-              <Shine width={CARD_W} delay={i * 700} />
-              <PowerKind />
-              <View style={styles.art}>
-                <AppText style={styles.emoji}>{power.emoji}</AppText>
-              </View>
-              <AppText variant="headline" color="#FFFFFF" numberOfLines={1} style={styles.bold}>
-                {power.label}
-              </AppText>
-              <View style={styles.by}>
-                <Avatar player={player} size={16} sticker={false} />
-                <AppText variant="micro" color="rgba(255,255,255,0.8)" numberOfLines={1} style={styles.flex}>
-                  {nameIn(game, player)} · ancora {formatHoursLeft(new Date(a.until).getTime() - now)}
+            <View style={styles.frame}>
+              <PowerFrame id={`apf-${a.playerId}-${a.powerId}`} power={power} />
+              <View style={styles.chip}>
+                <PowerArt id={`ap-${a.playerId}-${a.powerId}`} vertical glow={finishOf(power).glow} />
+                <Shine width={CARD_W} delay={i * 700} />
+                <PowerKind power={power} />
+                <View style={styles.art}>
+                  <AppText style={styles.emoji}>{power.emoji}</AppText>
+                </View>
+                <AppText variant="headline" color="#FFFFFF" numberOfLines={1} style={styles.bold}>
+                  {power.label}
                 </AppText>
+                <View style={styles.by}>
+                  <Avatar player={player} size={16} sticker={false} />
+                  <AppText variant="micro" color="rgba(255,255,255,0.8)" numberOfLines={1} style={styles.flex}>
+                    {nameIn(game, player)} · ancora {formatHoursLeft(new Date(a.until).getTime() - now)}
+                  </AppText>
+                </View>
               </View>
             </View>
           </View>
@@ -69,8 +73,9 @@ export function ActivePowers({ game, now }: { game: Game; now: number }) {
 const styles = StyleSheet.create({
   scroll: { marginHorizontal: -space.md, flexGrow: 0 },
   row: { gap: space.sm, paddingHorizontal: space.md, paddingVertical: space.xs },
-  shell: { width: CARD_W, height: CARD_W, borderRadius: radius.lg, ...({ boxShadow: POWER_GLOW } as object) },
-  chip: { flex: 1, gap: 2, padding: space.sm, overflow: 'hidden', borderRadius: radius.lg },
+  shell: { width: CARD_W, height: CARD_W / PLAY_RATIO, borderRadius: radius.lg },
+  frame: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', padding: 5 },
+  chip: { flex: 1, gap: 2, padding: space.sm, overflow: 'hidden', borderRadius: radius.lg - 5 },
   art: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 40, lineHeight: 48 },
   bold: { fontWeight: '700' },

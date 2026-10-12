@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivePowers } from '@/components/game/ActivePowers';
 import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
-import { PointCard } from '@/components/game/PointCard';
+import { GroupInfo, LeagueTitle, StandingsCard } from '@/components/game/LeagueBoard';
 import { PregamePanel } from '@/components/game/PregamePanel';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
@@ -43,7 +43,7 @@ import { DEFAULT_SETTINGS, type Player } from '@/types/game';
 /**
  * DASHBOARD della partita, sulle dinamiche di FantaSanremo:
  * chiamate da votare, carta del giorno che vale doppio, capitano della squadra,
- * podio e MVP della giornata, ultimi punti.
+ * in cima il nome della lega, poi due card (cosa fare adesso, classifica) e sotto il gruppo.
  */
 export function DashboardScreen() {
   const game = useCurrentGame();
@@ -62,16 +62,13 @@ export function DashboardScreen() {
   const refreshTick = useUiStore((s) => s.refreshTick);
   const proposals = useGameStore((s) => s.proposals);
 
-  const { calls, latest } = useMemo(() => {
-    const mine = events.filter((e) => e.gameId === game?.id);
-    return {
-      calls: mine.filter((e) => e.status === 'pending').sort((a, b) => Number(!!a.myVote) - Number(!!b.myVote)),
-      latest: mine
-        .filter((e) => e.status === 'confirmed')
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 6),
-    };
-  }, [events, players, game, now]);
+  const calls = useMemo(
+    () =>
+      events
+        .filter((e) => e.gameId === game?.id && e.status === 'pending')
+        .sort((a, b) => Number(!!a.myVote) - Number(!!b.myVote)),
+    [events, game?.id],
+  );
 
   if (!game) return null;
   const day = gameDay(game, now);
@@ -81,14 +78,6 @@ export function DashboardScreen() {
     ? (myTeam.memberIds.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[])
     : [];
   const captainId = myTeam ? captains[myTeam.id] : undefined;
-  // Primi tre: squadre se ci sono, altrimenti giocatori
-  const top = game.teams?.length
-    ? computeTeamStandings(game, events, players, captains, now)
-        .slice(0, 3)
-        .map((t) => ({ id: t.team.id, name: t.team.name, points: t.points, color: teamColor(game, t.team.id) }))
-    : computeStandings(game, events, players)
-        .slice(0, 3)
-        .map((r) => ({ id: r.player.id, name: nameIn(game, r.player), points: r.points, color: r.player.color }));
   const toVote = calls.filter((c) => !c.myVote && c.playerId !== ME.id && c.authorId !== ME.id).length;
   const goTo = (tab: 'live' | 'leaderboard' | 'rules') => {
     haptics.tap();
@@ -175,13 +164,9 @@ export function DashboardScreen() {
 
   return (
     <PullToRefresh style={styles.screen} contentContainerStyle={styles.content} onRefresh={refresh} pulse={refreshTick}>
+      <LeagueTitle game={game} now={now} />
       <HeroCard {...next} />
-
-      {game.status === 'waiting' && (
-        <>
-          <PregamePanel game={game} onInvite={invite} />
-        </>
-      )}
+      <StandingsCard game={game} now={now} onOpen={() => goTo('leaderboard')} />
 
       {sudden !== 'off' && (
         <View style={styles.sudden}>
@@ -199,76 +184,9 @@ export function DashboardScreen() {
 
       {game.status === 'ended' && <ResultsPanel game={game} />}
 
-      {game.status !== 'waiting' && (
-        <View style={styles.section}>
-          <SectionHeader title={game.teams?.length ? 'Squadre in testa' : 'In testa'} />
-          {hidden ? (
-            <EmptyNote
-              emoji="🤫"
-              title="Classifica nascosta"
-              body="Finale a sorpresa: si svela tutto con i risultati."
-            />
-          ) : (
-            <View style={styles.podium}>
-              {[top[1], top[0], top[2]].map((r, k) =>
-                r ? (
-                  <PressableScale
-                    key={r.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${r.name}, ${r.points} punti`}
-                    disabled={!game.teams?.length}
-                    onPress={() => openTeam(r.id)}
-                    style={styles.podiumCol}>
-                    <View style={[styles.podiumDot, { backgroundColor: r.color }]} />
-                    <AppText variant="name" numberOfLines={1} style={styles.center}>
-                      {r.name}
-                    </AppText>
-                    <AppText variant="caption" color={colors.inkSoft}>
-                      {r.points} pt
-                    </AppText>
-                    <View style={[styles.block, { height: k === 1 ? 72 : k === 0 ? 52 : 36 }]}>
-                      <AppText variant="headline">{k === 1 ? 1 : k === 0 ? 2 : 3}</AppText>
-                    </View>
-                  </PressableScale>
-                ) : null,
-              )}
-            </View>
-          )}
-          {!hidden && <Button label="Vedi la classifica" variant="tertiary" onPress={() => goTo('leaderboard')} />}
-        </View>
-      )}
+      <GroupInfo game={game} onInvite={invite} />
 
-      {game.status !== 'waiting' && (
-        <View style={styles.section}>
-          <SectionHeader title="Ultimi punti" action={{ label: 'Tutti nel Live', onPress: () => goTo('live') }} />
-          {latest.length ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.hScroll}
-              contentContainerStyle={styles.hRow}>
-              {latest.map((e) => {
-                const p = players.find((x) => x.id === e.playerId);
-                const a = players.find((x) => x.id === e.authorId);
-                return (
-                  <PointCard
-                    key={e.id}
-                    event={e}
-                    player={p}
-                    name={p ? nameIn(game, p) : ''}
-                    author={a ? nameIn(game, a) : undefined}
-                    now={now}
-                    style={styles.pointCard}
-                    onPress={() => router.push({ pathname: '/call/[eventId]', params: { eventId: e.id } })}
-                  />
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
-          )}
-        </View>
-      )}
+      {game.status === 'waiting' && <PregamePanel game={game} onInvite={invite} />}
 
       {game.status === 'live' && (
         <View style={styles.section}>
@@ -295,7 +213,9 @@ export function DashboardScreen() {
                 </AppText>
               </View>
               <View style={styles.double}>
-                <AppText variant="headline">×2</AppText>
+                <AppText variant="headline" color="#0B0B0D">
+                  ×2
+                </AppText>
               </View>
             </PressableScale>
           )}

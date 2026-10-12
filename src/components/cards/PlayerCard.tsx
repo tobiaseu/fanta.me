@@ -1,5 +1,6 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { CoinIcon } from '@/components/ui/Brand';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { CardGlow } from '@/components/ui/ActionRow';
@@ -53,8 +54,9 @@ export function PlayerCard({
         </AppText>
         {points !== undefined && (
           <View style={styles.gem}>
+            <CoinIcon size={12} />
             <AppText variant="micro" color={colors.inkInverse} style={styles.gemText}>
-              {points} pt
+              {points}
             </AppText>
           </View>
         )}
@@ -98,7 +100,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 10,
     backgroundColor: colors.ink,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   gemText: { fontSize: 11, lineHeight: 13, fontWeight: '700' },
   check: {

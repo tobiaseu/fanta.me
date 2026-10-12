@@ -1,4 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CoinIcon } from '@/components/ui/Brand';
+import { playerTeamLine } from '@/lib/teams';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -183,8 +185,14 @@ export function CallScreen() {
               style={styles.who}>
               <Avatar player={player} size={36} sticker={false} />
               <View style={styles.flex}>
-                <AppText variant="headline" color={WHITE}>
+                <AppText variant="headline" color={WHITE} numberOfLines={1}>
                   {name}
+                  {game && playerTeamLine(game, player.id) ? (
+                    <AppText variant="caption" color={WHITE_SOFT} style={styles.regular}>
+                      {'  '}
+                      {game && playerTeamLine(game, player.id)}
+                    </AppText>
+                  ) : null}
                 </AppText>
                 <View style={styles.byRow}>
                   <AppText variant="micro" color={WHITE_SOFT}>
@@ -212,9 +220,13 @@ export function CallScreen() {
           entering={FadeInDown.duration(280)}
           pointerEvents="box-none"
           style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
-          <AppText style={[styles.points, { color: isBonus ? '#7CF29A' : '#FF8A80' }]}>
-            {isBonus ? `+${event.points}` : event.points} punti{confirmed ? ', confermati' : ''}
-          </AppText>
+          <View style={styles.pointsRow}>
+            <CoinIcon size={18} />
+            <AppText style={[styles.points, { color: isBonus ? '#7CF29A' : '#FF8A80' }]}>
+              {isBonus ? `+${event.points}` : event.points}
+              {confirmed ? ' · confermati' : ''}
+            </AppText>
+          </View>
           <AppText variant="serifTitle" color={WHITE}>
             {rule.emoji} {rule.label}
           </AppText>
@@ -381,6 +393,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   points: { fontSize: 16, lineHeight: 20, fontWeight: '700' },
+  pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   regular: { fontWeight: '400' },
   tally: { gap: space.xxs, marginVertical: space.xs },
   bar: { flexDirection: 'row', gap: 3 },
