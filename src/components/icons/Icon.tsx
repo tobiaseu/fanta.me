@@ -27,7 +27,8 @@ export type IconName =
   | 'compass'
   | 'globe'
   | 'user'
-  | 'search';
+  | 'search'
+  | 'share';
 
 interface Props {
   name: IconName;
@@ -117,6 +118,9 @@ export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 1.4 }:
           {...p}
           d="M12.15 16.5v2.1M7.15 22h10v-1c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2v1ZM6.15 22h12M12 16c-3.87 0-7-3.13-7-7V6c0-2.21 1.79-4 4-4h6c2.21 0 4 1.79 4 4v3c0 3.87-3.13 7-7 7ZM5.47 11.65c-.75-.24-1.41-.68-1.93-1.2-.9-1-1.5-2.2-1.5-3.6s1.1-2.5 2.5-2.5h.65M18.53 11.65c.75-.24 1.41-.68 1.93-1.2.9-1 1.5-2.2 1.5-3.6s-1.1-2.5-2.5-2.5h-.65"
         />
+      )}
+      {name === 'share' && (
+        <Path {...p} d="M12 15V3M8 7l4-4 4 4M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12" />
       )}
       {name === 'send' && <Path {...p} d="M21.5 2.5 10.5 13.5M21.5 2.5l-7 19-4-8-8-4 19-7Z" />}
       {name === 'settings' && (

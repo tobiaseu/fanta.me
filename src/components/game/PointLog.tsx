@@ -79,20 +79,22 @@ export function PointLog({
                     {e.double ? ' · ×2' : ''}
                   </AppText>
                   {showPlayer && player ? (
-                    <View style={styles.who}>
-                      <Avatar player={player} size={18} sticker={false} />
-                      <AppText variant="caption" numberOfLines={1} style={styles.flexText}>
-                        {who}
-                        {team ? (
-                          <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
-                            {'  '}
-                            {team}
-                          </AppText>
-                        ) : null}
-                      </AppText>
-                    </View>
+                    <>
+                      <View style={styles.who}>
+                        <Avatar player={player} size={18} sticker={false} />
+                        <AppText variant="caption" numberOfLines={1} style={styles.flexText}>
+                          {who}
+                        </AppText>
+                      </View>
+                      {/* La squadra su una riga sua, così nome e squadra non si troncano a vicenda */}
+                      {team ? (
+                        <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
+                          {team}
+                        </AppText>
+                      ) : null}
+                    </>
                   ) : null}
-                  <AppText variant="micro" color={pending ? colors.ink : colors.inkSoft} style={styles.regular}>
+                  <AppText variant="micro" color={pending ? colors.ink : colors.inkSoft}>
                     {pending
                       ? `In votazione · ${e.votes.confirm}/${need} sì`
                       : rejected
@@ -141,7 +143,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 3 },
   flexText: { flex: 1 },
   who: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  regular: { fontWeight: '400' },
   side: { alignItems: 'flex-end', gap: 6 },
   review: { fontStyle: 'italic', fontWeight: '400', paddingHorizontal: space.xxs },
 });

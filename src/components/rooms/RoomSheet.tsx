@@ -90,7 +90,7 @@ export function RoomSheet({
                   <AppText variant="headline" color={p.ink} style={styles.bold}>
                     {s.value}
                   </AppText>
-                  <AppText variant="micro" color={p.soft} style={styles.regular}>
+                  <AppText variant="micro" color={p.soft}>
                     {s.label}
                   </AppText>
                 </View>

@@ -24,7 +24,7 @@ export const colors = {
   ink: '#000000',
   inkSoft: '#6E6E6E',
   inkMuted: 'rgba(0, 0, 0, 0.5)',
-  inkFaint: '#909090',
+  inkFaint: '#6E6E73',
   inkInverse: '#FFFFFF',
 
   // Stato "in partita" (verde)
@@ -54,6 +54,8 @@ export const colors = {
   malus: '#D92D20',
   malusSoft: 'rgba(255, 130, 130, 0.5)',
   malusBorder: '#FF0000',
+  /** Azioni distruttive (Elimina account) */
+  destructive: '#D92D20',
 
   // Palette illustrazioni rubber-hose (come lo sticker "La Smurratona")
   toonBody: '#FFFDF5',
@@ -64,6 +66,17 @@ export const colors = {
   toonGreen: '#3DBA5B',
   toonInk: '#111114',
   sticker: '#FFFFFF',
+
+  // Colori delle squadre (stemmi e avatar)
+  teamBlue: '#2F7BEA',
+  teamPurple: '#8B6CF6',
+  teamGreen: '#3DBA5B',
+  teamRed: '#F25C54',
+
+  // Rarità delle carte
+  tierNormal: '#FFD84D',
+  tierRare: '#2F7BEA',
+  tierEpic: '#8B5CF6',
 } as const;
 
 /** Scala di spaziatura: 16/24 sono i gap "di respiro" delle linee guida. */
@@ -79,10 +92,10 @@ export const space = {
 
 export const radius = {
   sm: 12,
-  md: 16,
+  md: 12,
   lg: 24, // card, CTA
-  xl: 28, // navbar flottante
-  bar: 36, // top bar
+  xl: 24, // navbar flottante
+  bar: 24, // top bar
   pill: 999,
 } as const;
 
@@ -106,11 +119,11 @@ export const type = {
   name: { fontSize: 15, lineHeight: 20, fontWeight: '600' },
   body: { fontSize: 15, lineHeight: 21, fontWeight: '400' },
   caption: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  micro: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  micro: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
   number: { fontSize: 22, lineHeight: 26, fontWeight: '800', fontVariant: ['tabular-nums'] },
   serifTitle: { fontFamily: fonts.serifBold, fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
-  serifHeading: { fontFamily: fonts.serifBold, fontSize: 26, lineHeight: 32, letterSpacing: -0.4 },
-  serifCard: { fontFamily: fonts.serifSemi, fontSize: 18, lineHeight: 22, letterSpacing: -0.2 },
+  serifHeading: { fontFamily: fonts.serifBold, fontSize: 24, lineHeight: 30, letterSpacing: -0.4 },
+  serifCard: { fontFamily: fonts.serifSemi, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
 } as const;
 
 /** Layout: margine laterale, spazio tra sezioni, padding delle card. */
@@ -192,6 +205,7 @@ const DARK: Partial<Record<keyof typeof colors, string>> = {
   liveStrip: 'rgba(52, 199, 89, 0.22)',
   bonus: '#30B94D',
   malus: '#FF453A',
+  destructive: '#FF453A',
   ended: 'rgba(255, 255, 255, 0.10)',
   ctaSoft: 'rgba(255, 227, 130, 0.16)',
   accent: '#FF9F52',

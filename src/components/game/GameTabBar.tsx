@@ -18,7 +18,7 @@ const TABS: Record<string, { label: string; icon?: IconName }> = {
   rules: { label: 'Mazzo', icon: 'grid' },
   live: { label: 'Live' }, // stessa forma delle altre tab: icona play (lucchetto prima del via)
   leaderboard: { label: 'Classifica', icon: 'people' },
-  profile: { label: 'Profilo' },
+  profile: { label: 'Io' },
 };
 
 export const TAB_BAR_SPACE = 72 + space.lg + space.md;
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     ...shadow.floating,
   },
   tab: { alignItems: 'center', justifyContent: 'center', gap: 3, width: 64, height: 56 },
-  label: { fontSize: 11.5, lineHeight: 14, fontWeight: '600' },
+  label: { fontSize: 12, lineHeight: 14, fontWeight: '600' },
   avatarRing: { padding: 1, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
   avatarRingActive: { borderColor: colors.accent },
 });

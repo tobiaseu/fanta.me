@@ -45,7 +45,7 @@ export default function GameLayout() {
           <Tabs.Screen name="rules" options={{ title: 'Mazzo' }} />
           <Tabs.Screen name="live" options={{ title: 'Live' }} />
           <Tabs.Screen name="leaderboard" options={{ title: 'Classifica' }} />
-          <Tabs.Screen name="profile" options={{ title: 'Profilo' }} />
+          <Tabs.Screen name="profile" options={{ title: 'Io' }} />
           <Tabs.Screen name="feed" options={{ title: 'Cronaca' }} />
         </Tabs>
         <QuickActionSheet game={game} />

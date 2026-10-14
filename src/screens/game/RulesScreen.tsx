@@ -489,7 +489,7 @@ export function RulesScreen() {
                     {[main, second].map((pp, k) =>
                       pp ? (
                         <View key={k} style={[styles.power, k === 0 && styles.powerMain]}>
-                          <AppText variant="micro">
+                          <AppText variant="micro" style={styles.bold}>
                             {pp.emoji} {pp.label}
                           </AppText>
                         </View>
@@ -598,4 +598,5 @@ const styles = StyleSheet.create({
   },
   premiumEmoji: { fontSize: 28, lineHeight: 34 },
   regular: { fontWeight: '400' },
+  bold: { fontWeight: '600' },
 });

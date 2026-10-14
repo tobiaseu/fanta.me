@@ -31,7 +31,7 @@ const STATUS: Record<Game['status'], string> = { live: 'In corso', waiting: 'Pre
 /**
  * LOBBY: la casa del giocatore. Dall'alto, in ordine di urgenza:
  *  1. l'ultima partita vista, con l'unica azione gialla della pagina (Rientra / Vota);
- *  2. i due ingressi per iniziare: Entra con codice (a sinistra) e Crea partita (a destra);
+ *  2. i due ingressi per iniziare: Entra con codice (a sinistra) e Crea stanza (a destra);
  *  3. le altre partite attive, con la stessa card di quelle consigliate ma più informazioni;
  *  4. il Libro del Fanta;
  *  5. le partite consigliate dal sistema, in classifica come Apple Games.
@@ -128,7 +128,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
           />
           <EntryTile
             icon="plus"
-            title="Crea partita"
+            title="Crea stanza"
             note="Da zero o da un mazzo"
             strong
             onPress={() => router.push('/room/start')}

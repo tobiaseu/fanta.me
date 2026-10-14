@@ -35,7 +35,7 @@ export const TIER_LABEL: Record<Tier, string> = { normal: 'Normale', rare: 'Rara
 /**
  * Una carta dice due cose con due segnali diversi, uguali in chiaro e in scuro:
  *  - il FONDO è sempre bianco, così una carta non si confonde mai con stanze, poteri o sfondo;
- *  - il COLORE DIETRO L'IMMAGINE dice la rarità: giallo chiaro = normale, arancio = rara, viola = epica;
+ *  - il COLORE DIETRO L'IMMAGINE dice la rarità: giallo chiaro = normale, blu = rara, viola = epica;
  *  - il TAG in alto dice il segno: Bonus verde o Malus rosso.
  */
 type Paint = {
@@ -62,7 +62,11 @@ const WHITE_CARD = {
   inverse: false,
 };
 
-export const TIER_COLOR: Record<Tier, string> = { normal: '#FFD84D', rare: '#FF8A2B', epic: '#8B5CF6' };
+export const TIER_COLOR: Record<Tier, string> = {
+  normal: colors.tierNormal,
+  rare: colors.tierRare,
+  epic: colors.tierEpic,
+};
 
 const NORMAL: Paint = {
   ...WHITE_CARD,
@@ -74,10 +78,10 @@ const NORMAL: Paint = {
 };
 const RARE: Paint = {
   ...WHITE_CARD,
-  glow: '#FF8A2B',
+  glow: '#2F7BEA',
   glowOpacity: 0.8,
-  ring: '#F0662E',
-  accent: '#FF8A2B',
+  ring: '#1F5FC4',
+  accent: '#2F7BEA',
   onAccent: '#FFFFFF',
 };
 const EPIC: Paint = {
@@ -215,7 +219,6 @@ interface Props {
 export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLongPress, style }: Props) {
   const ref = useRef<View>(null);
   const p = cardPaint(rule);
-  const dark = p.inverse;
   const open = () => {
     const node = ref.current;
     if (!node?.measureInWindow) return onOpen();
@@ -235,6 +238,8 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
           <CardArt rule={rule} id={`c-${rule.id}`} />
           <View style={styles.top}>
             <PointsTag points={rule.points} />
+            {/* La rarità sulla faccia è solo un puntino del suo colore (e il bagliore dietro l'immagine) */}
+            <View style={[styles.tierDot, { backgroundColor: TIER_COLOR[tierOf(rule)] }]} />
           </View>
           <View style={styles.art}>
             <Text style={styles.emoji} allowFontScaling={false}>
@@ -242,13 +247,15 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
             </Text>
           </View>
           <View style={styles.body}>
-            <TierTag rule={rule} onDark={dark} />
             <AppText variant="headline" color={p.ink} numberOfLines={2} style={styles.title}>
               {rule.label}
             </AppText>
-            <AppText variant="micro" color={p.soft} numberOfLines={1} style={styles.subtitle}>
-              {cardSubtitle(rule, authorName)}
-            </AppText>
+            {/* La categoria resta solo nel dettaglio: sulla faccia solo autore o premio */}
+            {(rule.epic || rule.authorId) && (
+              <AppText variant="micro" color={p.soft} numberOfLines={1} style={styles.subtitle}>
+                {cardSubtitle(rule, authorName)}
+              </AppText>
+            )}
             {cta ? (
               <PressableScale
                 accessibilityRole="button"
@@ -258,16 +265,9 @@ export function PlayCard({ rule, authorName, cta, status, dimmed, onOpen, onLong
                   haptics.tap();
                   cta.onPress();
                 }}
-                style={[styles.cta, dark ? styles.ctaOnDark : styles.ctaOnLight, cta.done && styles.ctaDone]}>
-                {cta.icon && (
-                  <Icon
-                    name={cta.icon}
-                    size={13}
-                    strokeWidth={2.6}
-                    color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'}
-                  />
-                )}
-                <AppText variant="micro" color={cta.done ? p.ink : dark ? '#0B0B0D' : '#FFFFFF'} style={styles.ctaText}>
+                style={[styles.cta, styles.ctaOutline, cta.done && styles.ctaDone]}>
+                {cta.icon && <Icon name={cta.icon} size={13} strokeWidth={2.6} color={cta.done ? p.ink : '#0B0B0D'} />}
+                <AppText variant="micro" color={cta.done ? p.ink : '#0B0B0D'} style={styles.ctaText}>
                   {cta.label}
                 </AppText>
               </PressableScale>
@@ -293,7 +293,8 @@ const styles = StyleSheet.create({
   /** Carta trofeo (unica): filo d'oro sul bordo */
   trophyEdge: { borderWidth: 2, borderColor: '#E8B53A' },
   cardLight: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  top: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  tierDot: { width: 8, height: 8, borderRadius: 4 },
   points: { alignSelf: 'flex-start', height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: 'center' },
   pointsLarge: { height: 30, paddingHorizontal: space.sm, borderRadius: 15 },
   pointsText: { fontWeight: '700' },
@@ -323,8 +324,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: space.xs,
   },
-  ctaOnLight: { backgroundColor: '#0B0B0D' },
-  ctaOnDark: { backgroundColor: '#FFFFFF' },
-  ctaDone: { backgroundColor: 'rgba(127,127,127,0.18)' },
+  /** Bottone secondario: le carte sono sempre bianche, quindi bordo e testo quasi neri */
+  ctaOutline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#0B0B0D' },
+  ctaDone: { backgroundColor: 'rgba(127,127,127,0.18)', borderWidth: 0 },
   ctaText: { fontSize: 12, lineHeight: 14, fontWeight: '700' },
 });

@@ -52,7 +52,7 @@ export function HeroCard({
         </View>
         <View style={styles.flex}>
           {typeof eyebrow === 'string' ? (
-            <AppText variant="micro" color={dark ? 'rgba(255,255,255,0.6)' : colors.inkSoft}>
+            <AppText variant="micro" color={dark ? 'rgba(255,255,255,0.6)' : colors.inkSoft} style={styles.bold}>
               {eyebrow}
             </AppText>
           ) : (
@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   flexGap: { flex: 1, gap: 2 },
   regular: { fontWeight: '400' },
+  bold: { fontWeight: '600' },
   surface: { backgroundColor: colors.surface },
   proposal: { backgroundColor: colors.proposal },
   dark: { backgroundColor: '#0E0E11', overflow: 'hidden' },

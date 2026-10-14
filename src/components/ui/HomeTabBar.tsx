@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, height: 52, borderRadius: radius.xl },
   tabOn: { backgroundColor: colors.accentSoft },
-  label: { fontSize: 11, lineHeight: 13, fontWeight: '600' },
+  label: { fontSize: 12, lineHeight: 14, fontWeight: '600' },
   ring: { padding: 1, borderRadius: 13, borderWidth: 1.5, borderColor: 'transparent' },
   ringOn: { borderColor: colors.accent },
   dot: {

@@ -1,10 +1,24 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
 import { colors, layout, radius, space } from '@/theme/tokens';
 
-/** Segnaposto per le sezioni vuote: dice cosa comparirà qui, senza sembrare un errore. */
-export function EmptyNote({ emoji, title, body }: { emoji: string; title: string; body: string }) {
+/**
+ * Segnaposto per le sezioni vuote: dice cosa comparirà qui, senza sembrare un errore.
+ * Se c'è qualcosa da fare per riempirla, `action` lo offre subito.
+ */
+export function EmptyNote({
+  emoji,
+  title,
+  body,
+  action,
+}: {
+  emoji: string;
+  title: string;
+  body: string;
+  action?: { label: string; onPress: () => void };
+}) {
   return (
     <View style={styles.box}>
       <AppText style={styles.emoji}>{emoji}</AppText>
@@ -13,6 +27,7 @@ export function EmptyNote({ emoji, title, body }: { emoji: string; title: string
         <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
           {body}
         </AppText>
+        {action && <Button label={action.label} variant="secondary" onPress={action.onPress} style={styles.action} />}
       </View>
     </View>
   );
@@ -32,4 +47,5 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 28, lineHeight: 34 },
   text: { flex: 1, gap: 2 },
   regular: { fontWeight: '400' },
+  action: { alignSelf: 'flex-start', height: 40, marginTop: space.xs },
 });

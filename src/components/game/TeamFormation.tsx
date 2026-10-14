@@ -96,7 +96,9 @@ export function TeamFormation({
                     showToast({ text: `${nameIn(game, p)} è il capitano di oggi` });
                   }}
                   style={styles.capBtn}>
-                  <AppText variant="micro">Capitano</AppText>
+                  <AppText variant="micro" style={styles.bold}>
+                    Capitano
+                  </AppText>
                 </PressableScale>
               )}
               <AppText variant="caption" color={colors.inkSoft}>
@@ -123,6 +125,7 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: 6 },
   flex: { flex: 1 },
   regular: { fontWeight: '400' },
+  bold: { fontWeight: '600' },
   capBtn: {
     paddingHorizontal: space.sm,
     height: 28,

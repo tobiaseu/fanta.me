@@ -5,6 +5,7 @@ import { TeamAvatar } from '@/components/ui/TeamAvatar';
 import { PlayerCard } from '@/components/cards/PlayerCard';
 import { PlayerSheet } from '@/components/cards/PlayerSheet';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { EmptySlot } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyNote } from '@/components/ui/EmptyNote';
@@ -24,6 +25,7 @@ import type { Game, Player } from '@/types/game';
  * sotto i giocatori ancora liberi da prendere. In partita le carte mostrano i punti.
  */
 export function TeamsBuilder({ game }: { game: Game }) {
+  const router = useRouter();
   const players = useGameStore((s) => s.players);
   const events = useGameStore((s) => s.events);
   const captains = useGameStore((s) => s.captains);
@@ -225,6 +227,10 @@ export function TeamsBuilder({ game }: { game: Game }) {
               emoji="🤝"
               title="Sei solo in stanza"
               body="Invita qualcuno: in squadra puoi mettere tutti tranne te."
+              action={{
+                label: 'Invita amici',
+                onPress: () => router.push({ pathname: '/onboarding/invite', params: { gameId: game.id } }),
+              }}
             />
           )}
         </View>

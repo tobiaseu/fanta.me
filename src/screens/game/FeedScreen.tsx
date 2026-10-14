@@ -7,11 +7,13 @@ import { FeedItem } from '@/components/game/FeedItem';
 import { TAB_BAR_SPACE } from '@/components/game/GameTabBar';
 import { RubberHoseMascot } from '@/components/illustrations/RubberHoseMascot';
 import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useNow } from '@/hooks/useNow';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { useGameStore } from '@/store/useGameStore';
+import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, space } from '@/theme/tokens';
 
 /** Cronologia completa: ogni punto con foto, ora, chi l'ha chiamato e i voti. Si apre da "Guarda tutti i punti". */
@@ -22,6 +24,7 @@ export function FeedScreen() {
   const allEvents = useGameStore((s) => s.events);
   const players = useGameStore((s) => s.players);
   const openPlayer = useOpenPlayer();
+  const openQuickAction = useUiStore((s) => s.openQuickAction);
 
   const confirmed = useMemo(
     () =>
@@ -54,6 +57,9 @@ export function FeedScreen() {
           <AppText variant="body" color={colors.inkSoft} style={styles.center}>
             Ancora nessun punto ufficiale.{'\n'}Qualcuno dovrà pur fare la prima figuraccia.
           </AppText>
+          {game.status === 'live' && (
+            <Button label="Chiama il primo punto" variant="secondary" onPress={() => openQuickAction()} />
+          )}
         </View>
       }
       renderItem={({ item }) => (

@@ -123,7 +123,7 @@ export function LeaderboardScreen() {
             <TeamAvatar game={game} teamId={t.id} size={40} />
             <View style={styles.flex1}>
               <AppText variant="name">{t.name}</AppText>
-              <AppText variant="micro" color={colors.inkSoft} style={styles.regular}>
+              <AppText variant="micro" color={colors.inkSoft}>
                 {teamByline(game, t, players)}
               </AppText>
             </View>
@@ -264,7 +264,7 @@ export function LeaderboardScreen() {
                   {row.name}
                   {isMe ? ' (tu)' : ''}
                 </AppText>
-                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
+                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
                   {row.isTeam
                     ? teamByline(game, { ownerId: game.teams?.find((t) => t.id === row.id)?.ownerId ?? '' }, players)
                     : (playerTeamLine(game, row.id) ?? `@${row.lead.handle}`)}
@@ -300,10 +300,18 @@ function PeriodFilter({ value, today, onChange }: { value: Period; today: string
           setOpen((o) => !o);
         }}
         style={[styles.filter, value === 'today' && styles.filterOn]}>
-        <Icon name="calendar" size={15} strokeWidth={2.2} color={value === 'today' ? colors.ctaInk : colors.ink} />
         <AppText variant="caption" color={value === 'today' ? colors.ctaInk : colors.ink}>
-          {value === 'all' ? 'Tutta' : 'Oggi'}
+          {value === 'all' ? 'Tutta la partita' : 'Oggi'}
         </AppText>
+        {/* Freccia giù: dice che è un menu */}
+        <View style={styles.chevronDown}>
+          <Icon
+            name="chevron-right"
+            size={13}
+            strokeWidth={2.2}
+            color={value === 'today' ? colors.ctaInk : colors.ink}
+          />
+        </View>
       </PressableScale>
       {open && (
         <Animated.View entering={FadeInUp.duration(160)} style={styles.menu}>
@@ -331,9 +339,9 @@ function PeriodFilter({ value, today, onChange }: { value: Period; today: string
 }
 
 const styles = StyleSheet.create({
+  chevronDown: { transform: [{ rotate: '90deg' }] },
   toolbar: { flexDirection: 'row', alignItems: 'center', gap: space.sm, zIndex: 10 },
   periodNote: { fontWeight: '400', marginTop: -space.md },
-  regular: { fontWeight: '400' },
   filterWrap: { zIndex: 10 },
   filter: {
     flexDirection: 'row',

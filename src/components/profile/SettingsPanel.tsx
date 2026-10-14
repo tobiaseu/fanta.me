@@ -158,7 +158,7 @@ export function SettingsPanel() {
           <Button label="Esci dall'account" variant="secondary" onPress={signOut} />
           <Button
             label="Elimina account"
-            variant="tertiary"
+            variant="destructive"
             onPress={() =>
               confirmAction(
                 'Eliminare l’account?',

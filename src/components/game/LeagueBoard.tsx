@@ -1,10 +1,12 @@
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
 import { Score } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
+import { ObjectModal } from '@/components/ui/ObjectModal';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { TeamAvatar } from '@/components/ui/TeamAvatar';
 import { ME } from '@/data/mock';
@@ -131,7 +133,7 @@ export function StandingsCard({ game, now, onOpen }: { game: Game; now: number; 
                 <AppText variant="name" numberOfLines={1}>
                   {r.name}
                 </AppText>
-                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
+                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
                   {r.team ? r.sub : playerTeamLine(game, r.id)}
                 </AppText>
               </View>
@@ -152,8 +154,8 @@ export function StandingsCard({ game, now, onOpen }: { game: Game; now: number; 
 
 /**
  * La base della lega, come le info di un gruppo WhatsApp:
- * tre numeri (persone, partite insieme, stato), le squadre con chi le allena
- * e tutti i partecipanti uno per uno, con la loro squadra e i loro punti.
+ * tre numeri (persone, partite insieme, stato) e una riga compatta con chi c'è;
+ * toccandola si apre il pop up con le squadre e tutti i partecipanti, con squadra e punti.
  */
 export function GroupInfo({ game, onInvite }: { game: Game; onInvite: () => void }) {
   const players = useGameStore((s) => s.players);
@@ -161,6 +163,8 @@ export function GroupInfo({ game, onInvite }: { game: Game; onInvite: () => void
   const events = useGameStore((s) => s.events);
   const openTeam = useUiStore((s) => s.openTeam);
   const openPlayer = useOpenPlayer();
+  const win = useWindowDimensions();
+  const [open, setOpen] = useState(false);
   const people = players.filter((p) => game.playerIds.includes(p.id));
   // Partite giocate da questo gruppo: quelle con almeno metà delle stesse persone
   const together = games.filter(
@@ -187,80 +191,126 @@ export function GroupInfo({ game, onInvite }: { game: Game; onInvite: () => void
         </View>
       </View>
 
-      {game.teams?.length ? (
-        <View style={styles.list}>
-          <AppText variant="caption" color={colors.inkSoft} style={styles.listHead}>
-            {game.teams.length} squadre
-          </AppText>
-          {game.teams.map((t, i) => (
-            <PressableScale
-              key={t.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Squadra ${t.name}, ${teamByline(game, t, players)}`}
-              onPress={() => openTeam(t.id)}
-              style={[styles.member, i > 0 && styles.divider]}>
-              <TeamAvatar game={game} teamId={t.id} size={44} />
-              <View style={styles.flex}>
-                <AppText variant="name" numberOfLines={1}>
-                  {t.name}
-                </AppText>
-                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
-                  {teamByline(game, t, players)}
-                </AppText>
-              </View>
-              <AvatarStack
-                players={t.memberIds.map((id) => players.find((p) => p.id === id)).filter((p): p is Player => !!p)}
-                size={24}
-              />
-            </PressableScale>
-          ))}
-        </View>
-      ) : null}
-
-      <View style={styles.list}>
-        <AppText variant="caption" color={colors.inkSoft} style={styles.listHead}>
-          {people.length} partecipanti
+      {/* Una riga compatta: chi c'è. Le liste complete stanno nel pop up */}
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={`${people.length} persone${game.teams?.length ? `, ${game.teams.length} squadre` : ''}. Apri il gruppo`}
+        onPress={() => {
+          haptics.tap();
+          setOpen(true);
+        }}
+        style={[styles.list, styles.member, styles.summary]}>
+        <AvatarStack players={people} size={30} max={4} />
+        <AppText variant="name" style={styles.flex} numberOfLines={1}>
+          {people.length} persone{game.teams?.length ? ` · ${game.teams.length} squadre` : ''}
         </AppText>
-        {game.status !== 'ended' && (
-          <PressableScale accessibilityRole="button" onPress={onInvite} style={styles.member}>
-            <View style={styles.invite}>
-              <Icon name="plus" size={20} strokeWidth={2.4} color={colors.ctaInk} />
-            </View>
-            <AppText variant="name" style={styles.flex}>
-              Invita amici
+        <Icon name="chevron-right" size={18} color={colors.inkSoft} />
+      </PressableScale>
+
+      <ObjectModal
+        visible={open}
+        width={Math.min(400, win.width - space.lg)}
+        height={Math.min(640, win.height * 0.8)}
+        closeLabel="Chiudi il gruppo"
+        onClose={() => setOpen(false)}>
+        {(close) => (
+          <View style={styles.sheet}>
+            <AppText variant="title" style={styles.sheetTitle}>
+              Il gruppo
             </AppText>
-          </PressableScale>
-        )}
-        {sorted.map((p) => {
-          const me = p.id === ME.id;
-          return (
-            <PressableScale
-              key={p.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Profilo di ${nameIn(game, p)}`}
-              onPress={() => openPlayer(p.id)}
-              style={[styles.member, styles.divider]}>
-              <Avatar player={p} size={44} sticker={false} />
-              <View style={styles.flex}>
-                <AppText variant="name" numberOfLines={1}>
-                  {me ? 'Tu' : nameIn(game, p)}
-                </AppText>
-                <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.regular}>
-                  {playerTeamLine(game, p.id) ?? `@${p.handle}`}
-                </AppText>
-              </View>
-              {game.ownerId === p.id && (
-                <View style={styles.host}>
-                  <AppText variant="micro" color={colors.inkSoft}>
-                    Host
+            <ScrollView contentContainerStyle={styles.sheetContent}>
+              {game.teams?.length ? (
+                <View style={styles.list}>
+                  <AppText variant="caption" color={colors.inkSoft} style={styles.listHead}>
+                    {game.teams.length} squadre
                   </AppText>
+                  {game.teams.map((t, i) => (
+                    <PressableScale
+                      key={t.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Squadra ${t.name}, ${teamByline(game, t, players)}`}
+                      onPress={() => {
+                        close();
+                        openTeam(t.id);
+                      }}
+                      style={[styles.member, i > 0 && styles.divider]}>
+                      <TeamAvatar game={game} teamId={t.id} size={44} />
+                      <View style={styles.flex}>
+                        <AppText variant="name" numberOfLines={1}>
+                          {t.name}
+                        </AppText>
+                        <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
+                          {teamByline(game, t, players)}
+                        </AppText>
+                      </View>
+                      <AvatarStack
+                        players={t.memberIds
+                          .map((id) => players.find((p) => p.id === id))
+                          .filter((p): p is Player => !!p)}
+                        size={24}
+                      />
+                    </PressableScale>
+                  ))}
                 </View>
-              )}
-              {game.status !== 'waiting' && <Score value={totals.get(p.id) ?? 0} size="sm" />}
-            </PressableScale>
-          );
-        })}
-      </View>
+              ) : null}
+
+              <View style={styles.list}>
+                <AppText variant="caption" color={colors.inkSoft} style={styles.listHead}>
+                  {people.length} partecipanti
+                </AppText>
+                {game.status !== 'ended' && (
+                  <PressableScale
+                    accessibilityRole="button"
+                    onPress={() => {
+                      close();
+                      onInvite();
+                    }}
+                    style={styles.member}>
+                    <View style={styles.invite}>
+                      <Icon name="plus" size={20} strokeWidth={2.4} color={colors.ctaInk} />
+                    </View>
+                    <AppText variant="name" style={styles.flex}>
+                      Invita amici
+                    </AppText>
+                  </PressableScale>
+                )}
+                {sorted.map((p) => {
+                  const me = p.id === ME.id;
+                  return (
+                    <PressableScale
+                      key={p.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Profilo di ${nameIn(game, p)}`}
+                      onPress={() => {
+                        close();
+                        openPlayer(p.id);
+                      }}
+                      style={[styles.member, styles.divider]}>
+                      <Avatar player={p} size={44} sticker={false} />
+                      <View style={styles.flex}>
+                        <AppText variant="name" numberOfLines={1}>
+                          {me ? 'Tu' : nameIn(game, p)}
+                        </AppText>
+                        <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
+                          {playerTeamLine(game, p.id) ?? `@${p.handle}`}
+                        </AppText>
+                      </View>
+                      {game.ownerId === p.id && (
+                        <View style={styles.host}>
+                          <AppText variant="micro" color={colors.inkSoft} style={styles.bold}>
+                            Host
+                          </AppText>
+                        </View>
+                      )}
+                      {game.status !== 'waiting' && <Score value={totals.get(p.id) ?? 0} size="sm" />}
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </ObjectModal>
     </View>
   );
 }
@@ -280,6 +330,7 @@ const styles = StyleSheet.create({
   title: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: -space.sm },
   flex: { flex: 1, gap: 2 },
   regular: { fontWeight: '400' },
+  bold: { fontWeight: '600' },
   card: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: layout.card, gap: space.sm },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   rows: {},
@@ -292,6 +343,10 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 26 },
   statusDot: { width: 9, height: 9, borderRadius: 5 },
   list: { backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: space.md },
+  summary: { paddingVertical: space.md },
+  sheet: { flex: 1, backgroundColor: colors.background, borderRadius: radius.lg, overflow: 'hidden' },
+  sheetTitle: { padding: space.md, paddingBottom: space.xs },
+  sheetContent: { gap: space.sm, padding: space.md, paddingTop: 0 },
   listHead: { paddingTop: space.sm, paddingBottom: space.xxs },
   member: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
   invite: {

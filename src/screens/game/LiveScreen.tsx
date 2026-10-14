@@ -153,7 +153,8 @@ export function LiveScreen() {
               <EmptyNote
                 emoji="📭"
                 title="Niente da votare al momento"
-                body="Quando qualcuno chiama un punto compare qui come storia. Tocca il + per chiamarne uno."
+                body="Quando qualcuno chiama un punto compare qui come storia."
+                action={{ label: 'Chiama un punto', onPress: () => openQuickAction() }}
               />
             )}
           </View>
@@ -172,7 +173,12 @@ export function LiveScreen() {
           {feed.length ? (
             <PointLog game={game} events={feed} />
           ) : (
-            <EmptyNote emoji="🫣" title="Ancora nessun punto" body="Qualcuno dovrà pur fare la prima figuraccia." />
+            <EmptyNote
+              emoji="🫣"
+              title="Ancora nessun punto"
+              body="Qualcuno dovrà pur fare la prima figuraccia."
+              action={live ? { label: 'Chiama il primo punto', onPress: () => openQuickAction() } : undefined}
+            />
           )}
         </View>
       </PullToRefresh>

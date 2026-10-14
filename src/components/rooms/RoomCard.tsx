@@ -104,7 +104,7 @@ export function RoomCard({
             {title}
           </AppText>
           {subtitle ? (
-            <AppText variant="micro" color={p.soft} numberOfLines={1} style={styles.regular}>
+            <AppText variant="micro" color={p.soft} numberOfLines={1}>
               {subtitle}
             </AppText>
           ) : null}
@@ -149,7 +149,6 @@ const styles = StyleSheet.create({
   kindText: { fontSize: 11, lineHeight: 13, fontWeight: '700' },
   status: { flexShrink: 1, fontSize: 11, lineHeight: 14 },
   title: { fontSize: 17, lineHeight: 21, fontWeight: '700', marginTop: 2 },
-  regular: { fontWeight: '400' },
   foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginTop: 4 },
   extra: { flexShrink: 1 },
   cta: { height: 30, paddingHorizontal: space.sm, borderRadius: 15, justifyContent: 'center' },

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,8 +8,10 @@ import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { useNow } from '@/hooks/useNow';
+import { haptics } from '@/lib/haptics';
 import { formatHoursLeft } from '@/lib/time';
-import { gameDay } from '@/store/useGameStore';
+import { gameDay, inviteCode } from '@/store/useGameStore';
+import { useUiStore } from '@/store/useUiStore';
 import { colors, MAX_APP_WIDTH, radius, space } from '@/theme/tokens';
 import type { Game } from '@/types/game';
 
@@ -78,6 +80,25 @@ export function GameHeader({ game }: { game: Game }) {
   const cd = countdownOf(game, now);
   const left = cd ? Math.max(0, Math.floor((cd.target - now) / 1000)) : 0;
   const phase = PHASE_GUIDE[game.status];
+  const showToast = useUiStore((s) => s.showToast);
+  // Condividi la stanza: lo stesso invito dell'onboarding
+  const share = async () => {
+    haptics.tap();
+    const code = inviteCode(game);
+    const message = `Entra in "${game.name}" su Fanta.me con il codice ${code}: https://tobiaseu.github.io/fanta.me/?code=${code}`;
+    try {
+      if (Platform.OS === 'web') {
+        const nav = globalThis.navigator as Navigator | undefined;
+        if (nav?.share) await nav.share({ text: message });
+        else {
+          await nav?.clipboard?.writeText(message);
+          showToast({ text: 'Invito copiato, incollalo nel gruppo' });
+        }
+      } else await Share.share({ message });
+    } catch {
+      // condivisione annullata: niente da fare
+    }
+  };
   // Oltre i due giorni si contano giorni, ore e minuti; sotto, ore, minuti e secondi
   const tiles =
     left >= 172_800
@@ -105,18 +126,20 @@ export function GameHeader({ game }: { game: Game }) {
               else router.replace('/');
             }}
             style={styles.lobby}>
-            <Icon name="home" size={20} strokeWidth={1.6} />
+            <Icon name="home" size={18} strokeWidth={1.6} />
+            <AppText variant="caption">Esci</AppText>
           </PressableScale>
           <AppText variant="headline" numberOfLines={1} style={styles.title} accessibilityRole="header">
             {game.emoji} {game.name}
           </AppText>
           <PressableScale
             accessibilityRole="button"
-            accessibilityLabel="Il Libro del Fanta: le regole"
+            accessibilityLabel="Condividi la stanza con un invito"
             hitSlop={12}
-            onPress={() => router.push('/rulebook')}
-            style={[styles.back, styles.right]}>
-            <Icon name="book" size={22} />
+            onPress={share}
+            style={[styles.lobby, styles.right]}>
+            <Icon name="share" size={18} strokeWidth={1.6} />
+            <AppText variant="caption">Condividi</AppText>
           </PressableScale>
         </View>
 
@@ -128,7 +151,7 @@ export function GameHeader({ game }: { game: Game }) {
           onPress={() => router.navigate({ pathname: '/game/[gameId]/live', params: { gameId: game.id } })}
           style={[styles.pill, { backgroundColor: TINT[game.status].bg, borderColor: TINT[game.status].line }]}>
           <View style={[styles.dot, { backgroundColor: TINT[game.status].dot }]} />
-          <AppText variant="micro" numberOfLines={1}>
+          <AppText variant="micro" numberOfLines={1} style={styles.bold}>
             {phase.title}
             {cd ? <AppText variant="micro" color={colors.inkSoft}>{` ${cd.short}`}</AppText> : null}
           </AppText>
@@ -149,11 +172,12 @@ const styles = StyleSheet.create({
   },
   inner: { width: '100%', maxWidth: MAX_APP_WIDTH, alignSelf: 'center', paddingHorizontal: space.md, gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', height: 40 },
-  back: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
   lobby: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    height: 36,
+    borderRadius: 18,
+    paddingHorizontal: space.sm,
+    flexDirection: 'row',
+    gap: 4,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
@@ -174,7 +198,7 @@ const styles = StyleSheet.create({
   },
   pillOpen: { alignSelf: 'stretch', borderRadius: radius.md, paddingVertical: space.xs, gap: space.xs },
   open: { gap: space.xs },
-  regular: { fontWeight: '400' },
+  bold: { fontWeight: '600' },
   tiles: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tileWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tile: {

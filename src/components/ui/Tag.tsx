@@ -22,7 +22,7 @@ export function Tag({
 }) {
   return (
     <View style={[styles.tag, gold && styles.gold, filled && styles.filled, onDark && styles.onDark]}>
-      <AppText variant="micro" color={onDark ? '#FFFFFF' : gold ? '#9A7200' : colors.inkSoft}>
+      <AppText variant="micro" color={onDark ? '#FFFFFF' : gold ? '#9A7200' : colors.inkSoft} style={styles.bold}>
         {label}
       </AppText>
     </View>
@@ -30,6 +30,8 @@ export function Tag({
 }
 
 const styles = StyleSheet.create({
+  /** Tag e pill restano in grassetto: micro di base è regular */
+  bold: { fontWeight: '600' },
   tag: {
     alignSelf: 'flex-start',
     borderWidth: 1,
