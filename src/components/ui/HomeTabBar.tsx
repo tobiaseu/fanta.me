@@ -34,7 +34,7 @@ export function HomeTabBar({ state, navigation }: BottomTabBarProps) {
           const tab = TABS[route.name];
           if (!tab) return null;
           const focused = state.index === index;
-          const tint = focused ? colors.ink : colors.inkSoft;
+          const tint = focused ? colors.accent : colors.inkSoft;
           return (
             <PressableScale
               key={route.key}
@@ -99,10 +99,10 @@ const styles = StyleSheet.create({
     ...shadow.floating,
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, height: 52, borderRadius: radius.xl },
-  tabOn: { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+  tabOn: { backgroundColor: colors.accentSoft },
   label: { fontSize: 11, lineHeight: 13, fontWeight: '600' },
   ring: { padding: 1, borderRadius: 13, borderWidth: 1.5, borderColor: 'transparent' },
-  ringOn: { borderColor: colors.ink },
+  ringOn: { borderColor: colors.accent },
   dot: {
     position: 'absolute',
     top: -2,

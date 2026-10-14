@@ -16,7 +16,7 @@ import { colors, MAX_APP_WIDTH, radius, shadow, space, isDark } from '@/theme/to
 const TABS: Record<string, { label: string; icon?: IconName }> = {
   index: { label: 'Dashboard', icon: 'home' },
   rules: { label: 'Mazzo', icon: 'grid' },
-  live: { label: 'Live' },
+  live: { label: 'Live' }, // stessa forma delle altre tab: icona play (lucchetto prima del via)
   leaderboard: { label: 'Classifica', icon: 'people' },
   profile: { label: 'Profilo' },
 };
@@ -25,7 +25,7 @@ export const TAB_BAR_SPACE = 72 + space.lg + space.md;
 
 /**
  * "Navbar 2" del Figma: pillola flottante in vetro sopra un gradiente.
- * Il tasto centrale giallo cambia con la fase: apri il mazzo, aggiungi punti, rivincita.
+ * Cinque tab uguali; la pagina corrente è nel colore d'accento. Il Live mostra un pallino quando ci sono voti.
  */
 export function GameTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -50,40 +50,23 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
           // la cronaca completa appartiene alla Dashboard
           const focused = state.index === index || (route.name === 'live' && current === 'feed');
           // inattivi in #6E6E6E: contrasto 4,9:1 sul vetro chiaro (WCAG AA)
-          const tint = focused ? colors.ink : colors.inkSoft;
-
-          if (route.name === 'live') {
-            return (
-              <PressableScale
-                key={route.key}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: focused }}
-                accessibilityLabel={
-                  locked ? 'Live, si apre quando parte la partita' : toVote ? `Live, ${toVote} da votare` : 'Live'
-                }
-                onPress={() => {
-                  haptics.press();
-                  navigation.navigate(route.name, route.params);
-                }}
-                pressedScale={0.88}
-                style={styles.tab}>
-                <View style={[styles.play, locked && styles.playLocked, focused && styles.playFocused]}>
-                  <Icon name={locked ? 'lock' : 'play'} size={locked ? 20 : 22} color={colors.ink} />
-                  {toVote > 0 && !locked && <View style={styles.dot} />}
-                </View>
-                <AppText style={styles.label} color={colors.ink} numberOfLines={1}>
-                  Live
-                </AppText>
-              </PressableScale>
-            );
-          }
+          const tint = focused ? colors.accent : colors.inkSoft;
+          const isLive = route.name === 'live';
 
           return (
             <PressableScale
               key={route.key}
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
-              accessibilityLabel={tab.label}
+              accessibilityLabel={
+                isLive
+                  ? locked
+                    ? 'Live, si apre quando parte la partita'
+                    : toVote
+                      ? `Live, ${toVote} da votare`
+                      : 'Live'
+                  : tab.label
+              }
               onPress={() => {
                 const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
                 if (state.index !== index && !event.defaultPrevented) {
@@ -92,8 +75,16 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
                 }
               }}
               style={styles.tab}>
-              {tab.icon ? (
-                <Icon name={tab.icon} size={26} color={tint} strokeWidth={focused ? 1.9 : 1.5} />
+              {tab.icon || isLive ? (
+                <View style={[styles.pill, focused && styles.pillOn]}>
+                  <Icon
+                    name={isLive ? (locked ? 'lock' : 'play') : tab.icon!}
+                    size={isLive ? 22 : 26}
+                    color={tint}
+                    strokeWidth={focused ? 1.9 : 1.5}
+                  />
+                  {isLive && toVote > 0 && !locked && <View style={styles.dot} />}
+                </View>
               ) : (
                 <View style={[styles.avatarRing, focused && styles.avatarRingActive]}>
                   <Avatar player={ME} size={24} sticker={false} />
@@ -111,8 +102,8 @@ export function GameTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  playLocked: { backgroundColor: colors.surfaceMuted },
-  playFocused: { borderWidth: 2, borderColor: colors.ink },
+  pill: { width: 52, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  pillOn: { backgroundColor: colors.accentSoft },
   dot: {
     position: 'absolute',
     top: 0,
@@ -156,13 +147,5 @@ const styles = StyleSheet.create({
   tab: { alignItems: 'center', justifyContent: 'center', gap: 3, width: 64, height: 56 },
   label: { fontSize: 11.5, lineHeight: 14, fontWeight: '600' },
   avatarRing: { padding: 1, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
-  avatarRingActive: { borderColor: colors.ink },
-  play: {
-    width: 44,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.cta,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  avatarRingActive: { borderColor: colors.accent },
 });

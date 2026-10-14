@@ -39,6 +39,10 @@ export const colors = {
   ctaSoft: 'rgba(255, 227, 130, 0.2)', // card lega in attesa
   ctaInk: '#000000',
 
+  // Accento: dove sei (pagina attiva), punti
+  accent: '#BD5500',
+  accentSoft: '#FCECDE',
+
   // Lega conclusa
   ended: 'rgba(135, 135, 135, 0.2)',
 
@@ -190,5 +194,7 @@ const DARK: Partial<Record<keyof typeof colors, string>> = {
   malus: '#FF453A',
   ended: 'rgba(255, 255, 255, 0.10)',
   ctaSoft: 'rgba(255, 227, 130, 0.16)',
+  accent: '#FF9F52',
+  accentSoft: 'rgba(255, 138, 43, 0.18)',
 };
 if (isDark) Object.assign(colors as Record<string, string>, DARK);
