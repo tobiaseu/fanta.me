@@ -123,7 +123,7 @@ export function OnboardingInviteScreen() {
                     setInvited((l) => (on ? l.filter((x) => x !== p.id) : [...l, p.id]));
                   }}
                   style={[styles.toggle, on && styles.toggleOn]}>
-                  {on && <Icon name="check" size={14} strokeWidth={3} />}
+                  {on && <Icon name="check" size={14} strokeWidth={3} color={colors.ctaInk} />}
                   <AppText variant="caption">{on ? 'Invitato' : 'Invita'}</AppText>
                 </PressableScale>
               </View>

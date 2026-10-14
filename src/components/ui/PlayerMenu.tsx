@@ -14,7 +14,7 @@ import { colors, radius, space } from '@/theme/tokens';
 
 /**
  * Menù rapido su un giocatore: una piccola scheda che salta fuori (stile Clash)
- * con al massimo tre azioni, una sola gialla.
+ * con al massimo tre azioni, una sola arancio.
  */
 export function PlayerMenu() {
   const menu = useUiStore((s) => s.playerMenu);
@@ -64,7 +64,7 @@ export function PlayerMenu() {
             primary={{ label: 'Formazione', onPress: () => go('formazione') }}
           />
         ) : (
-          <Button label="Guarda profilo" onPress={() => go()} />
+          <Button label="Guarda il profilo" onPress={() => go()} />
         )}
         {status === 'none' && (
           <Button

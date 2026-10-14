@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
+import { MoreLink } from '@/components/ui/MoreLink';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { TileArt, tilePaint } from '@/components/ui/RoomArt';
 import { haptics } from '@/lib/haptics';
@@ -25,6 +26,7 @@ export function DeckStack({
   rank,
   cta,
   onPress,
+  onBrowse,
   width,
   style,
 }: {
@@ -36,6 +38,8 @@ export function DeckStack({
   rank?: number;
   cta: string;
   onPress: () => void;
+  /** Apre la scheda Mazzo con tutte le carte */
+  onBrowse?: () => void;
   width?: number | `${number}%`;
   style?: StyleProp<ViewStyle>;
 }) {
@@ -76,12 +80,13 @@ export function DeckStack({
           </AppText>
           {extra}
           <View style={styles.cta}>
-            <AppText variant="micro" color={isDark ? '#0B0B0D' : '#FFFFFF'} style={styles.bold}>
+            <AppText variant="micro" color={colors.ctaInk} style={styles.bold}>
               {cta}
             </AppText>
           </View>
         </View>
       </View>
+      {onBrowse && <MoreLink label="Guarda il mazzo" onPress={onBrowse} style={styles.browse} />}
     </PressableScale>
   );
 }
@@ -107,7 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     borderRadius: 10,
     justifyContent: 'center',
-    backgroundColor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.07)',
+    backgroundColor: 'rgba(0,0,0,0.07)',
   },
   kindText: { fontSize: 11, lineHeight: 13, fontWeight: '700' },
   art: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -119,7 +124,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? '#FFFFFF' : '#0B0B0D',
+    backgroundColor: colors.cta,
   },
   bold: { fontWeight: '700' },
+  browse: { marginTop: space.xxs },
 });

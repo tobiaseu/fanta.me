@@ -4,10 +4,13 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { CardSheet } from '@/components/cards/CardSheet';
 import { DeckStack } from '@/components/cards/DeckStack';
-import { PlayCard, type CardRect } from '@/components/cards/PlayCard';
+import { DeckCard } from '@/components/cards/DeckCard';
+import type { CardRect } from '@/components/cards/PlayCard';
 import { CommunityRoomCard, CommunityRoomSheet } from '@/components/rooms/CommunityRoom';
 import { ROOM_W } from '@/components/rooms/RoomCard';
 import { Icon } from '@/components/icons/Icon';
+import { MoreLink } from '@/components/ui/MoreLink';
+import { openDeckPage } from '@/lib/links';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyNote } from '@/components/ui/EmptyNote';
 import { HOME_TAB_SPACE } from '@/components/ui/HomeTabBar';
@@ -111,21 +114,17 @@ export function WorldScreen() {
       }
       cta="Gioca"
       onPress={() => playDeck(d)}
+      onBrowse={() => openDeckPage({ title: d.name, subtitle: `Mazzo di @${d.author.handle}`, ids: d.ruleIds })}
       width={width}
     />
   );
-  const cardTile = (c: CommunityCard, style?: object) => (
-    <PlayCard
+  // Una sola visualizzazione delle carte in tutta l'app: la stessa della scelta delle carte
+  const cardTile = (c: CommunityCard) => (
+    <DeckCard
       key={c.rule.id}
       rule={c.rule}
-      authorName={c.author.name}
-      style={style}
-      cta={
-        saved.includes(c.rule.id)
-          ? { label: 'Salvata', icon: 'check', done: true, onPress: () => save(c) }
-          : { label: 'Salva', icon: 'plus', onPress: () => save(c) }
-      }
-      onOpen={() => setSelected(c.rule)}
+      note={saved.includes(c.rule.id) ? 'salvata' : `di @${c.author.handle}`}
+      onPress={() => setSelected(c.rule)}
     />
   );
 
@@ -239,15 +238,8 @@ export function WorldScreen() {
                 <SectionHeader
                   title="Carte della settimana"
                   caption="Le più amate: salvale per usarle nelle tue partite."
-                  action={{ label: 'Tutte', onPress: () => setView('cards') }}
                 />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.bleed}
-                  contentContainerStyle={styles.row}>
-                  {cards.slice(0, 8).map((c) => cardTile(c, styles.carouselCard))}
-                </ScrollView>
+                <MoreLink label={`Guarda il mazzo · ${cards.length} carte`} onPress={() => setView('cards')} />
               </View>
             )}
             <View style={styles.section}>
@@ -287,11 +279,19 @@ export function WorldScreen() {
         }
         primary={
           community
-            ? {
-                label: liked.includes(community.rule.id) ? 'Ti piace' : 'Mi piace',
-                icon: liked.includes(community.rule.id) ? 'check' : undefined,
-                onPress: () => toggleLike(community.rule.id),
-              }
+            ? saved.includes(community.rule.id)
+              ? undefined
+              : { label: 'Salva', icon: 'plus', onPress: () => save(community) }
+            : undefined
+        }
+        secondary={
+          community
+            ? saved.includes(community.rule.id)
+              ? { label: 'Salvata · togli', onPress: () => save(community) }
+              : {
+                  label: liked.includes(community.rule.id) ? 'Ti piace' : 'Mi piace',
+                  onPress: () => toggleLike(community.rule.id),
+                }
             : undefined
         }
         onClose={() => setSelected(undefined)}

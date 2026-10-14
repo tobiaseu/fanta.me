@@ -19,7 +19,7 @@ interface Props {
 }
 
 /**
- * Riga "storie": le chiamate del gruppo da votare (anello giallo) o già votate (badge ✓ / ✕).
+ * Riga "storie": le chiamate del gruppo da votare (anello arancio) o già votate (badge ✓ / ✕).
  */
 export function StoriesRow({ calls, players, onOpen, onAdd }: Props) {
   const games = useGameStore((s) => s.games);
@@ -40,7 +40,7 @@ export function StoriesRow({ calls, players, onOpen, onAdd }: Props) {
           onPress={onAdd}
           style={styles.item}>
           <View style={[styles.circle, styles.add]}>
-            <Icon name="plus" size={28} />
+            <Icon name="plus" size={28} color={colors.ctaInk} />
           </View>
           <AppText variant="micro" style={styles.label} numberOfLines={1}>
             Chiama

@@ -10,6 +10,7 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TopBar } from '@/components/ui/TopBar';
 import { COMMUNITY_DECKS, type CommunityDeck } from '@/data/community';
+import { openDeckPage } from '@/lib/links';
 import { usePlayDeck } from '@/hooks/usePlayDeck';
 import { colors, layout, MAX_APP_WIDTH, space } from '@/theme/tokens';
 
@@ -17,7 +18,7 @@ const plays = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace('.0',
 
 /**
  * CREA UNA STANZA: due strade.
- * In cima "Da zero" (la card primaria, l'unico giallo); sotto tre file di partite pronte,
+ * In cima "Da zero" (la card primaria, l'unico arancio); sotto tre file di partite pronte,
  * come le locandine di Netflix: suggerite da Fanta.me, le più giocate, di stagione.
  */
 export function CreateRoomScreen() {
@@ -85,6 +86,7 @@ export function CreateRoomScreen() {
                   cta="Gioca"
                   width={156}
                   onPress={() => play(d)}
+                  onBrowse={() => openDeckPage({ title: d.name, ids: d.ruleIds })}
                 />
               ))}
             </ScrollView>

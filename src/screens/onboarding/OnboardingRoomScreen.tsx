@@ -177,7 +177,7 @@ export function OnboardingRoomScreen() {
                 }}
                 style={[styles.pledge, pledge && styles.pledgeOn]}>
                 <View style={[styles.box, pledge && styles.boxOn]}>
-                  {pledge && <Icon name="check" size={14} strokeWidth={3} />}
+                  {pledge && <Icon name="check" size={14} strokeWidth={3} color={colors.ctaInk} />}
                 </View>
                 <View style={styles.flex}>
                   <AppText variant="name">Giuro solennemente di essere un buon host 🤝</AppText>

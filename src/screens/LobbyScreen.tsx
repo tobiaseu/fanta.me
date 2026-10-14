@@ -30,7 +30,7 @@ const STATUS: Record<Game['status'], string> = { live: 'In corso', waiting: 'Pre
 
 /**
  * LOBBY: la casa del giocatore. Dall'alto, in ordine di urgenza:
- *  1. l'ultima partita vista, con l'unica azione gialla della pagina (Rientra / Vota);
+ *  1. l'ultima partita vista, con l'unica azione arancio della pagina (Rientra / Vota);
  *  2. i due ingressi per iniziare: Entra con codice (a sinistra) e Crea stanza (a destra);
  *  3. le altre partite attive, con la stessa card di quelle consigliate ma più informazioni;
  *  4. il Libro del Fanta;
@@ -210,7 +210,7 @@ export function LobbyScreen({ forceEmpty = false }: { forceEmpty?: boolean }) {
   );
 }
 
-/** L'ultima partita vista: larga, con il colore della fase e l'unico bottone giallo della pagina. */
+/** L'ultima partita vista: larga, con il colore della fase e l'unico bottone arancio della pagina. */
 function FeaturedGame({
   game,
   line,

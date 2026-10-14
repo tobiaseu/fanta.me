@@ -33,11 +33,16 @@ export const colors = {
   liveStrip: 'rgba(11, 130, 0, 0.2)', // banda laterale sovrapposta
   liveInk: '#0B8200',
 
-  // CTA primaria (giallo burro)
-  cta: '#FFE382',
-  ctaPressed: '#F7D45E',
-  ctaSoft: 'rgba(255, 227, 130, 0.2)', // card lega in attesa
-  ctaInk: '#000000',
+  // CTA primaria: lo stesso arancio dell'accento, testo bianco (contrasto AA 5.3:1)
+  cta: '#BD5500',
+  ctaPressed: '#9C4600',
+  ctaSoft: '#FCECDE',
+  ctaInk: '#FFFFFF',
+
+  // Fase "pre-partita": l'unico giallo rimasto nell'app
+  pregame: '#FFE382',
+  pregameSoft: 'rgba(255, 227, 130, 0.2)',
+  pregameInk: '#5C4300',
 
   // Accento: dove sei (pagina attiva), punti
   accent: '#BD5500',
@@ -183,7 +188,7 @@ const pref = readThemePref();
 export const isDark = pref === 'dark' || (pref === 'system' && systemDark());
 
 /**
- * Palette scura: stessi ruoli, valori invertiti. Il giallo CTA resta giallo con testo nero,
+ * Palette scura: stessi ruoli, valori invertiti. La CTA resta arancio pieno con testo bianco,
  * verde e rosso si schiariscono un po' per restare leggibili sul nero.
  */
 const DARK: Partial<Record<keyof typeof colors, string>> = {
@@ -207,7 +212,9 @@ const DARK: Partial<Record<keyof typeof colors, string>> = {
   malus: '#FF453A',
   destructive: '#FF453A',
   ended: 'rgba(255, 255, 255, 0.10)',
-  ctaSoft: 'rgba(255, 227, 130, 0.16)',
+  ctaSoft: 'rgba(255, 138, 43, 0.18)',
+  pregameSoft: 'rgba(255, 227, 130, 0.16)',
+  pregameInk: '#FFE382',
   accent: '#FF9F52',
   accentSoft: 'rgba(255, 138, 43, 0.18)',
 };

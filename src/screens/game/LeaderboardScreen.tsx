@@ -16,6 +16,7 @@ import { ME } from '@/data/mock';
 import { useCurrentGame } from '@/hooks/useCurrentGame';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
 import { haptics } from '@/lib/haptics';
+import { openTeamPage } from '@/lib/links';
 import {
   nameIn,
   computeStandings,
@@ -119,7 +120,12 @@ export function LeaderboardScreen() {
           ]}
         />
         {game.teams?.map((t) => (
-          <View key={t.id} style={styles.lockedTeam}>
+          <PressableScale
+            key={t.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Squadra ${t.name}: apri la pagina squadra`}
+            onPress={() => openTeamPage(game.id, t.id)}
+            style={styles.lockedTeam}>
             <TeamAvatar game={game} teamId={t.id} size={40} />
             <View style={styles.flex1}>
               <AppText variant="name">{t.name}</AppText>
@@ -134,7 +140,7 @@ export function LeaderboardScreen() {
                 .map((p) => nameIn(game, p))
                 .join(', ')}
             </AppText>
-          </View>
+          </PressableScale>
         ))}
       </ScrollView>
     );
@@ -160,7 +166,7 @@ export function LeaderboardScreen() {
   const open = (row: Row) => {
     if (!row.isTeam) return openPlayer(row.lead.id);
     haptics.tap();
-    setMode('players');
+    openTeamPage(game.id, row.id);
   };
 
   return (
@@ -210,7 +216,9 @@ export function LeaderboardScreen() {
                 <PressableScale
                   onPress={() => open(row)}
                   accessibilityRole="button"
-                  accessibilityLabel={row.isTeam ? `${row.name}: vedi i singoli giocatori` : `Profilo di ${row.name}`}
+                  accessibilityLabel={
+                    row.isTeam ? `Squadra ${row.name}: apri la pagina squadra` : `Profilo di ${row.name}`
+                  }
                   style={styles.podiumHead}>
                   {row.isTeam ? (
                     <TeamAvatar game={game} teamId={row.id} size={slot === 1 ? 76 : 62} />

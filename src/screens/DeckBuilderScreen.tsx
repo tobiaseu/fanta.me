@@ -1,4 +1,3 @@
-import { DeckExplorer } from '@/components/cards/DeckExplorer';
 import { DeckPile } from '@/components/cards/DeckPile';
 import { useLiveDeck } from '@/hooks/useLiveDeck';
 import { Segmented } from '@/components/ui/Segmented';
@@ -17,6 +16,7 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { ME } from '@/data/mock';
 import { RULES, ruleById } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
+import { openDeckPage } from '@/lib/links';
 import { customSlots, deckAuthor, nameIn, useGame, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { colors, layout, MAX_APP_WIDTH, radius, shadow, space } from '@/theme/tokens';
@@ -45,7 +45,6 @@ export function DeckBuilderScreen() {
   const showToast = useUiStore((s) => s.showToast);
   const [tab, setTab] = useState<Tab>('base');
   const [preview, setPreview] = useState<Rule>();
-  const [explore, setExplore] = useState(false);
   const slotRects = useRef<(Rect | undefined)[]>([]);
   const slotViews = useRef<(View | null)[]>([]);
   // Carta "fantasma" che segue il dito sopra tutto lo schermo durante il trascinamento
@@ -147,7 +146,11 @@ export function DeckBuilderScreen() {
       </View>
 
       <View style={[styles.content, styles.fixed]}>
-        <DeckPile deck={deck} height={84} onOpen={() => setExplore(true)} />
+        <DeckPile
+          deck={deck}
+          height={84}
+          onOpen={() => openDeckPage({ title: `Il mazzo di ${game.name}`, gameId: game.id })}
+        />
 
         <View style={styles.section}>
           <AppText variant="name">
@@ -259,7 +262,6 @@ export function DeckBuilderScreen() {
         author={players.find((p) => p.id === preview?.authorId)}
         onClose={() => setPreview(undefined)}
       />
-      <DeckExplorer game={game} deck={deck} open={explore} onClose={() => setExplore(false)} />
     </View>
   );
 }

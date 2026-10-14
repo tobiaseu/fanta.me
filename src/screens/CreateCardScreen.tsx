@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { cardTone } from '@/components/cards/DeckCard';
+import { cardTone, DeckCard } from '@/components/cards/DeckCard';
 import { Icon } from '@/components/icons/Icon';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -119,7 +118,7 @@ export function CreateCardScreen() {
           </AppText>
         </View>
         <View style={[styles.art, { backgroundColor: tone.fill }]}>
-          <RuleSticker rule={preview} size={110} />
+          <DeckCard rule={preview} style={{ width: 120 }} />
         </View>
         <AppText variant="serifCard" style={styles.center} numberOfLines={1}>
           {preview.label}

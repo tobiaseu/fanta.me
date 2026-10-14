@@ -24,7 +24,7 @@ export type RoomInfo = {
 
 /**
  * Stanza aperta: stesso pop up della carta (cresce dalla card, X in alto, secondaria a sinistra,
- * primaria gialla a destra) ma con la forma della stanza: fondo del suo stato, host, numeri.
+ * primaria arancio a destra) ma con la forma della stanza: fondo del suo stato, host, numeri.
  */
 export function RoomSheet({
   room,

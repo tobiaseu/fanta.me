@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: layout.card,
   },
-  // Secondario: il giallo è già sul tasto centrale della navbar, che fa la stessa cosa
+  // Secondario: l'arancio è già sul tasto centrale della navbar, che fa la stessa cosa
   cta: {
     borderWidth: 1,
     borderColor: colors.line,

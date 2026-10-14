@@ -18,7 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons/Icon';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { DeckCard } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -160,7 +160,7 @@ export function CallScreen() {
           </Animated.View>
         ) : (
           <View style={styles.noPhoto}>
-            <RuleSticker rule={rule} size={220} />
+            <DeckCard rule={rule} style={{ width: 170 }} />
           </View>
         )}
         <Scrim />

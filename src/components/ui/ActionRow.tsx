@@ -9,7 +9,7 @@ import { colors, space } from '@/theme/tokens';
 export type RowAction = { label: string; onPress: () => void; icon?: IconName };
 
 /**
- * Regola dei bottoni in tutta l'app: primaria (gialla) sempre a destra, secondaria (bordata) a sinistra.
+ * Regola dei bottoni in tutta l'app: primaria (arancio) sempre a destra, secondaria (bordata) a sinistra.
  * Se c'è solo la secondaria va a tutta larghezza.
  */
 export function ActionRow({
@@ -40,7 +40,7 @@ export function ActionRow({
   );
 }
 
-/** Bagliore giallo Fanta.me dietro il soggetto delle carte normali (stesso disegno delle carte del mazzo). */
+/** Bagliore arancio Fanta.me dietro il soggetto delle carte normali (stesso disegno delle carte del mazzo). */
 export function CardGlow({ cy = 52, id }: { cy?: number; id: string }) {
   return (
     <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 140" preserveAspectRatio="none" pointerEvents="none">

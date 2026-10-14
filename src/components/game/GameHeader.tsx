@@ -37,7 +37,7 @@ function countdownOf(game: Game, now: number) {
 
 /** Colore della fase: verde in trasparenza in partita, giallo nel pre-partita, oro a fine partita. */
 const TINT: Record<Game['status'], { bg: string; line: string; dot: string }> = {
-  waiting: { bg: colors.ctaSoft, line: 'rgba(230, 190, 60, 0.45)', dot: '#E6BE3C' },
+  waiting: { bg: colors.pregameSoft, line: 'rgba(230, 190, 60, 0.45)', dot: '#E6BE3C' },
   live: { bg: colors.liveSoft, line: 'rgba(11, 130, 0, 0.3)', dot: colors.live },
   ended: { bg: 'rgba(212, 160, 23, 0.18)', line: 'rgba(212, 160, 23, 0.45)', dot: '#D4A017' },
 };
@@ -48,7 +48,7 @@ const PHASE_GUIDE: Record<Game['status'], { title: string; todo: string; clock: 
     title: 'Pre-partita',
     todo: 'Invita i tuoi amici e scegli le carte del mazzo prima che si parta.',
     clock: 'Parte tra',
-    dot: colors.cta,
+    dot: colors.pregame,
   },
   live: {
     title: 'In partita',
@@ -119,15 +119,15 @@ export function GameHeader({ game }: { game: Game }) {
         <View style={styles.row}>
           <PressableScale
             accessibilityRole="button"
-            accessibilityLabel="Esci dalla partita e torna alla Lobby"
+            accessibilityLabel="Esci"
+            accessibilityHint="Esci dalla partita e torna alla Lobby"
             hitSlop={12}
             onPress={() => {
               if (router.canDismiss()) router.dismissAll();
               else router.replace('/');
             }}
-            style={styles.lobby}>
-            <Icon name="home" size={18} strokeWidth={1.6} />
-            <AppText variant="caption">Esci</AppText>
+            style={[styles.lobby, styles.iconOnly]}>
+            <Icon name="chevron-left" size={22} strokeWidth={2.2} />
           </PressableScale>
           <AppText variant="headline" numberOfLines={1} style={styles.title} accessibilityRole="header">
             {game.emoji} {game.name}
@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   right: { alignItems: 'flex-end' },
+  iconOnly: { width: 36, paddingHorizontal: 0 },
   title: { flex: 1, textAlign: 'center' },
   flex: { flexShrink: 1 },
   pill: {

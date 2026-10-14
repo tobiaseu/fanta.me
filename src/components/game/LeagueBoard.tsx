@@ -6,11 +6,13 @@ import { AppText } from '@/components/ui/AppText';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
 import { Score } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
+import { MoreLink } from '@/components/ui/MoreLink';
 import { ObjectModal } from '@/components/ui/ObjectModal';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { TeamAvatar } from '@/components/ui/TeamAvatar';
 import { ME } from '@/data/mock';
 import { useOpenPlayer } from '@/hooks/useOpenPlayer';
+import { openTeamPage } from '@/lib/links';
 import { haptics } from '@/lib/haptics';
 import { playerTeamLine, teamByline } from '@/lib/teams';
 import {
@@ -26,7 +28,7 @@ import { colors, layout, radius, space } from '@/theme/tokens';
 import type { Game, Player } from '@/types/game';
 
 const STATUS: Record<Game['status'], { label: string; dot: string }> = {
-  waiting: { label: 'In attesa', dot: colors.cta },
+  waiting: { label: 'In attesa', dot: colors.pregame },
   live: { label: 'In gioco', dot: colors.live },
   ended: { label: 'Conclusa', dot: colors.inkFaint },
 };
@@ -147,7 +149,7 @@ export function StandingsCard({ game, now, onOpen }: { game: Game; now: number; 
           I punti partono al via.
         </AppText>
       ) : null}
-      <Button label="Vedi la classifica" variant="secondary" onPress={onOpen} />
+      <MoreLink label="Guarda la classifica" onPress={onOpen} />
     </PressableScale>
   );
 }
@@ -161,7 +163,6 @@ export function GroupInfo({ game, onInvite }: { game: Game; onInvite: () => void
   const players = useGameStore((s) => s.players);
   const games = useGameStore((s) => s.games);
   const events = useGameStore((s) => s.events);
-  const openTeam = useUiStore((s) => s.openTeam);
   const openPlayer = useOpenPlayer();
   const win = useWindowDimensions();
   const [open, setOpen] = useState(false);
@@ -231,7 +232,7 @@ export function GroupInfo({ game, onInvite }: { game: Game; onInvite: () => void
                       accessibilityLabel={`Squadra ${t.name}, ${teamByline(game, t, players)}`}
                       onPress={() => {
                         close();
-                        openTeam(t.id);
+                        openTeamPage(game.id, t.id);
                       }}
                       style={[styles.member, i > 0 && styles.divider]}>
                       <TeamAvatar game={game} teamId={t.id} size={44} />

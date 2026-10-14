@@ -48,7 +48,7 @@ export function ToastHost() {
               toast.action?.onPress();
               hide();
             }}>
-            <AppText variant="caption" color={colors.cta}>
+            <AppText variant="caption" color={'#FF9F52'}>
               {toast.action.label}
             </AppText>
           </PressableScale>

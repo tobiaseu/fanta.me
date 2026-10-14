@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { teamByline } from '@/lib/teams';
 import { Score } from '@/components/ui/Brand';
 import { TeamAvatar } from '@/components/ui/TeamAvatar';
-import { DeckCard } from '@/components/cards/DeckCard';
+import { MoreLink } from '@/components/ui/MoreLink';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -13,12 +13,13 @@ import { teamColor } from '@/lib/teams';
 import { nameIn, useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { haptics } from '@/lib/haptics';
+import { openDeckPage, openTeamPage } from '@/lib/links';
 import { colors, radius, space } from '@/theme/tokens';
 import type { Game, Rule, Team } from '@/types/game';
 
 /**
  * Formazione di una squadra: per ogni giocatore il nickname di stanza (la @ sotto, in piccolo)
- * e le carte che ha schierato nel mazzo, ben in vista come carte vere.
+ * e quante carte ha schierato; le carte si guardano nella scheda Mazzo.
  */
 export function TeamFormation({
   game,
@@ -106,15 +107,21 @@ export function TeamFormation({
               </AppText>
             </PressableScale>
             {cards.length > 0 && (
-              <View style={styles.grid}>
-                {cards.map((r) => (
-                  <DeckCard key={r.id} rule={r} />
-                ))}
-              </View>
+              <MoreLink
+                label="Guarda il mazzo"
+                onPress={() =>
+                  openDeckPage({
+                    title: nameIn(game, p),
+                    subtitle: `Carte schierate in ${team.name}`,
+                    ids: cards.map((r) => r.id),
+                  })
+                }
+              />
             )}
           </View>
         );
       })}
+      <MoreLink label="Guarda la squadra" onPress={() => openTeamPage(game.id, team.id)} />
     </View>
   );
 }
@@ -134,7 +141,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
-  member: { gap: space.sm },
+  member: { gap: space.xxs },
   who: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.sm },
 });

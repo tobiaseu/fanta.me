@@ -39,7 +39,7 @@ interface Props {
   rule?: Rule;
   author?: Player;
   state?: CardState;
-  /** L'azione che fa avanzare il gioco: gialla, sempre a destra */
+  /** L'azione che fa avanzare il gioco: arancio, sempre a destra */
   primary?: SheetAction;
   /** Un'alternativa: bordata, sempre a sinistra. Se manca, a sinistra c'è "Salva la carta". */
   secondary?: SheetAction;
@@ -54,7 +54,7 @@ export const rarityOf = (rule: Rule) => TIER_LABEL[tierOf(rule)];
 /**
  * Carta aperta: stessa proporzione e stesso disegno della carta in griglia, solo più grande.
  * Dentro: Bonus/Malus, X, immagine, tag, titolo e sottotitolo, regola, azioni, firma di chi l'ha creata.
- * Azioni: secondaria a sinistra, primaria gialla a destra.
+ * Azioni: secondaria a sinistra, primaria arancio a destra.
  */
 export function CardSheet({ rule, author, state, primary, secondary, from, onClose }: Props) {
   const { width, height } = useWindowDimensions();
@@ -100,7 +100,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
     a.onPress();
     if (!keepOpen) onClose();
   };
-  // Sinistra: alternativa (o Salva). Destra: primaria gialla (o l'unica alternativa, o il motivo).
+  // Sinistra: alternativa (o Salva). Destra: primaria arancio (o l'unica alternativa, o il motivo).
   const left = primary ? (secondary ?? save) : save;
   const leftKeepsOpen = left === save;
   const right = primary ?? secondary;
@@ -129,7 +129,7 @@ function Face({ rule, author, state, primary, secondary, onClose }: Omit<Props, 
             <Avatar player={author} size={20} sticker={false} />
           ) : (
             <View style={[styles.mark, { backgroundColor: rule.epic ? '#B48CFF' : colors.cta }]}>
-              <AppText variant="micro" color="#0B0B0D" style={styles.markText}>
+              <AppText variant="micro" color={rule.epic ? '#0B0B0D' : colors.ctaInk} style={styles.markText}>
                 {rule.epic ? '★' : 'f'}
               </AppText>
             </View>

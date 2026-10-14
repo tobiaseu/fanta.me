@@ -1,8 +1,6 @@
 import { StyleSheet } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
-import { colors, isDark } from '@/theme/tokens';
-
 /**
  * Tono della card partita: il colore dice sempre una cosa sola.
  * live = verde (si gioca), waiting = giallo (si prepara), ended = grigio (archivio),
@@ -12,24 +10,17 @@ export type TileTone = 'live' | 'waiting' | 'ended' | 'community' | 'official';
 
 type Paint = { top: string; bottom: string; glow: string; glowOpacity: number; ink: string; soft: string };
 
-const WHITE = { ink: '#FFFFFF', soft: 'rgba(255,255,255,0.78)' };
-const INK = { ink: colors.ink, soft: colors.inkSoft };
+const INK = { ink: '#0B0B0D', soft: 'rgba(0,0,0,0.58)' };
 
-const PAINT: Record<TileTone, Paint> = isDark
-  ? {
-      live: { top: '#173A23', bottom: '#0C1A11', glow: '#34C759', glowOpacity: 0.35, ...WHITE },
-      waiting: { top: '#3A3014', bottom: '#1A160A', glow: colors.cta, glowOpacity: 0.35, ...WHITE },
-      ended: { top: '#26262A', bottom: '#151517', glow: '#FFFFFF', glowOpacity: 0.08, ...WHITE },
-      community: { top: '#FFB45C', bottom: '#F0662E', glow: '#FFFFFF', glowOpacity: 0.4, ...WHITE },
-      official: { top: '#2A2A2E', bottom: '#151517', glow: colors.cta, glowOpacity: 0.4, ...WHITE },
-    }
-  : {
-      live: { top: '#EEFAEB', bottom: '#CDEFC6', glow: '#FFFFFF', glowOpacity: 0.7, ...INK },
-      waiting: { top: '#FFF8DE', bottom: '#FCE7A2', glow: '#FFFFFF', glowOpacity: 0.7, ...INK },
-      ended: { top: '#FFFFFF', bottom: '#E9E9EE', glow: '#FFFFFF', glowOpacity: 0.6, ...INK },
-      community: { top: '#FFB45C', bottom: '#F0662E', glow: '#FFFFFF', glowOpacity: 0.4, ...WHITE },
-      official: { top: '#FFFFFF', bottom: '#F1F1F5', glow: colors.cta, glowOpacity: 0.85, ...INK },
-    };
+// Tile sempre chiare, anche nel tema scuro: le card che invitano a un'azione non sono mai nere
+// (il nero è riservato ai fantapoteri). Il testo sopra è quindi sempre scuro.
+const PAINT: Record<TileTone, Paint> = {
+  live: { top: '#EEFAEB', bottom: '#CDEFC6', glow: '#FFFFFF', glowOpacity: 0.7, ...INK },
+  waiting: { top: '#FFF8DE', bottom: '#FCE7A2', glow: '#FFFFFF', glowOpacity: 0.7, ...INK },
+  ended: { top: '#FFFFFF', bottom: '#E9E9EE', glow: '#FFFFFF', glowOpacity: 0.6, ...INK },
+  community: { top: '#FFF1E3', bottom: '#FCD9B8', glow: '#FFFFFF', glowOpacity: 0.7, ...INK },
+  official: { top: '#FFFFFF', bottom: '#F1F1F5', glow: '#FFB070', glowOpacity: 0.6, ...INK },
+};
 
 export const tilePaint = (tone: TileTone) => PAINT[tone];
 

@@ -29,6 +29,8 @@ setupWebApp();
  *   /card/new         → Editor di una carta personale (modale)
  *   /premium          → Popup Premium: pass a uso singolo o stanza Premium (modale)
  *   /powers           → Scelta dei fantapoteri principale e secondario (modale)
+ *   /cards            → Scheda Mazzo: tutte le carte di un mazzo (pagina secondaria)
+ *   /team/[teamId]    → Scheda Squadra: la stessa pagina da ovunque (pagina secondaria)
  *   /game/[gameId]/*  → DASHBOARD IN-GAME (Tabs a 5 icone, vedi game/[gameId]/_layout)
  *
  * La navbar esiste solo dentro il layout della partita: la Lobby non può
@@ -57,6 +59,8 @@ export default function RootLayout() {
             <Stack.Screen name="settings" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="rulebook" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="deck/[gameId]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="cards" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="team/[teamId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="onboarding/room" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="onboarding/invite" options={{ gestureEnabled: false }} />
             <Stack.Screen name="game/[gameId]" options={{ animation: 'slide_from_bottom' }} />

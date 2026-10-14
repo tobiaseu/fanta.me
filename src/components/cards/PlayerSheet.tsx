@@ -15,7 +15,7 @@ type Action = { label: string; onPress: () => void };
 
 /**
  * Carta giocatore aperta: stessa grammatica della carta del mazzo.
- * Carta, riga di stato, azione principale (gialla), alternativa, link al profilo.
+ * Carta, riga di stato, azione principale (arancio), alternativa, link al profilo.
  */
 export function PlayerSheet({
   player,
@@ -101,7 +101,7 @@ export function PlayerSheet({
             ) : null}
             {onProfile && (
               <Button
-                label="Vedi il profilo"
+                label="Guarda il profilo"
                 variant={primary || secondary ? 'tertiary' : 'secondary'}
                 onPress={run({ label: '', onPress: onProfile })}
                 style={styles.link}

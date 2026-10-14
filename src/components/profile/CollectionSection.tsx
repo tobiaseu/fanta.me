@@ -2,13 +2,14 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { DeckCard } from '@/components/cards/DeckCard';
 import { Icon } from '@/components/icons/Icon';
 import { AppText } from '@/components/ui/AppText';
+import { MoreLink } from '@/components/ui/MoreLink';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { Segmented } from '@/components/ui/Segmented';
 import { COLLECTIONS } from '@/data/mock';
 import { ruleById } from '@/data/rules';
+import { openDeckPage } from '@/lib/links';
 import { useGameStore } from '@/store/useGameStore';
 import type { Visibility } from '@/store/useSessionStore';
 import { colors, radius, space } from '@/theme/tokens';
@@ -86,10 +87,19 @@ export function CollectionSection({
           />
           {tab === 'cards' ? (
             cards.length ? (
-              <View style={styles.grid}>
-                {cards.map((r) => (
-                  <DeckCard key={r.id} rule={r} />
-                ))}
+              <View style={styles.cardsBox}>
+                <AppText variant="body" color={colors.inkSoft}>
+                  {cards.length} {cards.length === 1 ? 'carta' : 'carte'} nella collezione
+                </AppText>
+                <MoreLink
+                  label="Guarda il mazzo"
+                  onPress={() =>
+                    openDeckPage({
+                      title: isMe ? 'Le tue carte' : `Le carte di ${player.name}`,
+                      ids: cards.map((r) => r.id),
+                    })
+                  }
+                />
               </View>
             ) : (
               <Empty text="Nessuna carta creata, per ora." />
@@ -142,7 +152,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.md,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
+  cardsBox: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.md, gap: space.xxs },
   list: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },

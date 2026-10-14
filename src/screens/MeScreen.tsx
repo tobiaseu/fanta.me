@@ -2,18 +2,16 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { CardSheet } from '@/components/cards/CardSheet';
-import { PlayCard } from '@/components/cards/PlayCard';
-import { EmptySlot } from '@/components/cards/DeckCard';
 import { Icon } from '@/components/icons/Icon';
 import { ActionRow } from '@/components/ui/ActionRow';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { MoreLink } from '@/components/ui/MoreLink';
 import { HOME_TAB_SPACE } from '@/components/ui/HomeTabBar';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Segmented } from '@/components/ui/Segmented';
-import { TileArt } from '@/components/ui/RoomArt';
 import { RoomCard } from '@/components/rooms/RoomCard';
 import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { TopBar } from '@/components/ui/TopBar';
@@ -21,6 +19,7 @@ import { BADGES, COMMUNITY_CARDS } from '@/data/community';
 import { ME } from '@/data/mock';
 import { EPIC_RULES } from '@/data/rules';
 import { haptics } from '@/lib/haptics';
+import { openDeckPage } from '@/lib/links';
 import { computeStandings, customSlots, useGameStore } from '@/store/useGameStore';
 import { DEFAULT_PUBLIC, useSessionStore } from '@/store/useSessionStore';
 import { useUiStore } from '@/store/useUiStore';
@@ -49,8 +48,6 @@ export function MeScreen() {
   const visibility = useSessionStore((s) => s.collectionVisibility);
   const show = useSessionStore((s) => s.publicShow) ?? DEFAULT_PUBLIC;
   const showToast = useUiStore((s) => s.showToast);
-  const [tab, setTab] = useState<'unlocked' | 'created'>('unlocked');
-  const [selected, setSelected] = useState<Rule>();
 
   const career = ME.career;
   const friends = Object.values(friendships).filter((f) => f === 'friends').length;
@@ -105,7 +102,6 @@ export function MeScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: HOME_TAB_SPACE + space.lg }]}>
         {/* Chi sei, chi ti vede, cosa hai fatto */}
         <View style={styles.hero}>
-          <TileArt tone="official" id="me-hero" cx={50} cy={34} />
           <Avatar player={ME} size={96} sticker={false} />
           <View style={styles.names}>
             <AppText variant="title">{ME.name}</AppText>
@@ -175,50 +171,45 @@ export function MeScreen() {
         <View style={styles.section}>
           <SectionHeader
             title="Carte"
-            caption={
-              tab === 'unlocked'
-                ? `Epiche vinte e carte salvate dalla community${hiddenTag(show.unlocked) ? ' · nascoste agli altri' : ''}`
-                : `${created.length} di ${slots} carte create${hiddenTag(show.created) ? ' · nascoste agli altri' : ''}`
-            }
+            caption={`Epiche vinte, salvate dalla community e ${created.length} di ${slots} create${
+              hiddenTag(show.unlocked) || hiddenTag(show.created) ? ' · in parte nascoste agli altri' : ''
+            }`}
           />
-          <Segmented
-            value={tab}
-            options={[
-              { id: 'unlocked', label: `Sbloccate ${unlocked.length}` },
-              { id: 'created', label: `Create ${created.length}` },
-            ]}
-            onChange={setTab}
-          />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.bleed}
-            contentContainerStyle={styles.row}>
-            {tab === 'unlocked'
-              ? unlocked.map((r) => <PlayCard key={r.id} rule={r} style={styles.card} onOpen={() => setSelected(r)} />)
-              : [
-                  ...created.map((r) => (
-                    <PlayCard
-                      key={r.id}
-                      rule={r}
-                      authorName="te"
-                      style={styles.card}
-                      cta={
-                        published.includes(r.id)
-                          ? { label: 'Pubblicata', icon: 'check', done: true, onPress: () => togglePublish(r.id) }
-                          : { label: 'Pubblica', onPress: () => togglePublish(r.id) }
-                      }
-                      onOpen={() => setSelected(r)}
-                    />
-                  )),
-                  <EmptySlot
-                    key="new"
-                    label="Crea carta"
-                    onPress={() => router.push('/card/new')}
-                    style={styles.card}
-                  />,
-                ]}
-          </ScrollView>
+          <View style={styles.links}>
+            <MoreLink
+              label={`Guarda le carte sbloccate · ${unlocked.length}`}
+              onPress={() => openDeckPage({ title: 'Carte sbloccate', ids: unlocked.map((r) => r.id) })}
+            />
+            <MoreLink
+              label={`Guarda le carte create · ${created.length}`}
+              onPress={() => openDeckPage({ title: 'Carte create', ids: created.map((r) => r.id) })}
+            />
+          </View>
+          {created.length > 0 && (
+            <View style={styles.list}>
+              {created.map((r, i) => {
+                const on = published.includes(r.id);
+                return (
+                  <View key={r.id} style={[styles.listRow, i > 0 && styles.listDivider]}>
+                    <AppText style={styles.listEmoji}>{r.emoji}</AppText>
+                    <AppText variant="name" style={styles.flex} numberOfLines={1}>
+                      {r.label}
+                    </AppText>
+                    <PressableScale
+                      accessibilityRole="button"
+                      accessibilityLabel={on ? `Ritira ${r.label} dalla community` : `Pubblica ${r.label}`}
+                      onPress={() => togglePublish(r.id)}
+                      style={[styles.pill, on && styles.pillOn]}>
+                      <AppText variant="micro" color={on ? colors.ctaInk : colors.ink} style={styles.bold}>
+                        {on ? 'Pubblicata' : 'Pubblica'}
+                      </AppText>
+                    </PressableScale>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+          <Button label="Crea una carta" variant="secondary" icon="plus" onPress={() => router.push('/card/new')} />
         </View>
 
         <View style={styles.section}>
@@ -251,8 +242,6 @@ export function MeScreen() {
           </AppText>
         </PressableScale>
       </ScrollView>
-
-      <CardSheet rule={selected} onClose={() => setSelected(undefined)} />
     </View>
   );
 }
@@ -269,6 +258,27 @@ function Stat({ value, label }: { value: number | string; label: string }) {
 }
 
 const styles = StyleSheet.create({
+  links: { gap: space.xxs },
+  flex: { flex: 1 },
+  bold: { fontWeight: '600' },
+  list: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  listDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
+  listEmoji: { fontSize: 22, lineHeight: 28 },
+  pill: {
+    borderRadius: radius.pill,
+    paddingHorizontal: space.sm,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  pillOn: { backgroundColor: colors.cta, borderColor: colors.cta },
   screen: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: layout.gutter,

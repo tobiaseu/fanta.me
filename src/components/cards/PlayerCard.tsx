@@ -62,7 +62,7 @@ export function PlayerCard({
         )}
         {checked && (
           <View style={styles.check}>
-            <Icon name="check" size={11} strokeWidth={3.2} />
+            <Icon name="check" size={11} strokeWidth={3.2} color={colors.ctaInk} />
           </View>
         )}
       </View>

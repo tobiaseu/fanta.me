@@ -9,7 +9,7 @@ import { CollectionSection } from '@/components/profile/CollectionSection';
 import { MyPowersRow } from '@/components/game/MyPowersRow';
 import { RoomCard } from '@/components/rooms/RoomCard';
 import { Icon } from '@/components/icons/Icon';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { DeckCard } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -172,7 +172,7 @@ export function PlayerProfileScreen() {
           <View style={styles.section}>
             <AppText variant="headline">Carta più chiamata</AppText>
             <View style={styles.favorite}>
-              <RuleSticker rule={favorite.rule} size={72} />
+              <DeckCard rule={favorite.rule} bare style={styles.favCard} />
               <View style={styles.flex}>
                 <AppText variant="serifCard">{favorite.rule.label}</AppText>
                 <AppText variant="caption" color={colors.inkSoft} style={styles.regular}>
@@ -382,6 +382,7 @@ function MyFriends({
 }
 
 const styles = StyleSheet.create({
+  favCard: { width: 60 },
   gameBlock: { gap: space.lg },
   headActions: { flexDirection: 'row', gap: space.xs },
   screen: { flex: 1, backgroundColor: colors.background },

@@ -3,7 +3,7 @@ import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/icons/Icon';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { DeckCard } from '@/components/cards/DeckCard';
 import { AppText } from '@/components/ui/AppText';
 import { Avatar } from '@/components/ui/Avatar';
 import { Score } from '@/components/ui/Brand';
@@ -72,7 +72,7 @@ export function PointLog({
               pressedScale={0.98}
               style={[styles.entry, rejected && styles.rejected]}>
               <View style={styles.head}>
-                {rule && <RuleSticker rule={rule} size={56} />}
+                {rule && <DeckCard rule={rule} bare style={{ width: 44 }} />}
                 <View style={styles.flex}>
                   <AppText variant="headline" numberOfLines={1}>
                     {rule?.label ?? 'Carta'}
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.background,
   },
-  dotPending: { backgroundColor: colors.cta },
+  dotPending: { backgroundColor: colors.pregame },
   entry: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.sm, gap: space.xs },
   rejected: { opacity: 0.5 },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

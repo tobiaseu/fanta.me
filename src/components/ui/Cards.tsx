@@ -6,12 +6,11 @@ import { Button } from './Button';
 import { PressableScale } from './PressableScale';
 
 import { Icon } from '@/components/icons/Icon';
-import { AbstractArt, type ArtMood } from './AbstractArt';
 import { colors, layout, radius, space } from '@/theme/tokens';
 
 /**
  * HeroCard: la card primaria, larga quanto lo schermo, una per schermata, sempre in cima.
- * Invita a UN passaggio: emoji, occhiello, titolo, una riga, bottone giallo + uno secondario.
+ * Sempre chiara (il nero è riservato ai fantapoteri). Invita a UN passaggio: emoji, occhiello, titolo, una riga, bottone arancio + uno secondario.
  * Gli oggetti del gioco hanno le loro card: carta (PlayCard), stanza (RoomCard), potere (PowerCard), mazzo (DeckStack).
  */
 
@@ -27,7 +26,6 @@ export function HeroCard({
   footer,
   onPress,
   tone = 'surface',
-  mood = 'neutral',
 }: {
   emoji: string;
   eyebrow?: ReactNode;
@@ -38,31 +36,27 @@ export function HeroCard({
   /** Es. avatar dei giocatori, tra il testo e i bottoni */
   footer?: ReactNode;
   onPress?: () => void;
-  tone?: 'surface' | 'proposal' | 'dark';
-  /** Card scura: colore della grafica astratta in base al tipo di azione */
-  mood?: ArtMood;
+  tone?: 'surface' | 'proposal';
 }) {
-  const dark = tone === 'dark';
   const content = (
     <>
-      {dark && <AbstractArt mood={mood} />}
       <View style={styles.heroTop}>
-        <View style={[styles.heroArt, dark && styles.heroArtDark]}>
+        <View style={styles.heroArt}>
           <AppText style={styles.heroEmoji}>{emoji}</AppText>
         </View>
         <View style={styles.flex}>
           {typeof eyebrow === 'string' ? (
-            <AppText variant="micro" color={dark ? 'rgba(255,255,255,0.6)' : colors.inkSoft} style={styles.bold}>
+            <AppText variant="micro" color={colors.inkSoft} style={styles.bold}>
               {eyebrow}
             </AppText>
           ) : (
             eyebrow
           )}
-          <AppText variant="title" numberOfLines={2} color={dark ? '#FFFFFF' : undefined}>
+          <AppText variant="title" numberOfLines={2}>
             {title}
           </AppText>
           {body ? (
-            <AppText variant="body" color={dark ? 'rgba(255,255,255,0.7)' : colors.inkSoft} numberOfLines={2}>
+            <AppText variant="body" color={colors.inkSoft} numberOfLines={2}>
               {body}
             </AppText>
           ) : null}
@@ -76,7 +70,6 @@ export function HeroCard({
             <Button
               label={secondary.label}
               variant="secondary"
-              onDark={dark}
               onPress={secondary.onPress}
               style={primary ? undefined : styles.flex}
             />
@@ -85,7 +78,7 @@ export function HeroCard({
       )}
     </>
   );
-  const style = [styles.hero, tone === 'proposal' && styles.proposal, dark && styles.dark];
+  const style = [styles.hero, tone === 'proposal' && styles.proposal];
   return onPress ? (
     <PressableScale accessibilityRole="button" onPress={onPress} pressedScale={0.98} style={style}>
       {content}
@@ -102,8 +95,6 @@ const styles = StyleSheet.create({
   bold: { fontWeight: '600' },
   surface: { backgroundColor: colors.surface },
   proposal: { backgroundColor: colors.proposal },
-  dark: { backgroundColor: '#0E0E11', overflow: 'hidden' },
-  heroArtDark: { backgroundColor: 'rgba(255,255,255,0.1)' },
   hero: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,

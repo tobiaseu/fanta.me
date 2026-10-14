@@ -28,7 +28,7 @@ interface Props {
 
 /**
  * Tre livelli, sempre gli stessi:
- * primary = giallo pieno (al massimo uno per schermata),
+ * primary = arancio accento pieno, testo bianco (al massimo uno per schermata),
  * secondary = trasparente con bordo grigio scuro sottile,
  * tertiary = solo testo, stesso colore del secondario;
  * destructive = come il secondario, ma in rosso (azioni irreversibili).

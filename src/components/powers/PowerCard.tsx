@@ -129,7 +129,7 @@ export function PowerKind({ role, power }: { role?: 'main' | 'secondary'; power?
         </AppText>
       </View>
       {role ? (
-        <AppText variant="micro" color={role === 'main' ? colors.cta : 'rgba(255,255,255,0.7)'} style={styles.role}>
+        <AppText variant="micro" color={role === 'main' ? '#FF9F52' : 'rgba(255,255,255,0.7)'} style={styles.role}>
           {role === 'main' ? 'Principale' : 'Secondario'}
         </AppText>
       ) : null}
@@ -197,7 +197,7 @@ export function PowerCard({
                   cta.onPress();
                 }}
                 style={[styles.cta, cta.tone === 'primary' ? styles.ctaPrimary : styles.ctaPlain]}>
-                <AppText variant="micro" color={cta.tone === 'primary' ? '#0B0B0D' : '#FFFFFF'} style={styles.bold}>
+                <AppText variant="micro" color="#FFFFFF" style={styles.bold}>
                   {cta.label}
                 </AppText>
               </PressableScale>

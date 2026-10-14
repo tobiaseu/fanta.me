@@ -36,7 +36,7 @@ interface Props {
   onPress?: () => void;
   onLongPress?: () => void;
   style?: StyleProp<ViewStyle>;
-  /** Si può aggiungere al mazzo: "+" giallo in alto a destra */
+  /** Si può aggiungere al mazzo: "+" arancio in alto a destra */
   addable?: boolean;
   /** Senza nome sotto (pila del mazzo) */
   bare?: boolean;
@@ -80,12 +80,12 @@ export function DeckCard({ rule, dimmed, checked, addable, note, onPress, onLong
           </View>
           {checked && (
             <View style={styles.check}>
-              <Icon name="check" size={11} strokeWidth={3.2} />
+              <Icon name="check" size={11} strokeWidth={3.2} color={colors.ctaInk} />
             </View>
           )}
           {addable && (
             <View style={styles.add}>
-              <Icon name="plus" size={13} strokeWidth={2.4} />
+              <Icon name="plus" size={13} strokeWidth={2.4} color={colors.ctaInk} />
             </View>
           )}
         </View>
@@ -120,7 +120,12 @@ export function EmptySlot({
       style={[styles.wrap, style]}>
       <View style={[styles.card, locked ? styles.locked : styles.empty]}>
         <View style={[styles.plus, locked && styles.plusLocked]}>
-          <Icon name={locked ? 'lock' : 'plus'} size={18} strokeWidth={2.4} color={locked ? colors.cta : colors.ink} />
+          <Icon
+            name={locked ? 'lock' : 'plus'}
+            size={18}
+            strokeWidth={2.4}
+            color={locked ? colors.accent : colors.ink}
+          />
         </View>
       </View>
       <AppText variant="micro" color={colors.inkSoft} style={styles.name}>
@@ -202,7 +207,7 @@ const styles = StyleSheet.create({
   name: { textAlign: 'center', fontSize: 11, lineHeight: 13 },
   note: { fontSize: 10, lineHeight: 12, fontWeight: '500', marginTop: -2 },
   empty: { borderStyle: 'dashed', borderColor: colors.inkFaint, backgroundColor: 'transparent', borderWidth: 1 },
-  locked: { borderColor: colors.ink, backgroundColor: colors.ink, borderWidth: 1 },
+  locked: { borderColor: colors.accent, backgroundColor: colors.ctaSoft, borderWidth: 1 },
   plus: {
     width: 32,
     height: 32,
@@ -211,5 +216,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plusLocked: { backgroundColor: 'rgba(255,255,255,0.12)' },
+  plusLocked: { backgroundColor: colors.surface },
 });

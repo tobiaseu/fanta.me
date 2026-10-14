@@ -9,7 +9,7 @@ import { GroupInfo, LeagueTitle, StandingsCard } from '@/components/game/LeagueB
 import { PregamePanel } from '@/components/game/PregamePanel';
 import { ResultsPanel } from '@/components/game/ResultsPanel';
 import { StoriesRow } from '@/components/game/StoriesRow';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
+import { DeckCard } from '@/components/cards/DeckCard';
 import { EmptyNote } from '@/components/ui/EmptyNote';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { AppText } from '@/components/ui/AppText';
@@ -55,7 +55,6 @@ export function DashboardScreen() {
   const captains = useGameStore((s) => s.captains);
   const setCaptain = useGameStore((s) => s.setCaptain);
   const openQuickAction = useUiStore((s) => s.openQuickAction);
-  const openTeam = useUiStore((s) => s.openTeam);
   const showToast = useUiStore((s) => s.showToast);
   const openPlayer = useOpenPlayer();
   const simulateCall = useGameStore((s) => s.simulateCall);
@@ -111,8 +110,6 @@ export function DashboardScreen() {
             title: 'Metti le tue carte nel mazzo',
             body: `Ne hai messe ${mineProposed} su ${perPlayer}: scegli le tue prima del via.`,
             primary: { label: 'Apri il mazzo', onPress: openDeck },
-            tone: 'dark',
-            mood: 'deck',
           }
         : {
             emoji: '✅',
@@ -128,8 +125,6 @@ export function DashboardScreen() {
             title: 'Rivincita?',
             body: 'Stessa gente, stanza nuova. Il mazzo resta nella tua collezione.',
             primary: { label: 'Crea la rivincita', onPress: () => router.push('/room/start') },
-            tone: 'dark',
-            mood: 'rematch',
           }
         : toVote > 0
           ? {
@@ -138,8 +133,6 @@ export function DashboardScreen() {
               title: `${toVote} ${toVote === 1 ? 'chiamata da votare' : 'chiamate da votare'}`,
               body: `Bastano ${votesNeeded(game)} sì e il punto è ufficiale.`,
               primary: { label: 'Vota nel Live', onPress: () => goTo('live') },
-              tone: 'dark',
-              mood: 'vote',
             }
           : inFinale(game, now)
             ? {
@@ -150,8 +143,6 @@ export function DashboardScreen() {
                   ? 'Classifica nascosta: ogni punto può ribaltare tutto.'
                   : 'Le ultime chiamate decidono il podio.',
                 primary: { label: 'Chiama un punto', onPress: () => openQuickAction() },
-                tone: 'dark',
-                mood: 'finale',
               }
             : {
                 emoji: '📺',
@@ -200,7 +191,7 @@ export function DashboardScreen() {
                 openQuickAction(card.id);
               }}
               style={styles.dayCard}>
-              <RuleSticker rule={card} size={72} />
+              <DeckCard rule={card} bare style={styles.dayDeck} />
               <View style={styles.flex}>
                 <AppText variant="micro" color={colors.inkSoft}>
                   Carta del giorno
@@ -213,7 +204,7 @@ export function DashboardScreen() {
                 </AppText>
               </View>
               <View style={styles.double}>
-                <AppText variant="headline" color="#0B0B0D">
+                <AppText variant="headline" color={colors.ctaInk}>
                   ×2
                 </AppText>
               </View>
@@ -293,6 +284,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.cta,
   },
+  dayDeck: { width: 60 },
   double: {
     width: 48,
     height: 48,

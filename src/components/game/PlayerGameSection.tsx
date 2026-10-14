@@ -4,13 +4,12 @@ import { ME } from '@/data/mock';
 import { Fragment, useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { DeckCard } from '@/components/cards/DeckCard';
-import { RuleSticker } from '@/components/illustrations/RuleSticker';
 import { AppText } from '@/components/ui/AppText';
-import { Avatar } from '@/components/ui/Avatar';
+import { MoreLink } from '@/components/ui/MoreLink';
 import { powerById, ruleById } from '@/data/rules';
 import { useNow } from '@/hooks/useNow';
-import { activeActivations, cardOfDay, useGameStore } from '@/store/useGameStore';
+import { openDeckPage } from '@/lib/links';
+import { activeActivations, useGameStore } from '@/store/useGameStore';
 import { colors, radius, space } from '@/theme/tokens';
 import type { Game, Player, Rule } from '@/types/game';
 
@@ -19,9 +18,8 @@ const EMOJI_FONT = Platform.select({
   default: undefined,
 });
 
-/** Ombreggiature "da collezione": Rara (oro, carta del giorno) e Furia (rosso, in corso adesso). */
+/** Ombreggiatura "Furia" (rosso): un potere o una carta in corso adesso. Niente più bagliori gialli. */
 const SHADE = {
-  rara: { color: '#E8A400', glow: 'rgba(255, 196, 0, 0.55)', label: 'Rara' },
   furia: { color: '#E5352B', glow: 'rgba(255, 70, 40, 0.5)', label: 'Furia' },
 } as const;
 type Shade = keyof typeof SHADE;
@@ -50,7 +48,6 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
       .filter((p) => p.gameId === game.id && p.authorId === player.id)
       .map((p) => ruleById(p.ruleId))
       .filter((r): r is Rule => !!r);
-    const day = game.status === 'live' ? cardOfDay(game, now) : undefined;
     const pending = new Set(
       events
         .filter((e) => e.gameId === game.id && e.status === 'pending' && e.playerId === player.id)
@@ -59,7 +56,7 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
     return {
       cards: mine.map((rule) => ({
         rule,
-        shade: (pending.has(rule.id) ? 'furia' : day?.id === rule.id ? 'rara' : undefined) as Shade | undefined,
+        shade: (pending.has(rule.id) ? 'furia' : undefined) as Shade | undefined,
       })),
       log: events
         .filter((e) => e.gameId === game.id && e.playerId === player.id && e.status === 'confirmed')
@@ -75,15 +72,21 @@ export function PlayerGameSection({ game, player, hideCards }: { game: Game; pla
           <AppText variant="headline">{hideCards ? 'Fantapoteri' : `Formazione · ${game.name}`}</AppText>
         )}
         {hideCards ? null : cards.length ? (
-          <View style={styles.grid}>
-            {cards.map(({ rule, shade }) => (
-              <View key={rule.id} style={styles.cell}>
-                <View style={[styles.shadeWrap, shade && shadeStyle(shade)]}>
-                  <DeckCard rule={rule} style={styles.fill} />
-                </View>
-                {shade && <ShadeTag shade={shade} />}
-              </View>
-            ))}
+          <View style={styles.summary}>
+            <AppText variant="body" color={colors.inkSoft}>
+              {cards.length} {cards.length === 1 ? 'carta messa' : 'carte messe'} nel mazzo
+              {cards.some((c) => c.shade === 'furia') ? ' · una chiamata in corso' : ''}
+            </AppText>
+            <MoreLink
+              label="Guarda il mazzo"
+              onPress={() =>
+                openDeckPage({
+                  title: `Formazione di ${player.name}`,
+                  subtitle: game.name,
+                  ids: cards.map((c) => c.rule.id),
+                })
+              }
+            />
           </View>
         ) : (
           <AppText variant="body" color={colors.inkSoft}>
@@ -138,18 +141,9 @@ const shadeStyle = (shade: Shade) => ({
     : { shadowColor: SHADE[shade].color, shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }),
 });
 
-function ShadeTag({ shade }: { shade: Shade }) {
-  return (
-    <View style={[styles.tag, { backgroundColor: SHADE[shade].color }]}>
-      <AppText variant="micro" color={colors.inkInverse} style={styles.tagText}>
-        {SHADE[shade].label}
-      </AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   section: { gap: space.sm },
+  summary: { gap: space.xxs },
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: '5%', rowGap: space.md },
   cell: { width: '30%', alignItems: 'center' },
   shadeWrap: { width: '100%', borderRadius: radius.sm + 3, borderWidth: 1, borderColor: 'transparent', padding: 1 },

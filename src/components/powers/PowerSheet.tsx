@@ -10,7 +10,7 @@ import type { PowerUp } from '@/types/game';
 
 /**
  * Potere aperto: lo stesso pop up delle carte, nella forma della carta speciale (cornice della famiglia).
- * Dice cosa fa, quanto dura e quando si usa. Azioni: secondaria a sinistra, primaria gialla a destra.
+ * Dice cosa fa, quanto dura e quando si usa. Azioni: secondaria a sinistra, primaria arancio a destra.
  */
 export function PowerSheet({
   power,
@@ -74,7 +74,7 @@ export function PowerSheet({
                   Una volta a partita
                 </AppText>
                 {note ? (
-                  <AppText variant="micro" color="#FFE382" style={styles.note}>
+                  <AppText variant="micro" color="#FF9F52" style={styles.note}>
                     {note}
                   </AppText>
                 ) : null}
